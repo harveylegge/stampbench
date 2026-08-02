@@ -1,0 +1,65 @@
+@import "tailwindcss";
+
+@theme {
+  --color-bg: #0a0a0f;
+  --color-surface: #121219;
+  --color-surface-2: #191924;
+  --color-border: #262636;
+  --color-border-hi: #34344a;
+  --color-text: #ededf2;
+  --color-muted: #9b9bad;
+  --color-faint: #6b6b80;
+  --color-accent: #7c6af7;
+  --color-accent-hi: #9d8dff;
+  --color-accent-dim: #2c2650;
+  --color-success: #3ecf8e;
+  --color-danger: #f47c7c;
+  --color-warning: #f6c34a;
+
+  --font-sans: var(--font-inter), ui-sans-serif, system-ui, sans-serif;
+  --font-mono: var(--font-jbmono), ui-monospace, "SFMono-Regular", monospace;
+}
+
+html {
+  color-scheme: dark;
+  scroll-behavior: smooth;
+}
+
+body {
+  background-color: var(--color-bg);
+  color: var(--color-text);
+  font-feature-settings: "cv11", "ss01";
+  -webkit-font-smoothing: antialiased;
+}
+
+::selection {
+  background: var(--color-accent-dim);
+  color: var(--color-accent-hi);
+}
+
+/* Subtle grid backdrop for hero sections */
+.hero-grid {
+  background-image:
+    linear-gradient(to right, rgb(124 106 247 / 0.06) 1px, transparent 1px),
+    linear-gradient(to bottom, rgb(124 106 247 / 0.06) 1px, transparent 1px);
+  background-size: 44px 44px;
+  mask-image: radial-gradient(ellipse 70% 60% at 50% 0%, black 30%, transparent 100%);
+}
+
+/* Prose for AI explanations / docs bodies */
+.prose-ig h1, .prose-ig h2, .prose-ig h3 { color: var(--color-text); font-weight: 600; margin: 1.25em 0 0.5em; }
+.prose-ig p { margin: 0.6em 0; line-height: 1.65; color: var(--color-muted); }
+.prose-ig strong { color: var(--color-text); font-weight: 600; }
+.prose-ig code {
+  font-family: var(--font-mono);
+  font-size: 0.85em;
+  background: var(--color-surface-2);
+  border: 1px solid var(--color-border);
+  border-radius: 4px;
+  padding: 0.1em 0.35em;
+  color: var(--color-accent-hi);
+}
+.prose-ig ol, .prose-ig ul { margin: 0.6em 0 0.6em 1.4em; color: var(--color-muted); line-height: 1.65; }
+.prose-ig ol { list-style: decimal; }
+.prose-ig ul { list-style: disc; }
+.prose-ig li { margin: 0.35em 0; }

@@ -1,0 +1,196 @@
+import Link from 'next/link';
+
+const HERO_SNIPPET = `import { validateUblXml } from '@invoicegate/core';
+
+const result = validateUblXml(xml);
+// {
+//   valid: false,
+//   violations: [{
+//     ruleId: "BR-DE-15",
+//     severity: "error",
+//     message: "Missing buyer reference (BT-10).
+//       For German public-sector buyers this
+//       is the Leitweg-ID…"
+//   }]
+// }`;
+
+const features = [
+  {
+    title: 'Validation that explains itself',
+    body: 'EN 16931 core rules plus the German XRechnung profile (BR-DE). Every violation carries the rule id, the business term, and a message written for developers — with optional AI-written fix suggestions.',
+  },
+  {
+    title: 'Totals computed by construction',
+    body: 'Send lines with quantities, prices and VAT categories. InvoiceGate derives BT-106 through BT-115 and the VAT breakdown so the BR-CO arithmetic rules pass every time — the part hand-rolled generators always get wrong.',
+  },
+  {
+    title: 'TypeScript-first, everywhere',
+    body: 'The ecosystem is Java-heavy. InvoiceGate ships an MIT-licensed npm library for local validation and generation, plus a hosted REST API when you want always-current rules without maintaining them.',
+  },
+  {
+    title: 'Built for the mandate wave',
+    body: 'Germany requires all companies to receive e-invoices since 2025 and to issue them from 2027. France and others follow. Ship compliance now, before your customers ask.',
+  },
+  {
+    title: 'One endpoint to validate',
+    body: 'POST XML, get structured violations back in milliseconds. Wire it into CI, your invoicing pipeline, or a pre-send check. Anonymous trial calls need no signup.',
+  },
+  {
+    title: 'One endpoint to generate',
+    body: 'POST clean JSON, get compliant XRechnung UBL back. Factur-X (ZUGFeRD), Peppol BIS and FatturaPA are next on the roadmap.',
+  },
+];
+
+export default function LandingPage() {
+  return (
+    <div>
+      {/* Hero */}
+      <section className="hero-grid relative">
+        <div className="mx-auto grid max-w-6xl items-center gap-12 px-4 pb-20 pt-24 lg:grid-cols-2">
+          <div>
+            <div className="mb-5 inline-flex items-center gap-2 rounded-full border border-border bg-surface px-3 py-1 text-xs text-muted">
+              <span className="h-1.5 w-1.5 rounded-full bg-success" />
+              Germany&apos;s B2B e-invoicing mandate: issuing required from Jan 2027
+            </div>
+            <h1 className="mb-5 text-4xl font-semibold leading-tight tracking-tight sm:text-5xl">
+              E-invoicing compliance,
+              <br />
+              <span className="bg-gradient-to-r from-accent-hi to-accent bg-clip-text text-transparent">
+                minus the pain.
+              </span>
+            </h1>
+            <p className="mb-8 max-w-md text-lg leading-relaxed text-muted">
+              Validate and generate XRechnung / EN 16931 e-invoices with a TypeScript-first API.
+              Cryptic rule violations become plain-language fixes.
+            </p>
+            <div className="flex flex-wrap items-center gap-4">
+              <Link
+                href="/playground"
+                className="rounded-lg bg-accent px-5 py-2.5 font-medium text-white transition hover:bg-accent-hi"
+              >
+                Try the playground
+              </Link>
+              <Link
+                href="/docs"
+                className="rounded-lg border border-border bg-surface px-5 py-2.5 font-medium transition hover:border-border-hi"
+              >
+                Read the docs
+              </Link>
+            </div>
+            <div className="mt-8 font-mono text-sm text-faint">
+              npm install <span className="text-accent-hi">@invoicegate/core</span>
+            </div>
+          </div>
+          <div className="rounded-xl border border-border bg-surface/80 shadow-2xl shadow-accent/5">
+            <div className="flex items-center gap-1.5 border-b border-border px-4 py-3">
+              <span className="h-2.5 w-2.5 rounded-full bg-border-hi" />
+              <span className="h-2.5 w-2.5 rounded-full bg-border-hi" />
+              <span className="h-2.5 w-2.5 rounded-full bg-border-hi" />
+              <span className="ml-3 font-mono text-xs text-faint">validate.ts</span>
+            </div>
+            <pre className="overflow-x-auto p-5 font-mono text-[13px] leading-relaxed text-muted">
+              {HERO_SNIPPET}
+            </pre>
+          </div>
+        </div>
+      </section>
+
+      {/* The problem */}
+      <section className="border-t border-border bg-surface/40 py-20">
+        <div className="mx-auto max-w-6xl px-4">
+          <h2 className="mb-3 text-2xl font-semibold tracking-tight">
+            The official validator says <span className="font-mono text-danger">[BR-DE-15]</span>.
+            Now what?
+          </h2>
+          <p className="mb-12 max-w-2xl leading-relaxed text-muted">
+            Millions of European businesses are being forced onto structured e-invoices, and the
+            tooling assumes you enjoy reading Schematron. The reference stack is Java, the error
+            messages cite clauses instead of fields, and one wrong VAT rounding rejects the whole
+            document. InvoiceGate is the layer that makes it just work.
+          </p>
+          <div className="grid gap-6 sm:grid-cols-2 lg:grid-cols-3">
+            {features.map((f) => (
+              <div key={f.title} className="rounded-xl border border-border bg-surface p-6">
+                <h3 className="mb-2 font-medium">{f.title}</h3>
+                <p className="text-sm leading-relaxed text-muted">{f.body}</p>
+              </div>
+            ))}
+          </div>
+        </div>
+      </section>
+
+      {/* API demo */}
+      <section className="py-20">
+        <div className="mx-auto max-w-6xl px-4">
+          <h2 className="mb-3 text-2xl font-semibold tracking-tight">Two calls, full compliance</h2>
+          <p className="mb-10 max-w-2xl text-muted">
+            No SDK lock-in, no XML expertise required. Anonymous trial calls work straight from your
+            terminal.
+          </p>
+          <div className="grid gap-6 lg:grid-cols-2">
+            <div className="rounded-xl border border-border bg-surface">
+              <div className="border-b border-border px-5 py-3 font-mono text-xs text-muted">
+                POST /api/v1/validate
+              </div>
+              <pre className="overflow-x-auto p-5 font-mono text-xs leading-relaxed text-muted">
+{`curl -s https://invoicegate.dev/api/v1/validate \\
+  -H "Content-Type: application/xml" \\
+  --data-binary @invoice.xml
+
+{
+  "valid": false,
+  "errorCount": 2,
+  "violations": [
+    { "ruleId": "BR-DE-15", "severity": "error",
+      "message": "Missing buyer reference (BT-10)…" },
+    { "ruleId": "BR-CO-15", "severity": "error",
+      "message": "Total with VAT (BT-112) should be
+                  1130.50 but is 1140.50." }
+  ]
+}`}
+              </pre>
+            </div>
+            <div className="rounded-xl border border-border bg-surface">
+              <div className="border-b border-border px-5 py-3 font-mono text-xs text-muted">
+                POST /api/v1/generate
+              </div>
+              <pre className="overflow-x-auto p-5 font-mono text-xs leading-relaxed text-muted">
+{`curl -s https://invoicegate.dev/api/v1/generate \\
+  -H "Content-Type: application/json" \\
+  -d '{ "invoice": {
+        "number": "RE-2026-0043",
+        "seller": { … }, "buyer": { … },
+        "lines": [{ "quantity": 12,
+          "price": { "netPrice": 120 },
+          "vat": { "categoryCode": "S", "rate": 19 }}]
+      }}'
+
+{ "xml": "<?xml version=\\"1.0\\" …",
+  "validation": { "valid": true } }`}
+              </pre>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      {/* CTA */}
+      <section className="border-t border-border bg-surface/40 py-20">
+        <div className="mx-auto max-w-6xl px-4 text-center">
+          <h2 className="mb-3 text-3xl font-semibold tracking-tight">
+            Be compliant before your competitors are.
+          </h2>
+          <p className="mx-auto mb-8 max-w-md text-muted">
+            Free plan with 100 API calls a month. Unlimited local validation with the open-source
+            library, forever.
+          </p>
+          <Link
+            href="/register"
+            className="inline-block rounded-lg bg-accent px-6 py-3 font-medium text-white transition hover:bg-accent-hi"
+          >
+            Start free
+          </Link>
+        </div>
+      </section>
+    </div>
+  );
+}

@@ -1,0 +1,28 @@
+{
+  "name": "invoicegate-monorepo",
+  "private": true,
+  "version": "0.1.0",
+  "description": "InvoiceGate — e-invoicing compliance toolkit: validate and generate XRechnung/EN 16931 e-invoices in TypeScript",
+  "workspaces": [
+    "packages/*",
+    "apps/*"
+  ],
+  "scripts": {
+    "build": "npm run build -w @invoicegate/core && npm run build -w web",
+    "dev": "npm run dev -w web",
+    "test": "npm run test -w @invoicegate/core && npm run test -w web",
+    "lint": "npm run lint -w web",
+    "db:push": "npm run db:push -w web"
+  },
+  "engines": {
+    "node": ">=20"
+  },
+  "allowScripts": {
+    "@prisma/client@6.19.3": true,
+    "@prisma/engines@6.19.3": true,
+    "@tailwindcss/oxide@4.3.3": true,
+    "esbuild@0.28.1": true,
+    "prisma@6.19.3": true,
+    "sharp@0.34.5": true
+  }
+}

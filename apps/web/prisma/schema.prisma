@@ -1,0 +1,70 @@
+// InvoiceGate data model.
+// Default datasource is SQLite so the app runs locally with zero configuration.
+// Production (Vercel + Neon/Postgres): see docs/deployment.md — switch the
+// provider to "postgresql" and set DATABASE_URL before `prisma db push`.
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "sqlite"
+  url      = env("DATABASE_URL")
+}
+
+model User {
+  id                   String       @id @default(cuid())
+  email                String       @unique
+  passwordHash         String
+  name                 String?
+  role                 String       @default("user") // "user" | "admin"
+  plan                 String       @default("free") // "free" | "starter" | "pro" | "scale"
+  stripeCustomerId     String?      @unique
+  stripeSubscriptionId String?
+  planRenewsAt         DateTime?
+  createdAt            DateTime     @default(now())
+  updatedAt            DateTime     @updatedAt
+  apiKeys              ApiKey[]
+  sessions             Session[]
+  usageEvents          UsageEvent[]
+}
+
+model Session {
+  id        String   @id @default(cuid())
+  tokenHash String   @unique
+  userId    String
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  expiresAt DateTime
+  createdAt DateTime @default(now())
+
+  @@index([userId])
+}
+
+model ApiKey {
+  id         String       @id @default(cuid())
+  name       String
+  prefix     String // display-only, e.g. "ig_live_a1b2c3"
+  keyHash    String       @unique
+  userId     String
+  user       User         @relation(fields: [userId], references: [id], onDelete: Cascade)
+  lastUsedAt DateTime?
+  revokedAt  DateTime?
+  createdAt  DateTime     @default(now())
+  usageEvents UsageEvent[]
+
+  @@index([userId])
+}
+
+model UsageEvent {
+  id        String   @id @default(cuid())
+  userId    String
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  apiKeyId  String?
+  apiKey    ApiKey?  @relation(fields: [apiKeyId], references: [id], onDelete: SetNull)
+  kind      String // "validate" | "generate" | "ai_explain"
+  profile   String?
+  ok        Boolean  @default(true)
+  createdAt DateTime @default(now())
+
+  @@index([userId, createdAt])
+}
