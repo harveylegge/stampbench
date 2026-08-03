@@ -14,6 +14,7 @@ interface Violation {
 interface ValidationResult {
   valid: boolean;
   profile: string;
+  syntax?: 'ubl' | 'cii';
   errorCount: number;
   warningCount: number;
   violations: Violation[];
@@ -44,12 +45,18 @@ function SeverityBadge({ severity }: { severity: 'error' | 'warning' }) {
 }
 
 function ViolationList({ result }: { result: ValidationResult }) {
+  const syntaxLabel = result.syntax === 'cii' ? 'CII (ZUGFeRD/Factur-X)' : result.syntax === 'ubl' ? 'UBL' : null;
   return (
     <div className="flex flex-col gap-2">
       <div className={`text-sm font-medium ${result.valid ? 'text-success' : 'text-danger'}`}>
         {result.valid
           ? '✓ Valid — no blocking errors'
           : `✗ ${result.errorCount} error${result.errorCount === 1 ? '' : 's'}, ${result.warningCount} warning${result.warningCount === 1 ? '' : 's'}`}
+        {syntaxLabel && (
+          <span className="ml-2 rounded bg-surface-2 px-1.5 py-0.5 font-mono text-[11px] font-normal text-muted">
+            {syntaxLabel}
+          </span>
+        )}
       </div>
       {result.violations.map((v, i) => (
         <div key={i} className="rounded-lg border border-border bg-surface p-3 text-sm">
@@ -166,8 +173,15 @@ export function Playground() {
             <textarea
               value={xml}
               onChange={(e) => setXml(e.target.value)}
+              onDragOver={(e) => e.preventDefault()}
+              onDrop={(e) => {
+                e.preventDefault();
+                const file = e.dataTransfer.files?.[0];
+                if (!file) return;
+                file.text().then(setXml).catch(() => setError('Could not read the dropped file.'));
+              }}
               spellCheck={false}
-              placeholder="Paste your XRechnung / UBL XML here…"
+              placeholder="Paste — or drop a file: XRechnung, UBL, or CII/ZUGFeRD XML…"
               className="h-105 w-full resize-none rounded-xl border border-border bg-surface p-4 font-mono text-xs leading-relaxed outline-none transition focus:border-accent"
             />
             <button
@@ -183,9 +197,10 @@ export function Playground() {
             <div className="min-h-105 rounded-xl border border-border bg-bg p-4">
               {!result && !error && (
                 <p className="text-sm text-faint">
-                  Validation runs against EN 16931 core rules plus the German XRechnung (BR-DE)
-                  profile. Load the broken sample to see it catch a missing buyer reference and a
-                  VAT arithmetic error.
+                  Validation runs against EN 16931 core rules (including the BR-S/E/AE/Z/G/O VAT
+                  families) plus the German XRechnung (BR-DE) profile. Both syntaxes are
+                  auto-detected: UBL and CII (ZUGFeRD/Factur-X XML). Load the broken sample to see
+                  it catch a missing buyer reference and a VAT arithmetic error.
                 </p>
               )}
               {error && <p className="text-sm text-danger">{error}</p>}

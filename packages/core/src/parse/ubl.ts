@@ -241,7 +241,7 @@ export function parseUblInvoice(xml: string): Invoice {
     const found = Object.keys(doc).filter((k) => !k.startsWith('?'));
     if (found.includes('CrossIndustryInvoice')) {
       throw new InvoiceParseError(
-        'This is a UN/CEFACT CII document (ZUGFeRD/Factur-X XML). InvoiceGate currently parses UBL syntax — CII support is on the roadmap.',
+        'This is a UN/CEFACT CII document (ZUGFeRD/Factur-X XML). Use validateXml() / parseCiiInvoice() — this entry point parses UBL only.',
       );
     }
     throw new InvoiceParseError(

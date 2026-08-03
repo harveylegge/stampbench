@@ -298,8 +298,12 @@ const formatRules: Rule[] = [
     },
   },
   {
-    id: 'IG-VAT-02', severity: 'error', profile: 'en16931', terms: ['BT-118', 'BT-119', 'BT-120'],
-    description: 'VAT category semantics: S needs a rate > 0, Z/E/AE/K/G need rate 0, E/AE/K/G need an exemption reason.',
+    // Breakdown-level rate semantics. Exemption-reason requirements and line
+    // rate constraints live in the official BR-S/Z/E/AE/K/G/O families
+    // (rules/vat-categories.ts) — this rule only covers the breakdown's own
+    // stated rate, which the families don't re-check.
+    id: 'IG-VAT-02', severity: 'error', profile: 'en16931', terms: ['BT-118', 'BT-119'],
+    description: 'VAT breakdown rate semantics: S needs a rate > 0, Z/E/AE/K/G need rate 0.',
     check(inv) {
       const out: Violation[] = [];
       (inv.vatBreakdown ?? []).forEach((b, idx) => {
@@ -311,10 +315,6 @@ const formatRules: Rule[] = [
         if (['Z', 'E', 'AE', 'K', 'G'].includes(b.categoryCode) && present(b.rate) && (b.rate as number) !== 0) {
           out.push(violation({ id: 'IG-VAT-02', severity: 'error', terms: ['BT-119'] },
             `VAT category ${b.categoryCode} must have a rate of 0, got ${b.rate}%.`, { path: `${p}.rate`, value: b.rate }));
-        }
-        if (['E', 'AE', 'K', 'G'].includes(b.categoryCode) && !present(b.exemptionReason) && !present(b.exemptionReasonCode)) {
-          out.push(violation({ id: 'IG-VAT-02', severity: 'error', terms: ['BT-120', 'BT-121'] },
-            `VAT category ${b.categoryCode} requires an exemption reason (BT-120) or reason code (BT-121).`, { path: `${p}.exemptionReason` }));
         }
       });
       return out.length ? out : null;

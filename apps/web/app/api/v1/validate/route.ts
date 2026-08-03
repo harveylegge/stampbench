@@ -1,5 +1,5 @@
 import { NextResponse } from 'next/server';
-import { validateUblXml, RULESET_VERSION } from '@invoicegate/core';
+import { validateXml, RULESET_VERSION } from '@invoicegate/core';
 import { apiError, gateRequest, readBoundedText } from '@/lib/api';
 import { recordUsage } from '@/lib/usage';
 import { log } from '@/lib/log';
@@ -11,10 +11,11 @@ export const runtime = 'nodejs';
  *
  * Accepts either:
  *  - application/json: { "xml": "<Invoice …>", "profile": "xrechnung" | "en16931" }
- *  - application/xml or text/xml: the raw UBL document, profile via ?profile=
+ *  - application/xml or text/xml: the raw document, profile via ?profile=
  *
- * Auth: `Authorization: Bearer ig_live_…` (or x-api-key). Anonymous trial
- * calls are allowed with a low hourly IP limit.
+ * Syntax is auto-detected: UBL Invoice or UN/CEFACT CII (ZUGFeRD / Factur-X /
+ * XRechnung-CII). Auth: `Authorization: Bearer ig_live_…` (or x-api-key).
+ * Anonymous trial calls are allowed with a low hourly IP limit.
  */
 export async function POST(request: Request) {
   const gate = await gateRequest(request);
@@ -50,7 +51,7 @@ export async function POST(request: Request) {
   }
 
   const started = Date.now();
-  const result = validateUblXml(xml, { profile });
+  const result = validateXml(xml, { profile });
 
   if (gate.caller.type !== 'anon') {
     await recordUsage(gate.caller.userId, 'validate', {
@@ -61,6 +62,7 @@ export async function POST(request: Request) {
   }
   log.info('api.validate', {
     profile,
+    syntax: result.syntax,
     valid: result.valid,
     errors: result.errorCount,
     warnings: result.warningCount,

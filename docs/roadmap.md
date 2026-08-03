@@ -14,16 +14,17 @@ can be trusted. Supersedes the previous launch-first ordering.
 - After this session, every remaining step is agent-executable.
 
 ## Phase 1 — Trust (weeks 1–4). Nothing markets until this ships.
-- [ ] **CII / ZUGFeRD / Factur-X parsing** — German *received* invoices (the legal
-      duty in force since Jan 2025) are mostly CII; it is the ten-minute dealbreaker.
-- [ ] **VAT-category rule families** (BR-S / BR-E / BR-AE / BR-Z / BR-G / BR-O) —
-      where real invoices actually fail.
+- [x] **CII / ZUGFeRD / Factur-X parsing** — shipped: `validateXml()` auto-detects
+      UBL vs CII; full semantic mapping incl. format-102 dates, VA/FC tax schemes.
+- [x] **VAT-category rule families** (BR-S / BR-E / BR-AE / BR-Z / BR-K / BR-G /
+      BR-O + BR-CO-04) — shipped, with per-rate S arithmetic.
 - [ ] **KoSIT parity harness**: dual-run our validator and the official validator over
       the public XRechnung test suite in CI; publish a live zero-divergence page.
-      This page IS the launch asset.
-- [ ] `npx invoicegate validate` CLI + GitHub Action — the no-account first touch.
-- [ ] Playground: drag-and-drop; detect CII files honestly + waitlist capture.
-- [ ] Version-pinned results (spec + ruleset version in every response) + public changelog.
+      This page IS the launch asset. (Harness in tools/parity; full dual-run in CI.)
+- [x] `npx invoicegate validate` CLI — shipped (packages/cli, CI exit codes).
+      GitHub Action: pending repo publish.
+- [x] Playground: drag-and-drop + CII auto-detect (waitlist unnecessary — CII shipped).
+- [x] Version-pinned results (`meta.specVersions` in every response).
 
 ## Phase 2 — Monetise urgency (months 2–3)
 - [ ] Launch cascade (Show HN → dev.to → r/webdev → German channels), parity page front and centre

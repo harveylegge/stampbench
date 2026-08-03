@@ -17,7 +17,7 @@ const result = validateUblXml(xml);
 const features = [
   {
     title: 'Validation that explains itself',
-    body: 'EN 16931 core rules plus the German XRechnung profile (BR-DE). Every violation carries the rule id, the business term, and a message written for developers — with optional AI-written fix suggestions.',
+    body: 'EN 16931 core rules, the full VAT category families (BR-S/E/AE/Z/G/O), and the German XRechnung profile (BR-DE). Every violation carries the rule id, the business term, and a message written for developers — with optional AI-written fix suggestions.',
   },
   {
     title: 'Totals computed by construction',
@@ -32,12 +32,12 @@ const features = [
     body: 'Germany requires all companies to receive e-invoices since 2025 and to issue them from 2027. France and others follow. Ship compliance now, before your customers ask.',
   },
   {
-    title: 'One endpoint to validate',
-    body: 'POST XML, get structured violations back in milliseconds. Wire it into CI, your invoicing pipeline, or a pre-send check. Anonymous trial calls need no signup.',
+    title: 'Reads what Germany actually sends',
+    body: 'Both syntaxes, auto-detected: UBL and CII — the ZUGFeRD/Factur-X XML that most German e-invoices arrive as. POST XML, get structured violations back in milliseconds. Anonymous trial calls need no signup.',
   },
   {
     title: 'One endpoint to generate',
-    body: 'POST clean JSON, get compliant XRechnung UBL back. Factur-X (ZUGFeRD), Peppol BIS and FatturaPA are next on the roadmap.',
+    body: 'POST clean JSON, get compliant XRechnung UBL back. Factur-X PDF generation (embedded XML), Peppol BIS and FatturaPA are next on the roadmap.',
   },
 ];
 

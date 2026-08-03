@@ -23,7 +23,7 @@ const faqs = [
   },
   {
     q: 'Do you support Factur-X / ZUGFeRD, Peppol BIS, or FatturaPA?',
-    a: 'XRechnung (UBL) validation and generation ship today. CII parsing (ZUGFeRD/Factur-X XML), Peppol BIS and FatturaPA are the next roadmap items — Pro subscribers get early access.',
+    a: 'Validation supports both syntaxes today, auto-detected: UBL and CII (the ZUGFeRD/Factur-X XML most German invoices arrive as). Generation is XRechnung UBL. Factur-X PDF generation, Peppol BIS and FatturaPA are next — Agency subscribers get early access.',
   },
   {
     q: 'Is this legal advice? Will my invoice be accepted?',

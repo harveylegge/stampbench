@@ -12,8 +12,13 @@ follow. InvoiceGate is the developer-facing layer for that mandate wave.
 
 ```
 packages/core     @invoicegate/core — MIT-licensed library (npm)
-                  UBL parsing · EN 16931 + BR-DE rule engine · XRechnung generation ·
-                  auto-computed totals (BR-CO arithmetic passes by construction)
+                  UBL + CII (ZUGFeRD/Factur-X) parsing · EN 16931 rule engine incl.
+                  VAT category families (BR-S/E/AE/Z/K/G/O) + BR-DE · XRechnung
+                  generation · auto-computed totals (BR-CO passes by construction)
+packages/cli      invoicegate — `npx invoicegate validate invoice.xml` (CI-friendly
+                  exit codes) and `generate` from JSON
+tools/parity      KoSIT parity harness — dual-runs our validator against the official
+                  reference validator over the public XRechnung test suite
 apps/web          invoicegate.dev — Next.js 15 SaaS
                   landing · playground · docs · auth · API keys · usage metering ·
                   Stripe billing · AI error explanations (Claude) · admin
@@ -39,13 +44,20 @@ npm run build          # full production build
 ## The library
 
 ```ts
-import { validateUblXml, generateXRechnungUbl, withComputedTotals } from '@invoicegate/core';
+import { validateXml, generateXRechnungUbl, withComputedTotals } from '@invoicegate/core';
 
-const result = validateUblXml(xml, { profile: 'xrechnung' });
-// → { valid, violations: [{ ruleId: "BR-DE-15", severity: "error", message: "…" }] }
+const result = validateXml(xml); // auto-detects UBL or CII (ZUGFeRD/Factur-X)
+// → { valid, syntax: "cii", violations: [{ ruleId: "BR-DE-15", severity: "error", … }] }
 
 const invoice = withComputedTotals({ seller, buyer, lines, … });
-const xml = generateXRechnungUbl(invoice); // XRechnung 3.0 UBL
+const ubl = generateXRechnungUbl(invoice); // XRechnung 3.0 UBL
+```
+
+## The CLI
+
+```bash
+npx invoicegate validate invoice.xml     # exit 0 = valid, 1 = errors — CI-ready
+npx invoicegate generate invoice.json -o invoice.xml
 ```
 
 ## The API

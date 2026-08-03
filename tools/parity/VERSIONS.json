@@ -1,0 +1,32 @@
+{
+  "comment": "Pinned versions of the official KoSIT tooling used by the parity harness. Verified against the GitHub releases API on the date below. Update deliberately: a version bump changes what 'parity' means.",
+  "verifiedAt": "2026-08-03",
+  "validator": {
+    "repo": "itplr-kosit/validator",
+    "tag": "v1.6.2",
+    "publishedAt": "2026-02-17T16:02:34Z",
+    "asset": "validator-1.6.2-standalone.jar",
+    "url": "https://github.com/itplr-kosit/validator/releases/download/v1.6.2/validator-1.6.2-standalone.jar",
+    "sizeBytes": 10618475
+  },
+  "configuration": {
+    "repo": "itplr-kosit/validator-configuration-xrechnung",
+    "tag": "v2026-01-31",
+    "name": "Validator Configuration 2026-01-31 compatible with XRechnung 3.0.x",
+    "publishedAt": "2026-02-05T09:20:42Z",
+    "xrechnungVersion": "3.0.2",
+    "asset": "xrechnung-3.0.2-validator-configuration-2026-01-31.zip",
+    "url": "https://github.com/itplr-kosit/validator-configuration-xrechnung/releases/download/v2026-01-31/xrechnung-3.0.2-validator-configuration-2026-01-31.zip",
+    "sizeBytes": 487782
+  },
+  "testsuite": {
+    "repo": "itplr-kosit/xrechnung-testsuite",
+    "tag": "v2026-01-31",
+    "name": "Testsuite release in version 2026-01-31 compatible with XRechnung 3.0.x",
+    "publishedAt": "2026-02-05T09:15:16Z",
+    "xrechnungVersion": "3.0.2",
+    "asset": "xrechnung-3.0.2-testsuite-2026-01-31.zip",
+    "url": "https://github.com/itplr-kosit/xrechnung-testsuite/releases/download/v2026-01-31/xrechnung-3.0.2-testsuite-2026-01-31.zip",
+    "sizeBytes": 5587324
+  }
+}

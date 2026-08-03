@@ -48,17 +48,21 @@ export type { Profile, Rule, Severity, Violation } from './validate/rule.js';
 export { AMOUNT_TOLERANCE, amountsEqual, round2 } from './validate/rule.js';
 
 export { EN16931_RULES } from './validate/rules/en16931.js';
+export { VAT_CATEGORY_RULES } from './validate/rules/vat-categories.js';
 export { XRECHNUNG_RULES } from './validate/rules/xrechnung.js';
 
 export {
   RULESET_VERSION,
+  SPEC_VERSIONS,
   rulesForProfile,
   validateInvoice,
   validateUblXml,
+  validateXml,
 } from './validate/index.js';
-export type { ValidateOptions, ValidateXmlResult, ValidationResult } from './validate/index.js';
+export type { Syntax, ValidateOptions, ValidateXmlResult, ValidationResult } from './validate/index.js';
 
 export { InvoiceParseError, parseUblInvoice } from './parse/ubl.js';
+export { parseCiiInvoice } from './parse/cii.js';
 
 export { DEFAULT_PROCESS_ID, generateXRechnungUbl, withXRechnungDefaults } from './generate/ubl.js';
 export type { GenerateOptions } from './generate/ubl.js';

@@ -1,0 +1,35 @@
+{
+  "name": "invoicegate",
+  "version": "0.1.0",
+  "description": "Validate and generate XRechnung / EN 16931 e-invoices from the command line",
+  "license": "MIT",
+  "type": "module",
+  "bin": {
+    "invoicegate": "./dist/cli.js"
+  },
+  "files": [
+    "dist",
+    "README.md"
+  ],
+  "scripts": {
+    "build": "tsc -p tsconfig.build.json",
+    "test": "vitest run"
+  },
+  "keywords": [
+    "xrechnung",
+    "e-rechnung",
+    "zugferd",
+    "factur-x",
+    "en16931",
+    "cli",
+    "validator"
+  ],
+  "dependencies": {
+    "@invoicegate/core": "*"
+  },
+  "devDependencies": {
+    "@types/node": "^22",
+    "typescript": "^5.8.3",
+    "vitest": "^3.1.4"
+  }
+}

@@ -2,14 +2,16 @@ import { describe, expect, it } from 'vitest';
 import {
   computeTotals,
   generateXRechnungUbl,
+  parseCiiInvoice,
   parseUblInvoice,
   round2,
   validateInvoice,
   validateUblXml,
+  validateXml,
   withComputedTotals,
   withXRechnungDefaults,
 } from '../src/index.js';
-import { RAW_UBL_SAMPLE, validInvoice } from './fixtures.js';
+import { RAW_CII_SAMPLE, RAW_UBL_SAMPLE, validInvoice } from './fixtures.js';
 
 describe('computeTotals', () => {
   it('produces the BR-CO arithmetic chain by construction', () => {
@@ -116,8 +118,9 @@ describe('validateInvoice', () => {
       { categoryCode: 'S', rate: 0, taxableAmount: 100, taxAmount: 0 },
       { categoryCode: 'E', rate: 0, taxableAmount: 50, taxAmount: 0 },
     ];
-    const ids = validateInvoice(inv).violations.filter((v) => v.ruleId === 'IG-VAT-02');
-    expect(ids.length).toBe(2);
+    const violations = validateInvoice(inv).violations;
+    expect(violations.filter((v) => v.ruleId === 'IG-VAT-02')).toHaveLength(1); // S @ 0%
+    expect(violations.map((v) => v.ruleId)).toContain('BR-E-10'); // exempt without reason
   });
 
   it('flags malformed dates and codes', () => {
@@ -241,6 +244,131 @@ describe('generate → parse round-trip', () => {
     const parsed = parseUblInvoice(xml);
     expect(parsed.seller?.name).toBe('Müller & Söhne <GmbH> "Berlin"');
     expect(parsed.notes?.[0]).toBe('5 < 7 && 7 > 5');
+  });
+});
+
+describe('VAT category families (BR-S/Z/E/AE/K/G/O)', () => {
+  /** Reverse-charge invoice base: one AE line, correct breakdown + buyer VAT. */
+  function reverseChargeInvoice() {
+    const inv = validInvoice();
+    inv.lines = [
+      { id: '1', quantity: 1, unitCode: 'C62', netAmount: 1000,
+        item: { name: 'Beratung' }, price: { netPrice: 1000 },
+        vat: { categoryCode: 'AE', rate: 0 } },
+    ];
+    inv.allowancesCharges = [];
+    inv.buyer!.vatId = 'FRAB123456789';
+    inv.vatBreakdown = [
+      { categoryCode: 'AE', rate: 0, taxableAmount: 1000, taxAmount: 0,
+        exemptionReason: 'Reverse charge — VAT liability shifts to the buyer.' },
+    ];
+    inv.totals = { sumOfLineNet: 1000, taxExclusive: 1000, taxTotal: 0, taxInclusive: 1000, amountDue: 1000 };
+    return inv;
+  }
+
+  it('accepts a correct reverse-charge (AE) invoice', () => {
+    const result = validateInvoice(reverseChargeInvoice());
+    expect(result.violations.filter((v) => v.severity === 'error')).toEqual([]);
+  });
+
+  it('AE without the buyer VAT id fails BR-AE-02', () => {
+    const inv = reverseChargeInvoice();
+    delete inv.buyer!.vatId;
+    const ids = validateInvoice(inv).violations.map((v) => v.ruleId);
+    expect(ids).toContain('BR-AE-02');
+  });
+
+  it('AE without an exemption reason fails BR-AE-10', () => {
+    const inv = reverseChargeInvoice();
+    delete inv.vatBreakdown![0]!.exemptionReason;
+    const ids = validateInvoice(inv).violations.map((v) => v.ruleId);
+    expect(ids).toContain('BR-AE-10');
+  });
+
+  it('a line category with no matching breakdown fails BR-x-01', () => {
+    const inv = reverseChargeInvoice();
+    inv.vatBreakdown = [{ categoryCode: 'S', rate: 19, taxableAmount: 1000, taxAmount: 190 }];
+    inv.totals!.taxTotal = 190; inv.totals!.taxInclusive = 1190; inv.totals!.amountDue = 1190;
+    const ids = validateInvoice(inv).violations.map((v) => v.ruleId);
+    expect(ids).toContain('BR-AE-01');
+  });
+
+  it('an S line with rate 0 fails BR-S-05', () => {
+    const inv = validInvoice();
+    inv.lines![0]!.vat!.rate = 0;
+    const ids = validateInvoice(inv).violations.map((v) => v.ruleId);
+    expect(ids).toContain('BR-S-05');
+  });
+
+  it('a per-rate taxable mismatch fails BR-S-08', () => {
+    const inv = validInvoice();
+    inv.vatBreakdown!.find((b) => b.rate === 19)!.taxableAmount = 950; // ignores the 50 allowance
+    const ids = validateInvoice(inv).violations.map((v) => v.ruleId);
+    expect(ids).toContain('BR-S-08');
+  });
+
+  it('a line without any VAT category fails BR-CO-04', () => {
+    const inv = validInvoice();
+    delete inv.lines![0]!.vat;
+    const ids = validateInvoice(inv).violations.map((v) => v.ruleId);
+    expect(ids).toContain('BR-CO-04');
+  });
+
+  it('a nonzero VAT amount on an exempt breakdown fails BR-E-09', () => {
+    const inv = reverseChargeInvoice();
+    inv.lines![0]!.vat = { categoryCode: 'E', rate: 0 };
+    inv.vatBreakdown = [
+      { categoryCode: 'E', rate: 0, taxableAmount: 1000, taxAmount: 19, exemptionReason: 'Steuerbefreit.' },
+    ];
+    const ids = validateInvoice(inv).violations.map((v) => v.ruleId);
+    expect(ids).toContain('BR-E-09');
+  });
+});
+
+describe('parseCiiInvoice (ZUGFeRD / Factur-X / XRechnung-CII)', () => {
+  it('maps a CII document to the same semantic model as UBL', () => {
+    const cii = parseCiiInvoice(RAW_CII_SAMPLE);
+    expect(cii.number).toBe('RE-2026-0042');
+    expect(cii.issueDate).toBe('2026-08-01'); // converted from format-102 20260801
+    expect(cii.dueDate).toBe('2026-08-31');
+    expect(cii.buyerReference).toBe('04011000-12345-67');
+    expect(cii.seller?.name).toBe('Beispiel Software GmbH');
+    expect(cii.seller?.vatId).toBe('DE123456789');
+    expect(cii.seller?.contact?.email).toBe('buchhaltung@beispiel-software.de');
+    expect(cii.seller?.electronicAddress).toBe('rechnung@beispiel-software.de');
+    expect(cii.buyer?.address?.postCode).toBe('53113');
+    expect(cii.payment?.meansTypeCode).toBe('58');
+    expect(cii.payment?.creditTransfers?.[0]?.iban).toBe('DE89370400440532013000');
+    expect(cii.payment?.creditTransfers?.[0]?.bic).toBe('COBADEFFXXX');
+    expect(cii.lines).toHaveLength(2);
+    expect(cii.lines?.[0]?.quantity).toBe(10);
+    expect(cii.lines?.[0]?.unitCode).toBe('HUR');
+    expect(cii.lines?.[1]?.item?.name).toBe('Fachbuch "EN 16931 & XRechnung"');
+    expect(cii.vatBreakdown).toHaveLength(2);
+    expect(cii.allowancesCharges?.[0]?.amount).toBe(50);
+    expect(cii.totals?.taxInclusive).toBe(1199.08);
+    expect(cii.totals?.taxTotal).toBe(179.38);
+  });
+
+  it('a compliant CII invoice validates clean against the XRechnung profile', () => {
+    const result = validateXml(RAW_CII_SAMPLE);
+    expect(result.syntax).toBe('cii');
+    expect(result.violations.filter((v) => v.severity === 'error')).toEqual([]);
+    expect(result.valid).toBe(true);
+  });
+
+  it('validateXml auto-detects UBL too', () => {
+    const result = validateXml(RAW_UBL_SAMPLE);
+    expect(result.syntax).toBe('ubl');
+    expect(result.valid).toBe(true);
+  });
+
+  it('CII and UBL parses of the same invoice agree on the money', () => {
+    const cii = parseCiiInvoice(RAW_CII_SAMPLE);
+    const ubl = parseUblInvoice(generateXRechnungUbl(validInvoice()));
+    expect(cii.totals?.taxInclusive).toBe(ubl.totals?.taxInclusive);
+    expect(cii.totals?.sumOfLineNet).toBe(ubl.totals?.sumOfLineNet);
+    expect(cii.vatBreakdown?.length).toBe(ubl.vatBreakdown?.length);
   });
 });
 

@@ -82,9 +82,11 @@ export default function DocsPage() {
 
         <H2 id="validate">POST /api/v1/validate</H2>
         <p className="text-sm leading-relaxed text-muted">
-          Validates a UBL Invoice document against EN 16931 plus (by default) the German XRechnung
-          profile. Accepts raw XML (<code className="font-mono">Content-Type: application/xml</code>)
-          or JSON:
+          Validates an e-invoice against EN 16931 plus (by default) the German XRechnung profile.
+          Both syntaxes are auto-detected: <strong className="text-text">UBL</strong> and{' '}
+          <strong className="text-text">CII</strong> (ZUGFeRD / Factur-X XML — what German
+          companies mostly receive). Accepts raw XML
+          (<code className="font-mono">Content-Type: application/xml</code>) or JSON:
         </p>
         <Code>{`// Request (JSON form)
 { "xml": "<?xml version=\\"1.0\\"?><Invoice …>", "profile": "xrechnung" }
@@ -93,6 +95,7 @@ export default function DocsPage() {
 {
   "valid": false,
   "profile": "xrechnung",
+  "syntax": "ubl",            // or "cii" (ZUGFeRD/Factur-X)
   "errorCount": 1,
   "warningCount": 1,
   "violations": [
@@ -207,15 +210,23 @@ if (!result.valid) console.table(result.violations);`}</Code>
           InvoiceGate implements a documented, growing subset of the official rule sets — currently:
         </p>
         <ul className="my-3 list-disc pl-5 text-sm leading-relaxed text-muted">
-          <li>EN 16931 structural rules: BR-01…BR-16, per-line BR-21…BR-27</li>
+          <li>EN 16931 structural rules: BR-01…BR-16, per-line BR-21…BR-27, BR-CO-04</li>
           <li>Totals &amp; VAT arithmetic: BR-CO-10, -13, -14, -15, -16, -17, -18, -25</li>
+          <li>
+            VAT category families — BR-S, BR-Z, BR-E, BR-AE, BR-K, BR-G, BR-O: breakdown
+            presence, rate constraints, per-category taxable/VAT arithmetic, exemption reasons
+          </li>
           <li>XRechnung (German CIUS): BR-DE-1…9, BR-DE-15, BR-DE-16, BR-DE-17, BR-DE-21, plus credit-transfer/IBAN checks</li>
-          <li>Format &amp; code-list diagnostics (IG-* rule ids): ISO dates, currency/country codes, UNCL 5305 VAT categories, VAT category semantics</li>
+          <li>Format &amp; code-list diagnostics (IG-* rule ids): ISO dates, currency/country codes, UNCL 5305 VAT categories</li>
         </ul>
         <p className="text-sm leading-relaxed text-muted">
-          Syntax coverage is UBL today; CII (ZUGFeRD/Factur-X XML) parsing is next. InvoiceGate is
-          developer tooling, not legal advice — for certification-grade sign-off, also run the
-          official KoSIT validator in CI. Our goal is that by the time you run it, it passes.
+          Syntax coverage: <strong className="text-text">UBL and CII</strong> (ZUGFeRD/Factur-X
+          XML) for validation, UBL for generation. Every result is version-pinned to the spec
+          release it was checked against (EN 16931-1:2017, XRechnung 3.0 — see{' '}
+          <code className="font-mono">meta.specVersions</code>). InvoiceGate is developer tooling,
+          not legal advice — for certification-grade sign-off, also run the official KoSIT
+          validator in CI. Our goal is that by the time you run it, it passes — and we publish our
+          divergence from the KoSIT validator rather than asking you to take that on faith.
         </p>
       </article>
     </div>
