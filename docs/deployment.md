@@ -43,8 +43,9 @@ The repo is a npm-workspaces monorepo; the deployable app is `apps/web`.
 
 ## 3. Stripe
 
-1. Create three recurring monthly Prices (GBP 19 / 49 / 149) under one or three Products →
-   copy the `price_…` ids into the env vars.
+1. Create three recurring monthly Prices — Developer £29, Agency £99, Platform £299 — under
+   one or three Products → copy the `price_…` ids into the env vars (the env var names keep
+   the internal tier ids: STARTER=Developer, PRO=Agency, SCALE=Platform).
 2. Add a webhook endpoint `https://<domain>/api/stripe/webhook` with events:
    `customer.subscription.created`, `customer.subscription.updated`,
    `customer.subscription.deleted` → copy the signing secret.

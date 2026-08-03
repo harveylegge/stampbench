@@ -24,8 +24,8 @@ const features = [
     body: 'Send lines with quantities, prices and VAT categories. InvoiceGate derives BT-106 through BT-115 and the VAT breakdown so the BR-CO arithmetic rules pass every time — the part hand-rolled generators always get wrong.',
   },
   {
-    title: 'TypeScript-first, everywhere',
-    body: 'The ecosystem is Java-heavy. InvoiceGate ships an MIT-licensed npm library for local validation and generation, plus a hosted REST API when you want always-current rules without maintaining them.',
+    title: 'Open source where it counts',
+    body: 'The full rule engine is MIT-licensed — validate and generate locally, unlimited, forever. The hosted platform sells what code alone can’t promise: always-current rules without dependency upgrades, volume, and compliance posture.',
   },
   {
     title: 'Built for the mandate wave',
@@ -54,15 +54,16 @@ export default function LandingPage() {
               Germany&apos;s B2B e-invoicing mandate: issuing required from Jan 2027
             </div>
             <h1 className="mb-5 text-4xl font-semibold leading-tight tracking-tight sm:text-5xl">
-              E-invoicing compliance,
+              Pass the e-invoice mandate.
               <br />
               <span className="bg-gradient-to-r from-accent-hi to-accent bg-clip-text text-transparent">
-                minus the pain.
+                In TypeScript.
               </span>
             </h1>
             <p className="mb-8 max-w-md text-lg leading-relaxed text-text/90">
-              Validate and generate XRechnung / EN 16931 e-invoices with a TypeScript-first API.
-              Cryptic rule violations become plain-language fixes.
+              Open-source validation and generation for XRechnung / EN 16931 — plus a hosted
+              platform that keeps you current as the rules change. Built to match the official
+              KoSIT validator, with cryptic rule violations turned into plain-language fixes.
             </p>
             <div className="flex flex-wrap items-center gap-4">
               <Link

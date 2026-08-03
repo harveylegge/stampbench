@@ -10,8 +10,12 @@ export const metadata: Metadata = {
 
 const faqs = [
   {
-    q: 'What counts as an API call?',
-    a: 'Each request to /api/v1/validate, /api/v1/generate, or /api/ai/explain counts as one call. Local validation with the open-source @invoicegate/core library is unlimited and free forever.',
+    q: 'What counts as a document?',
+    a: 'Each request to /api/v1/validate or /api/v1/generate counts as one document. Local validation with the open-source @invoicegate/core library is unlimited and free forever — the quota only applies to the hosted API.',
+  },
+  {
+    q: 'What does the Platform tier actually include?',
+    a: 'Usage-based pricing beyond 100k documents, a signable DPA/AVV and EU data residency (rolling out), version pinning per integration, and a rule-update commitment: new KoSIT releases supported within days, contractually.',
   },
   {
     q: 'Why pay when the library is free?',
@@ -40,11 +44,12 @@ export default function PricingPage() {
   return (
     <div className="mx-auto max-w-6xl px-4 py-16">
       <h1 className="mb-3 text-center text-3xl font-semibold tracking-tight">
-        Simple, usage-based pricing
+        The library is free forever. Plans buy certainty.
       </h1>
       <p className="mx-auto mb-12 max-w-xl text-center text-muted">
-        Every plan includes validation, generation, and AI explanations. Compare: Invopop starts at
-        €50/month, InvoiceXML at $99/month.
+        Unlimited local validation with the open-source library, always. Paid plans sell what code
+        alone can&apos;t promise: always-current rules without upgrades, volume, client-project
+        leverage, and platform compliance posture.
       </p>
 
       <div className="mb-20 grid gap-4 md:grid-cols-4">

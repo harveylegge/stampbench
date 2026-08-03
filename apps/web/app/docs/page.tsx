@@ -163,9 +163,9 @@ export default function DocsPage() {
             <tbody className="text-muted">
               <tr className="border-t border-border"><td className="px-4 py-2">Anonymous</td><td className="px-4 py-2">10 / hour / IP</td><td className="px-4 py-2">—</td></tr>
               <tr className="border-t border-border"><td className="px-4 py-2">Free</td><td className="px-4 py-2">100</td><td className="px-4 py-2">10 / min</td></tr>
-              <tr className="border-t border-border"><td className="px-4 py-2">Starter</td><td className="px-4 py-2">2,500</td><td className="px-4 py-2">60 / min</td></tr>
-              <tr className="border-t border-border"><td className="px-4 py-2">Pro</td><td className="px-4 py-2">15,000</td><td className="px-4 py-2">120 / min</td></tr>
-              <tr className="border-t border-border"><td className="px-4 py-2">Scale</td><td className="px-4 py-2">100,000</td><td className="px-4 py-2">300 / min</td></tr>
+              <tr className="border-t border-border"><td className="px-4 py-2">Developer</td><td className="px-4 py-2">5,000</td><td className="px-4 py-2">60 / min</td></tr>
+              <tr className="border-t border-border"><td className="px-4 py-2">Agency</td><td className="px-4 py-2">25,000</td><td className="px-4 py-2">120 / min</td></tr>
+              <tr className="border-t border-border"><td className="px-4 py-2">Platform</td><td className="px-4 py-2">100,000+</td><td className="px-4 py-2">300 / min</td></tr>
             </tbody>
           </table>
         </div>

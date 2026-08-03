@@ -1,37 +1,58 @@
 # Roadmap
 
-Ordered by revenue impact per unit of effort.
+Strategy of record (2026-08): win the **trust layer** of European e-invoicing for
+developers — open-source and provably correct — then charge platforms for staying
+current, at volume, with liability posture. Sequenced so nothing markets before it
+can be trusted. Supersedes the previous launch-first ordering.
 
-## Now → launch (week 1–2)
-- [ ] Publish `@invoicegate/core` to npm (funnel top). Add README badges + GitHub repo.
-- [ ] Deploy to Vercel + Neon; connect domain (invoicegate.dev).
-- [ ] Stripe live prices + webhook.
-- [ ] Programmatic SEO: `/rules/[id]` page per implemented rule (BR-DE-15 etc.) generated
-      from the rule registry — the moat described in docs/marketing/seo-strategy.md.
-- [ ] Launch posts (Show HN, r/webdev, dev.to, German channels) — drafts in docs/marketing.
+## Phase 0 — The One Founder Session (single 3-hour block; the only credential-gated step)
+- [ ] Publish `@invoicegate/core` (+ `invoicegate` alias) to npm
+- [ ] Deploy to Vercel (Frankfurt/fra1) + Neon (Frankfurt); domain
+- [ ] Legal posture for the German market: Impressum, AVV/DPA template, explicit
+      no-retention statement for invoice payloads, AI-explanation opt-in note
+- [ ] Stripe live (Developer £29 / Agency £99 / Platform £299)
+- After this session, every remaining step is agent-executable.
 
-## Near (month 1–2)
-- [ ] CII syntax support (parse ZUGFeRD/Factur-X XML) — biggest inbound request expected,
-      since German *received* invoices are often CII.
-- [ ] Expand BR rule coverage toward the full EN 16931 set; per-rule docs page auto-grows.
-- [ ] CLI: `npx invoicegate validate invoice.xml` (free, drives npm installs).
-- [ ] GitHub Action for CI validation (`invoicegate/validate-action`).
-- [ ] Annual billing + EUR prices (Stripe multi-currency).
-- [ ] Resend transactional email: welcome, quota 80%/100% nudges (drafts already written).
+## Phase 1 — Trust (weeks 1–4). Nothing markets until this ships.
+- [ ] **CII / ZUGFeRD / Factur-X parsing** — German *received* invoices (the legal
+      duty in force since Jan 2025) are mostly CII; it is the ten-minute dealbreaker.
+- [ ] **VAT-category rule families** (BR-S / BR-E / BR-AE / BR-Z / BR-G / BR-O) —
+      where real invoices actually fail.
+- [ ] **KoSIT parity harness**: dual-run our validator and the official validator over
+      the public XRechnung test suite in CI; publish a live zero-divergence page.
+      This page IS the launch asset.
+- [ ] `npx invoicegate validate` CLI + GitHub Action — the no-account first touch.
+- [ ] Playground: drag-and-drop; detect CII files honestly + waitlist capture.
+- [ ] Version-pinned results (spec + ruleset version in every response) + public changelog.
 
-## Mid (month 3–6)
-- [ ] Factur-X *generation*: embed XML in PDF/A-3 (pdf-lib) — unlocks the huge
-      "PDF invoice + compliance" segment.
-- [ ] Peppol BIS profile + validation; FatturaPA (Italy) as the second country wedge.
-- [ ] AI mapping assistant: paste arbitrary invoice JSON/CSV → suggested semantic-model
-      mapping (the second genuinely-AI feature; Claude structured outputs).
-- [ ] Team accounts (invite by email), usage charts, webhook notifications.
-- [ ] Official KoSIT validator parity harness in CI: run both on a corpus, publish the
-      delta as a trust page.
+## Phase 2 — Monetise urgency (months 2–3)
+- [ ] Launch cascade (Show HN → dev.to → r/webdev → German channels), parity page front and centre
+- [ ] Agency motion: white-label validation reports; outreach to German agencies/ERP
+      consultancies (the only segment buying in 2026)
+- [ ] Factur-X *generation* (embed XML in PDF/A-3) — the "PDF invoice + compliance" segment
+- [ ] Programmatic /rules/[id] SEO pages — only now, when coverage is defensible
+- [ ] EUR prices + annual billing (2 months free)
 
-## Later
-- [ ] France (Factur-X mandate 2026–27), Belgium, Poland KSeF, Spain Verifactu — one
-      country CIUS at a time, each a new SEO surface and pricing tier.
-- [ ] E-invoice *sending* (Peppol access point partnership) — moves up the value chain
-      from validation to delivery.
-- [ ] SOC 2 lite / security page when first enterprise lead asks.
+## Phase 3 — Platform (months 4–6)
+- [ ] Usage-based per-document pricing beyond the Platform tier's included volume
+- [ ] DPA/AVV signable self-serve; EU-residency statement; SLA + public status page
+- [ ] Country #2: France (Factur-X mandate 2026–27) — the multi-country compounding story begins
+- [ ] AI mapping assistant: arbitrary invoice JSON/CSV → semantic model (the one AI
+      feature with compounding integration-cost value; structured outputs)
+- [ ] Integration partnerships: commerce/invoicing template + Shopware app authors
+      embed the free core; Platform tier is the upsell
+
+## Phase 4 — The wave (2027)
+- [ ] Peppol delivery via access-point partnership — from validating documents to
+      carrying them (the recurring, load-bearing layer)
+- [ ] GoBD-compliant 10-year archival + audit trails — validator → system of record
+- [ ] Country #3+: Italy FatturaPA, Poland KSeF, Spain Verifactu — one CIUS per quarter
+
+## Dormant (built, deliberately parked — do not delete, do not extend)
+- SaaS billing/auth/dashboard shell (activates when free users ask to pay)
+- Admin panel (a DB client suffices until ~100 customers)
+- /api/ai/explain as a public endpoint (playground-only; German procurement treats
+  an AI subprocessor of invoice data as a blocker)
+
+## Explicitly killed
+- SMB cold email, paid ads, social posting cadence, Product Hunt before parity+CII
