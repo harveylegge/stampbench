@@ -79,6 +79,26 @@ export type { Syntax, ValidateOptions, ValidateXmlResult, ValidationResult } fro
 export { InvoiceParseError, parseUblInvoice } from './parse/ubl.js';
 export { parseCiiInvoice } from './parse/cii.js';
 
+export {
+  boundSemanticPaths,
+  indexXml,
+  locatableTerms,
+  locateSemanticPath,
+  locateViolations,
+  resolveFirstXmlPath,
+  resolveXmlPath,
+} from './locate/index.js';
+export type {
+  LocatedViolation,
+  LocationPrecision,
+  PathMatch,
+  ResolvedLocation,
+  ViolationLocation,
+  XmlAttributeLocation,
+  XmlDocumentIndex,
+  XmlNode,
+} from './locate/index.js';
+
 export { DEFAULT_PROCESS_ID, generateXRechnungUbl, withXRechnungDefaults } from './generate/ubl.js';
 export type { GenerateOptions } from './generate/ubl.js';
 

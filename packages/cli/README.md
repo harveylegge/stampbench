@@ -10,26 +10,54 @@ npx invoicegate validate invoice.xml
 
 ## Commands
 
-### `invoicegate validate <file.xml>`
+### `invoicegate validate <file.xml|dir...>`
 
-Checks a UBL or CII (ZUGFeRD / Factur-X) invoice against the EN 16931 business
+Checks UBL or CII (ZUGFeRD / Factur-X) invoices against the EN 16931 business
 rules — plus the German BR-DE rules when the profile is `xrechnung` (the default).
-The syntax (UBL vs CII) is auto-detected.
+The syntax (UBL vs CII) is auto-detected. Directories are searched recursively
+for `.xml` files.
 
 ```sh
 invoicegate validate invoice.xml
+invoicegate validate ./invoices                      # a whole folder
 invoicegate validate invoice.xml --profile en16931   # core rules only
 invoicegate validate invoice.xml --json              # machine-readable result
 invoicegate validate invoice.xml --quiet             # summary line only
+invoicegate validate ./invoices --fail-on warning    # warnings fail the build too
 ```
 
 Example output:
 
 ```
-invoice.xml  syntax: UBL | profile: xrechnung | ruleset: 2026-08.1
-  ERROR  BR-DE-15  The buyer reference must be provided.
-INVALID — 1 error, 0 warnings (31 rules run)
+invoice.xml  syntax: UBL | profile: xrechnung | ruleset: 2026-08.2
+  ERROR  BR-CO-17  VAT breakdown S @ 7%: tax amount should be 22.04 (314.86 × 7%) but is 99.99. (line 78)
+  ERROR  BR-DE-15  Missing buyer reference (BT-10). … (~line 2)
+INVALID — 2 errors, 0 warnings (56 rules run)
 ```
+
+A line marked `~` is **approximate**: the field is missing from the document, so
+there is no line for it and the nearest enclosing element is reported instead.
+The distinction is kept in every output format — a tool that sends you to the
+wrong line without saying so is worse than one that admits it.
+
+### CI output formats
+
+`--format` selects how results are reported:
+
+| Format   | Use                                                                 |
+| -------- | ------------------------------------------------------------------- |
+| `human`  | Readable report with line numbers (default)                          |
+| `json`   | Machine-readable; every violation carries a `location`               |
+| `github` | GitHub Actions workflow commands — inline pull-request annotations   |
+| `sarif`  | SARIF 2.1.0 for GitHub code scanning and other CI systems            |
+
+```sh
+invoicegate validate ./invoices --format github
+invoicegate validate ./invoices --format sarif > invoicegate.sarif
+```
+
+See [CI annotations](../../docs/ci-annotations.md) for the GitHub Action, an
+example workflow, and how precise the line numbers actually are.
 
 ### `invoicegate generate <invoice.json>`
 
@@ -54,7 +82,10 @@ invoicegate generate invoice.json --no-validate      # skip the validation step
 
 This makes the CLI directly usable as a CI gate — `invoicegate validate invoice.xml`
 in a pipeline fails the job when the invoice is non-compliant, while warnings
-alone keep it green.
+alone keep it green. Use `--fail-on warning` to fail on warnings as well.
+
+Exit code 2 always means the run never happened, so CI can tell "your invoices
+are broken" apart from "the tool is broken".
 
 ## Library
 

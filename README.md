@@ -57,8 +57,36 @@ const ubl = generateXRechnungUbl(invoice); // XRechnung 3.0 UBL
 
 ```bash
 npx invoicegate validate invoice.xml     # exit 0 = valid, 1 = errors — CI-ready
+npx invoicegate validate ./invoices      # a whole folder
 npx invoicegate generate invoice.json -o invoice.xml
 ```
+
+## In CI — on the failing line
+
+```yaml
+- uses: actions/checkout@v4
+- uses: invoicegate/invoicegate@v1
+  with:
+    paths: ./invoices
+```
+
+Violations are anchored to the line **and column** of the offending element, so a
+broken invoice annotates the pull request where the problem is instead of dumping
+a log:
+
+```
+  78 |       <cbc:TaxAmount currencyID="EUR">99.99</cbc:TaxAmount>
+     |       ^ BR-CO-17 — tax amount should be 22.04 (314.86 × 7%) but is 99.99.
+```
+
+Most rules fire because a field is *missing*, and a missing element has no line —
+so those annotations point at the nearest enclosing element and **say that they
+are approximate**. Measured across 9,983 single-field deletions over the official
+XRechnung corpus: 100% of violations anchor to a real element, 27.1% to the exact
+element or attribute, none to the document root.
+
+`--format sarif` uploads to GitHub code scanning; `--format json` gives the same
+locations for any other pipeline. See [CI annotations](docs/ci-annotations.md).
 
 ## Regression testing — the bit nobody else does
 
@@ -99,6 +127,7 @@ Full reference: [/docs](https://invoicegate.dev/docs) (or `apps/web/app/docs/pag
 ## Documentation
 
 - [Architecture](docs/architecture.md)
+- [CI annotations](docs/ci-annotations.md) — the GitHub Action, SARIF, and how precise the line numbers are
 - [Deployment guide](docs/deployment.md) — Vercel + Neon + Stripe + Anthropic
 - [Roadmap](docs/roadmap.md)
 - [Marketing launch pack](docs/marketing/)

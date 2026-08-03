@@ -10,7 +10,7 @@
   "scripts": {
     "build": "npm run build -w @invoicegate/core && npm run build -w web",
     "dev": "npm run dev -w web",
-    "test": "npm run test -w @invoicegate/core && npm run test -w web",
+    "test": "npm run test -w @invoicegate/core && npm run test -w invoicegate && npm run test -w web",
     "lint": "npm run lint -w web",
     "db:push": "npm run db:push -w web"
   },

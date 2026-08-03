@@ -210,6 +210,182 @@ describe('invoicegate validate', () => {
   });
 });
 
+describe('invoicegate validate — CI output', () => {
+  /** 1-based line of the first line containing `needle`. */
+  function lineOf(xml: string, needle: string): number {
+    const found = xml.split('\n').findIndex((l) => l.includes(needle));
+    if (found === -1) throw new Error(`sample has no line containing "${needle}"`);
+    return found + 1;
+  }
+
+  /** The sample with an unrecognised unit code, which trips IG-W-01 (a warning). */
+  function badUnitCode(): string {
+    return ublSample().replace('unitCode="C62"', 'unitCode="ZZZ"');
+  }
+
+  it('annotates the exact line of the offending attribute', async () => {
+    const xml = badUnitCode();
+    const file = join(tmp, 'gh-unit.xml');
+    writeFileSync(file, xml, 'utf8');
+    const cap = captured();
+
+    const code = await run(['validate', file, '--format', 'github'], cap.io);
+
+    expect(code).toBe(0); // warnings alone do not fail the build
+    const annotation = cap.stdout().split('\n').find((l) => l.includes('IG-W-01'))!;
+    expect(annotation).toBeDefined();
+    expect(annotation.startsWith('::warning ')).toBe(true);
+    expect(annotation).toContain(`line=${lineOf(xml, 'unitCode="ZZZ"')}`);
+    // The column points at the attribute, not the start of the element.
+    expect(annotation).toContain(`col=${xml.split('\n')[lineOf(xml, 'unitCode="ZZZ"') - 1]!.indexOf('unitCode') + 1}`);
+    // An exactly-located finding must not carry an approximation caveat.
+    expect(annotation).not.toContain('no element for this field');
+  });
+
+  it('says so when the field is absent and the line is only approximate', async () => {
+    const file = join(tmp, 'gh-missing.xml');
+    writeFileSync(file, ublSample({ buyerReference: false }), 'utf8');
+    const cap = captured();
+
+    const code = await run(['validate', file, '--format', 'github'], cap.io);
+
+    expect(code).toBe(1);
+    expect(cap.stdout()).toContain('::error ');
+    expect(cap.stdout()).toContain('BR-DE-15');
+    expect(cap.stdout()).toContain('no element for this field');
+  });
+
+  it('always states the true totals on stderr, whatever GitHub renders', async () => {
+    const file = join(tmp, 'gh-totals.xml');
+    writeFileSync(file, ublSample({ buyerReference: false }), 'utf8');
+    const cap = captured();
+
+    await run(['validate', file, '--format', 'github'], cap.io);
+
+    expect(cap.stderr()).toMatch(/\d+ errors?, \d+ warnings? in 1 file\./);
+  });
+
+  it('caps annotations with --max-annotations and reports the remainder', async () => {
+    const file = join(tmp, 'gh-capped.xml');
+    writeFileSync(file, ublSample({ buyerReference: false }), 'utf8');
+    const cap = captured();
+
+    await run(['validate', file, '--format', 'github', '--max-annotations', '0'], cap.io);
+
+    expect(cap.stdout()).toBe('');
+    expect(cap.stderr()).toContain('not annotated');
+  });
+
+  it('emits SARIF that carries rule metadata and a region', async () => {
+    const file = join(tmp, 'sarif.xml');
+    writeFileSync(file, ublSample({ buyerReference: false }), 'utf8');
+    const cap = captured();
+
+    const code = await run(['validate', file, '--format', 'sarif'], cap.io);
+
+    expect(code).toBe(1);
+    const sarif = JSON.parse(cap.stdout()) as {
+      version: string;
+      runs: {
+        tool: { driver: { rules: { id: string }[] } };
+        results: {
+          ruleId: string;
+          ruleIndex: number;
+          locations: { physicalLocation: { region: { startLine: number } } }[];
+        }[];
+      }[];
+    };
+    expect(sarif.version).toBe('2.1.0');
+    const run0 = sarif.runs[0]!;
+    const finding = run0.results.find((r) => r.ruleId === 'BR-DE-15')!;
+    expect(finding).toBeDefined();
+    expect(run0.tool.driver.rules[finding.ruleIndex]!.id).toBe('BR-DE-15');
+    expect(finding.locations[0]!.physicalLocation.region.startLine).toBeGreaterThan(0);
+  });
+
+  it('adds a location to every violation in --json output', async () => {
+    const file = join(tmp, 'json-loc.xml');
+    writeFileSync(file, ublSample({ buyerReference: false }), 'utf8');
+    const cap = captured();
+
+    await run(['validate', file, '--json'], cap.io);
+
+    const parsed = JSON.parse(cap.stdout()) as {
+      valid: boolean;
+      violations: Array<{ ruleId: string; location: { line: number; precision: string; xpath: string } }>;
+    };
+    // The long-standing single-file shape is preserved, with locations added.
+    expect(parsed.valid).toBe(false);
+    const v = parsed.violations.find((x) => x.ruleId === 'BR-DE-15')!;
+    expect(v.location.line).toBeGreaterThan(0);
+    expect(v.location.precision).toBe('ancestor');
+    expect(v.location.xpath).toBe('/Invoice');
+  });
+
+  it('validates a whole directory and summarises across files', async () => {
+    const dir = mkdtempSync(join(tmpdir(), 'invoicegate-dir-'));
+    writeFileSync(join(dir, 'ok.xml'), ublSample(), 'utf8');
+    writeFileSync(join(dir, 'bad.xml'), ublSample({ buyerReference: false }), 'utf8');
+    const cap = captured();
+
+    const code = await run(['validate', dir], cap.io);
+
+    expect(code).toBe(1);
+    expect(cap.stdout()).toContain('ok.xml');
+    expect(cap.stdout()).toContain('bad.xml');
+    expect(cap.stdout()).toContain('across 2 files');
+  });
+
+  it('reports every file in the multi-file --json shape', async () => {
+    const dir = mkdtempSync(join(tmpdir(), 'invoicegate-dirjson-'));
+    writeFileSync(join(dir, 'a.xml'), ublSample(), 'utf8');
+    writeFileSync(join(dir, 'b.xml'), ublSample({ buyerReference: false }), 'utf8');
+    const cap = captured();
+
+    await run(['validate', dir, '--json'], cap.io);
+
+    const parsed = JSON.parse(cap.stdout()) as {
+      files: Array<{ file: string; violations: unknown[] }>;
+      summary: { files: number; errors: number; warnings: number };
+    };
+    expect(parsed.files).toHaveLength(2);
+    expect(parsed.summary.files).toBe(2);
+    expect(parsed.summary.errors).toBeGreaterThan(0);
+  });
+
+  it('fails the build on warnings with --fail-on warning', async () => {
+    const file = join(tmp, 'warn-only.xml');
+    writeFileSync(file, badUnitCode(), 'utf8');
+
+    const lenient = captured();
+    expect(await run(['validate', file], lenient.io)).toBe(0);
+
+    const strict = captured();
+    expect(await run(['validate', file, '--fail-on', 'warning'], strict.io)).toBe(1);
+  });
+
+  it('rejects an unknown --format', async () => {
+    const file = join(tmp, 'fmt.xml');
+    writeFileSync(file, ublSample(), 'utf8');
+    const cap = captured();
+
+    const code = await run(['validate', file, '--format', 'xml'], cap.io);
+
+    expect(code).toBe(2);
+    expect(cap.stderr()).toContain('--format must be one of');
+  });
+
+  it('shows line numbers in the human report, marking approximate ones', async () => {
+    const file = join(tmp, 'human-lines.xml');
+    writeFileSync(file, ublSample({ buyerReference: false }), 'utf8');
+    const cap = captured();
+
+    await run(['validate', file], cap.io);
+
+    expect(cap.stdout()).toMatch(/BR-DE-15.*\(~line \d+\)/);
+  });
+});
+
 describe('invoicegate generate', () => {
   it('generates XML from a JSON invoice and exits 0', async () => {
     const file = join(tmp, 'invoice.json');

@@ -1,0 +1,139 @@
+name: "InvoiceGate e-invoice validation"
+description: "Validate XRechnung / EN 16931 / ZUGFeRD e-invoices and annotate the exact failing line in the pull request."
+author: "InvoiceGate"
+
+branding:
+  icon: check-square
+  color: blue
+
+inputs:
+  paths:
+    description: "Files and/or directories to validate, space separated. Directories are searched recursively for .xml files."
+    required: false
+    default: "."
+  profile:
+    description: "Rule profile: xrechnung (adds the German BR-DE rules) or en16931 (European core only)."
+    required: false
+    default: "xrechnung"
+  format:
+    description: "github (inline pull-request annotations) or sarif (upload to code scanning)."
+    required: false
+    default: "github"
+  fail-on:
+    description: "error (default) fails the step only on errors; warning also fails on warnings."
+    required: false
+    default: "error"
+  max-annotations:
+    description: "Maximum annotations to emit. Empty means no cap. Note that GitHub itself renders only a limited number per step; the true totals are always printed to the log."
+    required: false
+    default: ""
+  sarif-file:
+    description: "Where to write the SARIF report when format is sarif."
+    required: false
+    default: "invoicegate.sarif"
+  version:
+    description: "Version of the invoicegate npm package to run. Pin this for reproducible builds."
+    required: false
+    default: "latest"
+  working-directory:
+    description: "Directory to run in. Paths and annotations are resolved relative to it."
+    required: false
+    default: "."
+  node-version:
+    description: "Node.js version to set up. Set to an empty string to use the runner's existing Node."
+    required: false
+    default: "20"
+
+outputs:
+  exit-code:
+    description: "0 when the run passed, 1 when it found problems that meet fail-on."
+    value: ${{ steps.validate.outputs.exit-code }}
+  sarif-file:
+    description: "Path to the SARIF report, when format is sarif."
+    value: ${{ steps.validate.outputs.sarif-file }}
+
+runs:
+  using: composite
+  steps:
+    - name: Set up Node.js
+      if: inputs.node-version != ''
+      uses: actions/setup-node@v4
+      with:
+        node-version: ${{ inputs.node-version }}
+
+    - name: Validate e-invoices
+      id: validate
+      shell: bash
+      working-directory: ${{ inputs.working-directory }}
+      env:
+        IG_PATHS: ${{ inputs.paths }}
+        IG_PROFILE: ${{ inputs.profile }}
+        IG_FORMAT: ${{ inputs.format }}
+        IG_FAIL_ON: ${{ inputs.fail-on }}
+        IG_MAX: ${{ inputs.max-annotations }}
+        IG_SARIF: ${{ inputs.sarif-file }}
+        IG_VERSION: ${{ inputs.version }}
+      run: |
+        set -euo pipefail
+
+        case "$IG_FORMAT" in
+          github|sarif) ;;
+          *) echo "::error::invoicegate: format must be 'github' or 'sarif', got '$IG_FORMAT'."; exit 2 ;;
+        esac
+
+        args=(validate)
+        # Unquoted on purpose: the input is a space-separated list and may contain globs.
+        # shellcheck disable=SC2206
+        args+=($IG_PATHS)
+        args+=(--profile "$IG_PROFILE" --format "$IG_FORMAT" --fail-on "$IG_FAIL_ON")
+        if [ -n "$IG_MAX" ]; then
+          args+=(--max-annotations "$IG_MAX")
+        fi
+
+        stdout_file="$(mktemp)"
+        stderr_file="$(mktemp)"
+
+        # The CLI exits 1 when it finds problems; that is a result, not a crash,
+        # so capture it and decide at the end — otherwise `set -e` would abort
+        # before the SARIF report is written or the summary is produced.
+        set +e
+        npx --yes "invoicegate@$IG_VERSION" "${args[@]}" > "$stdout_file" 2> "$stderr_file"
+        code=$?
+        set -e
+
+        # Exit code 2 means a usage or IO problem — the run never happened.
+        if [ "$code" -ge 2 ]; then
+          cat "$stderr_file" >&2
+          echo "::error::invoicegate could not run (exit $code). See the log above."
+          echo "exit-code=$code" >> "$GITHUB_OUTPUT"
+          exit "$code"
+        fi
+
+        if [ "$IG_FORMAT" = "sarif" ]; then
+          mkdir -p "$(dirname "$IG_SARIF")"
+          mv "$stdout_file" "$IG_SARIF"
+          echo "sarif-file=$IG_SARIF" >> "$GITHUB_OUTPUT"
+          echo "Wrote SARIF report to $IG_SARIF"
+        else
+          # Emitting the workflow commands is what creates the annotations.
+          cat "$stdout_file"
+        fi
+
+        cat "$stderr_file" >&2
+
+        {
+          echo "### InvoiceGate e-invoice validation"
+          echo
+          if [ "$code" -eq 0 ]; then
+            echo "No problems that meet \`fail-on: $IG_FAIL_ON\`."
+          else
+            echo "Validation failed. Totals:"
+          fi
+          echo
+          echo '```'
+          cat "$stderr_file"
+          echo '```'
+        } >> "$GITHUB_STEP_SUMMARY"
+
+        echo "exit-code=$code" >> "$GITHUB_OUTPUT"
+        exit "$code"

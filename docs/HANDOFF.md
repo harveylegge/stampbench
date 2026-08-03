@@ -1,7 +1,7 @@
 # Session handoff — read this first
 
 **Last updated:** 2026-08-03 · **Repo:** `C:\Users\harvey\Downloads\invoicegate` (git, clean,
-8 commits, HEAD = `5076744`) · **Nothing is deployed or published yet.**
+10 commits) · **Nothing is deployed or published yet.**
 
 ---
 
@@ -26,12 +26,14 @@ a real risk — the plan is built to batch them into one session.
 
 | Package | What | Tests |
 |---|---|---|
-| `packages/core` | Rule engine: UBL **and** CII parsing, EN 16931 + VAT families + BR-DE rules, XRechnung generation, auto-computed totals, versioned rulesets + regression diff | 44 ✅ |
-| `packages/cli` | `validate`, `generate`, `regress`, `rulesets` — CI exit codes | 18 ✅ |
+| `packages/core` | Rule engine: UBL **and** CII parsing, EN 16931 + VAT families + BR-DE rules, XRechnung generation, auto-computed totals, versioned rulesets + regression diff, **source-position index + violation→line locator** (`src/locate/`) | 101 ✅ |
+| `packages/cli` | `validate`, `generate`, `regress`, `rulesets` — CI exit codes, **`--format github\|sarif`, multi-file, `--fail-on`** | 42 ✅ |
 | `apps/web` | Landing, playground, docs, auth, API keys, metering, Stripe, trust/security/legal pages | 6 ✅ |
+| `action.yml` | Composite GitHub Action wrapping the CLI | — |
 | `tools/parity` | KoSIT parity harness (pinned validator 1.6.2 + XRechnung 3.0.2 corpus) | — |
 
-**68 tests green. Production build clean. All flows browser-verified locally.**
+**149 tests green. Production build clean. All flows browser-verified locally.**
+(Root `npm test` now includes the CLI workspace — it previously skipped it.)
 
 ### Verified facts (do not re-derive; these are on the public /trust page)
 - 68 tests total (44 core / 18 CLI / 6 web)
@@ -112,7 +114,9 @@ clearance. Budget a paid EUIPO/DPMA search in Nice classes 9/35/36/42 before fil
 
 ### Blocked on Harvey (one ~3-hour session; batch them all)
 1. Pick the name → buy domain
-2. `npm publish` `@invoicegate/core` + `invoicegate` (both names verified free)
+2. `npm publish` `@invoicegate/core` + `invoicegate` (both names verified free).
+   **This also switches on the GitHub Action**, which runs `npx invoicegate@<version>` —
+   the Action is written and tested but cannot resolve the package until it is published.
 3. Deploy: Vercel + Neon Postgres (switch the `provider` line in `prisma/schema.prisma`,
    set `SESSION_SECRET` + `DATABASE_URL`). **Vercel MCP can deploy directly — no GitHub needed.**
 4. Fill the amber `<Fill>` placeholders in `/terms`, `/privacy`, `/impressum`, then have a
@@ -121,9 +125,14 @@ clearance. Budget a paid EUIPO/DPMA search in Nice classes 9/35/36/42 before fil
 6. GitHub repo → unlocks the CI parity run (needs Java) and the GitHub Action
 
 ### Agent-executable (no credentials needed)
-- **CI PR annotations** — GitHub Marketplace has **zero** invoice-validation Actions. The moat
-  is XPath→line-number mapping, which our own evaluator can emit natively and Java/Schematron
-  competitors can't. Strongest remaining open gap.
+- ~~CI PR annotations~~ — **SHIPPED 2026-08-03.** See `docs/ci-annotations.md`.
+  Measured 100% of violations anchored to a real element (27.1% exact), 0% falling back
+  to the document root, over 9,983 field-deletion mutations of the official corpus.
+  **Two corrections came out of building it — read `docs/roadmap.md` before repeating
+  the old pitch:** (1) the "GitHub Marketplace has zero invoice-validation Actions"
+  claim is refuted in substance by `hernaninverso/validate-einvoice-action`; (2)
+  **eleata.io is a direct competitor** occupying nearly the identical position since
+  ~2026-06-30 (hosted API + MIT CLI + Action + MCP server + same messaging).
 - Rule-indexed **invalid-fixture generation** (`give me an XRechnung violating BR-DE-15`)
 - **JSON-Patch remediation** with per-hunk rule provenance (nobody returns a reviewable patch)
 - Factur-X **PDF generation**; France as country #2; hosted batch regression endpoint

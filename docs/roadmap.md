@@ -22,7 +22,9 @@ can be trusted. Supersedes the previous launch-first ordering.
       the public XRechnung test suite in CI; publish a live zero-divergence page.
       This page IS the launch asset. (Harness in tools/parity; full dual-run in CI.)
 - [x] `npx invoicegate validate` CLI — shipped (packages/cli, CI exit codes).
-      GitHub Action: pending repo publish.
+- [x] **GitHub Action + line-level PR annotations** — shipped (`action.yml`,
+      `--format github|sarif`). Activates once `invoicegate` is on npm, since the
+      Action runs `npx invoicegate@<version>`.
 - [x] Playground: drag-and-drop + CII auto-detect (waitlist unnecessary — CII shipped).
 - [x] Version-pinned results (`meta.specVersions` in every response).
 
@@ -42,10 +44,53 @@ it contradicts the managed-compliance pitch ("you don't need to test, we handle 
 Also verified and *rejected* as differentiators: Peppol participant lookup (free from
 OpenPeppol + 6 vendors — bundle it into validation or skip), per-rule explainer pages
 (Invoice Navigator already has 1,388 with failing/fixed XML — generate ours from the
-rule engine as a by-product, don't treat as an SEO moat). Still open: CI line-level PR
-annotations (GitHub Marketplace has *zero* invoice-validation Actions; the moat is
-XPath→line mapping, which our own evaluator can emit natively), rule-indexed invalid
-fixture generation, and JSON-Patch remediation with per-hunk rule provenance.
+rule engine as a by-product, don't treat as an SEO moat). Still open: rule-indexed
+invalid fixture generation, and JSON-Patch remediation with per-hunk rule provenance.
+
+## CI line-level PR annotations (SHIPPED 2026-08-03)
+
+`invoicegate validate --format github|sarif` plus a composite GitHub Action
+(`action.yml`). Violations are anchored to the line and column of the offending
+element via a source-position index over the raw XML (`packages/core/src/locate/`).
+Measured by deleting one required field at a time from all 86 corpus documents
+(9,983 mutations → 6,149 violations): **100% anchored to a real element, 27.1%
+to the exact element or attribute, 0% falling back to the document root.**
+Approximate anchors are labelled as such in every output format.
+
+⚠️ **Correction to an earlier claim — do not restate it.** The previous wording here
+was "GitHub Marketplace has *zero* invoice-validation Actions". Adversarial research
+(2026-08-03) refuted it in substance:
+
+- **`hernaninverso/validate-einvoice-action` exists** and validates Peppol BIS,
+  EN 16931, XRechnung, Factur-X, UBL and CII in CI. It is not *Marketplace-listed*,
+  so the literal sentence survives on a technicality — but `uses: owner/repo@v1`
+  works from any public repo, so Marketplace listing is not what gates adoption.
+  The claim reads as false to any informed reader.
+- The Marketplace search index genuinely returns 0 results for invoice, e-invoice,
+  xrechnung, peppol and zugferd (control query `lint` returns 597, so the zeroes
+  are real) — but that measures a directory, not the competitive landscape.
+- The **DIY recipe is published**: torrocus.com has a hand-written workflow that
+  curls the KoSIT jar and runs it in ~5 steps. Mustang's CLI does the same. The
+  barrier to "validate invoices in CI" is already near zero.
+
+**Say instead:** line-level PR annotations with per-rule remediation, computed
+locally, versus today's options — a hand-rolled KoSIT jar workflow or a wrapper
+that uploads your invoices to someone else's API. That is defensible and true.
+
+### ⚠️ Direct competitor discovered: eleata.io (Inverso Hub S.R.L.)
+
+Shipped ~2026-06-30, occupying nearly the identical position: hosted validation API,
+web validator, MIT CLI (`npx @eleata/validate-einvoice`), GitHub Action, an MCP
+server, a Go SDK, an error-code explainer site, and the same "every error comes with
+the fix" messaging. Free tier 200 validations/month.
+
+What we still hold, pending verification: their Action is a **thin wrapper that
+streams files to `api.eleata.io`** and its documented outputs are
+`results-json` / `total-files` / `total-errors` — no evidence of line-level
+annotations. Our two remaining edges are therefore (a) local-first validation, no
+invoice bytes leaving the build, and (b) line/column anchoring. **Verify (b)
+against their Action before claiming it.** Every eleata repo is at 0 stars, so this
+is a positional threat, not yet a distributional one.
 
 ## Phase 2 — Monetise urgency (months 2–3)
 - [ ] Launch cascade (Show HN → dev.to → r/webdev → German channels), parity page front and centre

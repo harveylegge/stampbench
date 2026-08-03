@@ -15,6 +15,7 @@ import {
   compareRulesets,
   generateXRechnungUbl,
   listRulesets,
+  locateViolations,
   parseCiiInvoice,
   parseUblInvoice,
   validateInvoice,
@@ -25,11 +26,14 @@ import {
 import type {
   DocumentInput,
   Invoice,
+  LocatedViolation,
   Profile,
   RegressionReport,
+  ValidateXmlResult,
   ValidationResult,
   Violation,
 } from '@invoicegate/core';
+import { formatGithub, formatSarif, type FileReport } from './report.js';
 
 /** Injectable output streams; each call receives one full line (no trailing \n). */
 export interface Io {
@@ -48,7 +52,9 @@ interface Colors {
 const USAGE = `invoicegate — validate and generate XRechnung / EN 16931 e-invoices
 
 Usage:
-  invoicegate validate <file.xml> [--profile xrechnung|en16931] [--json] [--quiet]
+  invoicegate validate <file.xml|dir...> [--profile xrechnung|en16931]
+                       [--format human|json|github|sarif] [--fail-on error|warning]
+                       [--max-annotations <n>] [--json] [--quiet]
   invoicegate generate <invoice.json> [-o out.xml] [--no-validate]
   invoicegate regress <dir|file...> --from <ruleset> --to <ruleset> [--json] [--quiet]
   invoicegate rulesets
@@ -56,9 +62,19 @@ Usage:
   invoicegate --help
 
 Commands:
-  validate   Check a UBL or CII (ZUGFeRD / Factur-X) invoice against the
+  validate   Check UBL or CII (ZUGFeRD / Factur-X) invoices against the
              EN 16931 business rules, plus the German BR-DE rules when the
-             profile is xrechnung (the default).
+             profile is xrechnung (the default). Accepts files and directories.
+
+Output formats (validate):
+  human    Readable report with line numbers (default).
+  json     Machine-readable, including a location for every violation.
+  github   GitHub Actions workflow commands — annotates the pull request
+           on the exact line of the offending element.
+  sarif    SARIF 2.1.0, for GitHub code scanning and other CI systems.
+
+  A line marked "~" is approximate: the field is absent from the document,
+  so the nearest enclosing element is reported instead.
   generate   Build XRechnung 3.0 UBL XML from a JSON semantic model
              (either the bare invoice object or { "invoice": { ... } }).
   regress    Re-check a folder of invoices against a different rule set and
@@ -94,9 +110,16 @@ function readOwnVersion(): string {
   return pkg.version ?? '0.0.0';
 }
 
-function formatViolation(v: Violation, c: Colors): string {
+function formatViolation(v: Violation | LocatedViolation, c: Colors): string {
   const badge = v.severity === 'error' ? c.red('ERROR') : c.yellow('WARN ');
-  const where = v.path ? c.dim(` (${v.path})`) : '';
+  const located = 'location' in v ? v.location : undefined;
+  // An approximate line is labelled as such — "~" reads as "near here", and a
+  // reviewer who is silently sent to the wrong line stops trusting the tool.
+  const where = located
+    ? c.dim(` (${located.precision === 'exact' ? '' : '~'}line ${located.line})`)
+    : v.path
+      ? c.dim(` (${v.path})`)
+      : '';
   return `  ${badge}  ${c.bold(v.ruleId)}  ${v.message}${where}`;
 }
 
@@ -109,17 +132,45 @@ function summaryLine(r: ValidationResult, c: Colors): string {
   return r.errorCount > 0 ? c.red(`INVALID — ${counts}`) : c.green(`VALID — ${counts}`);
 }
 
+type OutputFormat = 'human' | 'json' | 'github' | 'sarif';
+
+const OUTPUT_FORMATS = new Set<string>(['human', 'json', 'github', 'sarif']);
+
 function validateCommand(args: string[], ctx: { out: Io['out']; err: Io['err']; color: boolean }): number {
-  let file: string | undefined;
+  const paths: string[] = [];
   let profile: Profile = 'xrechnung';
-  let json = false;
+  let format: OutputFormat = 'human';
   let quiet = false;
+  let failOn: 'error' | 'warning' = 'error';
+  let maxAnnotations = Number.POSITIVE_INFINITY;
 
   for (let i = 0; i < args.length; i++) {
     const a = args[i]!;
-    if (a === '--json') json = true;
+    if (a === '--json') format = 'json';
     else if (a === '--quiet' || a === '-q') quiet = true;
-    else if (a === '--profile' || a.startsWith('--profile=')) {
+    else if (a === '--format' || a.startsWith('--format=')) {
+      const value = a.startsWith('--format=') ? a.slice('--format='.length) : args[++i];
+      if (value === undefined || !OUTPUT_FORMATS.has(value)) {
+        ctx.err(`invoicegate: --format must be one of human, json, github, sarif (got "${value ?? ''}").`);
+        return 2;
+      }
+      format = value as OutputFormat;
+    } else if (a === '--fail-on' || a.startsWith('--fail-on=')) {
+      const value = a.startsWith('--fail-on=') ? a.slice('--fail-on='.length) : args[++i];
+      if (value !== 'error' && value !== 'warning') {
+        ctx.err(`invoicegate: --fail-on must be "error" or "warning" (got "${value ?? ''}").`);
+        return 2;
+      }
+      failOn = value;
+    } else if (a === '--max-annotations' || a.startsWith('--max-annotations=')) {
+      const value = a.startsWith('--max-annotations=') ? a.slice('--max-annotations='.length) : args[++i];
+      const parsed = Number(value);
+      if (!Number.isInteger(parsed) || parsed < 0) {
+        ctx.err(`invoicegate: --max-annotations must be a non-negative integer (got "${value ?? ''}").`);
+        return 2;
+      }
+      maxAnnotations = parsed;
+    } else if (a === '--profile' || a.startsWith('--profile=')) {
       const value = a.startsWith('--profile=') ? a.slice('--profile='.length) : args[++i];
       if (value !== 'xrechnung' && value !== 'en16931') {
         ctx.err(`invoicegate: --profile must be "xrechnung" or "en16931" (got "${value ?? ''}").`);
@@ -129,46 +180,137 @@ function validateCommand(args: string[], ctx: { out: Io['out']; err: Io['err']; 
     } else if (a.startsWith('-')) {
       ctx.err(`invoicegate: unknown option "${a}" for validate.`);
       return 2;
-    } else if (file === undefined) file = a;
-    else {
-      ctx.err(`invoicegate: validate takes a single file, got "${a}" as well as "${file}".`);
+    } else paths.push(a);
+  }
+
+  if (paths.length === 0) {
+    ctx.err(
+      'invoicegate: missing file. Usage: invoicegate validate <file.xml|dir...> [--profile xrechnung|en16931] [--format human|json|github|sarif] [--fail-on error|warning] [--quiet]',
+    );
+    return 2;
+  }
+
+  // A single explicit file is read directly, so a non-XML filename the user
+  // named on purpose is still validated (and its read error still reported).
+  let files: string[];
+  const singleExplicitFile = paths.length === 1 && isFile(paths[0]!);
+  if (singleExplicitFile) {
+    files = [paths[0]!];
+  } else {
+    try {
+      files = collectXmlFiles(paths);
+    } catch (e) {
+      ctx.err(`invoicegate: cannot read input: ${errorMessage(e)}`);
+      return 2;
+    }
+    if (files.length === 0) {
+      ctx.err(`invoicegate: no .xml files found in ${paths.join(', ')}.`);
       return 2;
     }
   }
 
-  if (file === undefined) {
-    ctx.err('invoicegate: missing file. Usage: invoicegate validate <file.xml> [--profile xrechnung|en16931] [--json] [--quiet]');
-    return 2;
-  }
-
-  let xml: string;
-  try {
-    xml = readFileSync(file, 'utf8');
-  } catch (e) {
-    ctx.err(`invoicegate: cannot read ${file}: ${errorMessage(e)}`);
-    return 2;
-  }
-
-  const result = validateXml(xml, { profile });
-
-  if (json) {
-    ctx.out(JSON.stringify(result, null, 2));
-  } else {
-    const c = makeColors(ctx.color);
-    if (!quiet) {
-      const syntaxLabel = result.syntax === 'cii' ? 'CII/ZUGFeRD' : result.syntax === 'ubl' ? 'UBL' : 'unrecognised syntax';
-      ctx.out(`${c.bold(file)}  ${c.dim(`syntax: ${syntaxLabel} | profile: ${result.profile} | ruleset: ${result.meta.rulesetVersion}`)}`);
-      for (const v of result.violations) ctx.out(formatViolation(v, c));
+  const reports: FileReport[] = [];
+  const results: ValidateXmlResult[] = [];
+  for (const file of files) {
+    let xml: string;
+    try {
+      xml = readFileSync(file, 'utf8');
+    } catch (e) {
+      ctx.err(`invoicegate: cannot read ${file}: ${errorMessage(e)}`);
+      return 2;
     }
-    ctx.out(summaryLine(result, c));
+    const result = validateXml(xml, { profile });
+    // Without a recognised syntax there is nothing to index, so violations
+    // keep their document-level fallback rather than a fabricated position.
+    const located = locateViolations(xml, result.violations, result.syntax ?? 'ubl');
+    results.push(result);
+    reports.push({ file, profile: result.profile, violations: located });
   }
 
-  return result.errorCount > 0 ? 1 : 0;
+  const totals = {
+    errors: results.reduce((n, r) => n + r.errorCount, 0),
+    warnings: results.reduce((n, r) => n + r.warningCount, 0),
+  };
+
+  const c = makeColors(ctx.color);
+  // A plain-text tally on stderr survives GitHub's annotation rendering limits
+  // and SARIF post-processing, so the log always states the true totals.
+  const emitTally = (): void => {
+    ctx.err(
+      `invoicegate: ${plural(totals.errors, 'error')}, ${plural(totals.warnings, 'warning')} in ${plural(reports.length, 'file')}.`,
+    );
+  };
+
+  switch (format) {
+    case 'json': {
+      if (singleExplicitFile) {
+        // The long-standing single-file shape, with locations added.
+        ctx.out(JSON.stringify({ ...results[0]!, violations: reports[0]!.violations }, null, 2));
+      } else {
+        ctx.out(
+          JSON.stringify(
+            {
+              files: reports.map((r, i) => ({ file: r.file, ...results[i]!, violations: r.violations })),
+              summary: { files: reports.length, ...totals },
+            },
+            null,
+            2,
+          ),
+        );
+      }
+      break;
+    }
+    case 'github': {
+      const { lines, suppressed } = formatGithub(reports, { limit: maxAnnotations });
+      for (const line of lines) ctx.out(line);
+      if (suppressed > 0) {
+        ctx.err(`invoicegate: ${suppressed} further problems not annotated (--max-annotations ${maxAnnotations}).`);
+      }
+      emitTally();
+      break;
+    }
+    case 'sarif': {
+      ctx.out(formatSarif(reports, { version: readOwnVersion() }));
+      emitTally();
+      break;
+    }
+    case 'human': {
+      for (const [i, report] of reports.entries()) {
+        const result = results[i]!;
+        if (!quiet) {
+          const syntaxLabel =
+            result.syntax === 'cii' ? 'CII/ZUGFeRD' : result.syntax === 'ubl' ? 'UBL' : 'unrecognised syntax';
+          ctx.out(
+            `${c.bold(report.file)}  ${c.dim(`syntax: ${syntaxLabel} | profile: ${result.profile} | ruleset: ${result.meta.rulesetVersion}`)}`,
+          );
+          for (const v of report.violations) ctx.out(formatViolation(v, c));
+        }
+        if (reports.length === 1) ctx.out(summaryLine(result, c));
+      }
+      if (reports.length > 1) {
+        const counts = `${plural(totals.errors, 'error')}, ${plural(totals.warnings, 'warning')} across ${plural(reports.length, 'file')}`;
+        ctx.out(totals.errors > 0 ? c.red(`INVALID — ${counts}`) : c.green(`VALID — ${counts}`));
+      }
+      break;
+    }
+  }
+
+  if (totals.errors > 0) return 1;
+  return failOn === 'warning' && totals.warnings > 0 ? 1 : 0;
 }
 
 // ————————————————————————————————————————————————————————————————
 // regress — will my invoices survive the next rule set?
 // ————————————————————————————————————————————————————————————————
+
+/** True when the path exists and is a regular file. */
+function isFile(path: string): boolean {
+  try {
+    return statSync(path).isFile();
+  } catch {
+    return false;
+  }
+}
 
 /** Collect .xml files from a list of files and/or directories (recursively). */
 function collectXmlFiles(paths: string[]): string[] {
