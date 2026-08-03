@@ -59,7 +59,7 @@ export default function LandingPage() {
                 minus the pain.
               </span>
             </h1>
-            <p className="mb-8 max-w-md text-lg leading-relaxed text-muted">
+            <p className="mb-8 max-w-md text-lg leading-relaxed text-text/90">
               Validate and generate XRechnung / EN 16931 e-invoices with a TypeScript-first API.
               Cryptic rule violations become plain-language fixes.
             </p>
@@ -81,14 +81,14 @@ export default function LandingPage() {
               npm install <span className="text-accent-hi">@invoicegate/core</span>
             </div>
           </div>
-          <div className="rounded-xl border border-border bg-surface/80 shadow-2xl shadow-accent/5">
+          <div className="rounded-xl border border-border-hi bg-surface shadow-2xl shadow-accent/10">
             <div className="flex items-center gap-1.5 border-b border-border px-4 py-3">
               <span className="h-2.5 w-2.5 rounded-full bg-border-hi" />
               <span className="h-2.5 w-2.5 rounded-full bg-border-hi" />
               <span className="h-2.5 w-2.5 rounded-full bg-border-hi" />
-              <span className="ml-3 font-mono text-xs text-faint">validate.ts</span>
+              <span className="ml-3 font-mono text-xs text-muted">validate.ts</span>
             </div>
-            <pre className="overflow-x-auto p-5 font-mono text-[13px] leading-relaxed text-muted">
+            <pre className="overflow-x-auto p-5 font-mono text-[13px] leading-relaxed text-[#cdcdda]">
               {HERO_SNIPPET}
             </pre>
           </div>
