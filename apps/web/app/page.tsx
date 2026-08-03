@@ -46,7 +46,8 @@ export default function LandingPage() {
     <div>
       {/* Hero */}
       <section className="hero-grid relative">
-        <div className="mx-auto grid max-w-6xl items-center gap-12 px-4 pb-20 pt-24 lg:grid-cols-2">
+        {/* relative keeps the content painting above the ::before grid layer */}
+        <div className="relative mx-auto grid max-w-6xl items-center gap-12 px-4 pb-20 pt-24 lg:grid-cols-2">
           <div>
             <div className="mb-5 inline-flex items-center gap-2 rounded-full border border-border bg-surface px-3 py-1 text-xs text-muted">
               <span className="h-1.5 w-1.5 rounded-full bg-success" />

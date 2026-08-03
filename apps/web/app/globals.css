@@ -37,11 +37,20 @@ body {
   color: var(--color-accent-hi);
 }
 
-/* Subtle grid backdrop for hero sections */
+/* Subtle grid backdrop for hero sections. The grid + fade mask live on a
+   ::before layer so the mask never applies to the section's actual content
+   (a mask on the section itself would fade the text and buttons out too). */
 .hero-grid {
+  position: relative;
+}
+.hero-grid::before {
+  content: "";
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
   background-image:
-    linear-gradient(to right, rgb(124 106 247 / 0.06) 1px, transparent 1px),
-    linear-gradient(to bottom, rgb(124 106 247 / 0.06) 1px, transparent 1px);
+    linear-gradient(to right, rgb(124 106 247 / 0.07) 1px, transparent 1px),
+    linear-gradient(to bottom, rgb(124 106 247 / 0.07) 1px, transparent 1px);
   background-size: 44px 44px;
   mask-image: radial-gradient(ellipse 70% 60% at 50% 0%, black 30%, transparent 100%);
 }
