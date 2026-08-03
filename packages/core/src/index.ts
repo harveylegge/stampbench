@@ -52,6 +52,21 @@ export { VAT_CATEGORY_RULES } from './validate/rules/vat-categories.js';
 export { XRECHNUNG_RULES } from './validate/rules/xrechnung.js';
 
 export {
+  compareRulesets,
+  getRuleset,
+  listRulesets,
+  registerRuleset,
+} from './validate/rulesets.js';
+export type {
+  DocumentInput,
+  RegressionEntry,
+  RegressionReport,
+  RulesetDefinition,
+  RulesetStatus,
+  Transition,
+} from './validate/rulesets.js';
+
+export {
   RULESET_VERSION,
   SPEC_VERSIONS,
   rulesForProfile,

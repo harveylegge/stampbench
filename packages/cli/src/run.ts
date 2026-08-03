@@ -9,15 +9,27 @@
  *   1  validation errors found
  *   2  usage or IO error
  */
-import { readFileSync, writeFileSync } from 'node:fs';
+import { readdirSync, readFileSync, statSync, writeFileSync } from 'node:fs';
+import { join } from 'node:path';
 import {
+  compareRulesets,
   generateXRechnungUbl,
+  listRulesets,
+  parseCiiInvoice,
+  parseUblInvoice,
   validateInvoice,
   validateXml,
   withComputedTotals,
   withXRechnungDefaults,
 } from '@invoicegate/core';
-import type { Invoice, Profile, ValidationResult, Violation } from '@invoicegate/core';
+import type {
+  DocumentInput,
+  Invoice,
+  Profile,
+  RegressionReport,
+  ValidationResult,
+  Violation,
+} from '@invoicegate/core';
 
 /** Injectable output streams; each call receives one full line (no trailing \n). */
 export interface Io {
@@ -38,6 +50,8 @@ const USAGE = `invoicegate — validate and generate XRechnung / EN 16931 e-invo
 Usage:
   invoicegate validate <file.xml> [--profile xrechnung|en16931] [--json] [--quiet]
   invoicegate generate <invoice.json> [-o out.xml] [--no-validate]
+  invoicegate regress <dir|file...> --from <ruleset> --to <ruleset> [--json] [--quiet]
+  invoicegate rulesets
   invoicegate --version
   invoicegate --help
 
@@ -47,10 +61,15 @@ Commands:
              profile is xrechnung (the default).
   generate   Build XRechnung 3.0 UBL XML from a JSON semantic model
              (either the bare invoice object or { "invoice": { ... } }).
+  regress    Re-check a folder of invoices against a different rule set and
+             report which documents would START failing. Use it before a new
+             specification takes effect, so you fix invoices on your schedule
+             instead of on the switchover date.
+  rulesets   List the rule sets available to --from / --to.
 
 Exit codes:
-  0  valid / success
-  1  validation errors found
+  0  valid / success / no regressions
+  1  validation errors found / regressions found
   2  usage or IO error`;
 
 const ESC = String.fromCharCode(27); // the ANSI escape character, kept out of the source as a literal byte
@@ -145,6 +164,156 @@ function validateCommand(args: string[], ctx: { out: Io['out']; err: Io['err']; 
   }
 
   return result.errorCount > 0 ? 1 : 0;
+}
+
+// ————————————————————————————————————————————————————————————————
+// regress — will my invoices survive the next rule set?
+// ————————————————————————————————————————————————————————————————
+
+/** Collect .xml files from a list of files and/or directories (recursively). */
+function collectXmlFiles(paths: string[]): string[] {
+  const found: string[] = [];
+  const walk = (p: string): void => {
+    const stat = statSync(p);
+    if (stat.isDirectory()) {
+      for (const entry of readdirSync(p).sort()) walk(join(p, entry));
+    } else if (p.toLowerCase().endsWith('.xml')) {
+      found.push(p);
+    }
+  };
+  for (const p of paths) walk(p);
+  return found;
+}
+
+function parseAnyInvoice(xml: string): Invoice {
+  return /CrossIndustryInvoice[\s>]/.test(xml.slice(0, 4000))
+    ? parseCiiInvoice(xml)
+    : parseUblInvoice(xml);
+}
+
+function rulesetsCommand(ctx: { out: Io['out']; color: boolean }): number {
+  const c = makeColors(ctx.color);
+  ctx.out(c.bold('Available rule sets'));
+  for (const r of listRulesets()) {
+    const effective = r.effectiveFrom ? ` since ${r.effectiveFrom}` : '';
+    ctx.out(`  ${c.bold(r.id.padEnd(22))} ${r.label}`);
+    ctx.out(`  ${' '.repeat(22)} ${c.dim(`${r.specVersion} · ${r.status}${effective} · ${r.rules.length} rules`)}`);
+  }
+  return 0;
+}
+
+function formatRegressionReport(report: RegressionReport, c: Colors): string[] {
+  const lines: string[] = [];
+  const s = report.summary;
+  lines.push(
+    `${c.bold(report.from.id)} ${c.dim('→')} ${c.bold(report.to.id)}  ${c.dim(
+      `(${report.from.rulesRun} → ${report.to.rulesRun} rules)`,
+    )}`,
+  );
+  lines.push('');
+
+  if (s.regressions > 0) {
+    lines.push(
+      c.red(
+        `${plural(s.regressions, 'document')} would START failing under ${report.to.specVersion}.`,
+      ),
+    );
+    lines.push('');
+    lines.push(c.bold('Fix these rules first (most documents affected):'));
+    for (const r of report.byNewRule) {
+      lines.push(`  ${c.red(r.ruleId.padEnd(12))} ${plural(r.documents, 'document')}  ${c.dim(r.message)}`);
+    }
+    lines.push('');
+    lines.push(c.bold('Affected documents:'));
+    for (const e of report.entries.filter((x) => x.transition === 'regression')) {
+      lines.push(`  ${e.id}  ${c.dim(e.newRuleIds.join(', '))}`);
+    }
+    lines.push('');
+  } else {
+    lines.push(c.green(`No regressions — every valid document stays valid under ${report.to.specVersion}.`));
+    lines.push('');
+  }
+
+  lines.push(
+    c.dim(
+      `${s.total} checked · ${s.regressions} regressions · ${s.improvements} improvements · ` +
+        `${s.unchangedPass} unchanged pass · ${s.unchangedFail} unchanged fail`,
+    ),
+  );
+  return lines;
+}
+
+function regressCommand(args: string[], ctx: { out: Io['out']; err: Io['err']; color: boolean }): number {
+  const paths: string[] = [];
+  let from: string | undefined;
+  let to: string | undefined;
+  let json = false;
+  let quiet = false;
+
+  for (let i = 0; i < args.length; i++) {
+    const a = args[i]!;
+    if (a === '--json') json = true;
+    else if (a === '--quiet' || a === '-q') quiet = true;
+    else if (a === '--from' || a.startsWith('--from=')) {
+      from = a.startsWith('--from=') ? a.slice('--from='.length) : args[++i];
+    } else if (a === '--to' || a.startsWith('--to=')) {
+      to = a.startsWith('--to=') ? a.slice('--to='.length) : args[++i];
+    } else if (a.startsWith('-')) {
+      ctx.err(`invoicegate: unknown option "${a}" for regress.`);
+      return 2;
+    } else paths.push(a);
+  }
+
+  if (paths.length === 0 || from === undefined || to === undefined) {
+    ctx.err(
+      'invoicegate: usage: invoicegate regress <dir|file...> --from <ruleset> --to <ruleset>\n' +
+        '            Run `invoicegate rulesets` to see the available rule sets.',
+    );
+    return 2;
+  }
+
+  let files: string[];
+  try {
+    files = collectXmlFiles(paths);
+  } catch (e) {
+    ctx.err(`invoicegate: cannot read input: ${errorMessage(e)}`);
+    return 2;
+  }
+  if (files.length === 0) {
+    ctx.err(`invoicegate: no .xml files found in ${paths.join(', ')}.`);
+    return 2;
+  }
+
+  const documents: DocumentInput[] = [];
+  const unreadable: string[] = [];
+  for (const file of files) {
+    try {
+      documents.push({ id: file, invoice: parseAnyInvoice(readFileSync(file, 'utf8')) });
+    } catch (e) {
+      // A document we cannot parse is reported, not silently dropped — a
+      // regression run that quietly skips files would be worse than useless.
+      unreadable.push(`${file}: ${errorMessage(e)}`);
+    }
+  }
+
+  let report: RegressionReport;
+  try {
+    report = compareRulesets(documents, from, to);
+  } catch (e) {
+    ctx.err(`invoicegate: ${errorMessage(e)}`);
+    return 2;
+  }
+
+  if (json) {
+    ctx.out(JSON.stringify({ ...report, unreadable }, null, 2));
+  } else {
+    const c = makeColors(ctx.color);
+    if (!quiet) for (const line of formatRegressionReport(report, c)) ctx.out(line);
+    else ctx.out(`${report.summary.regressions} regressions in ${report.summary.total} documents`);
+    for (const u of unreadable) ctx.err(`  ${makeColors(ctx.color).yellow('SKIPPED')} ${u}`);
+  }
+
+  return report.summary.regressions > 0 ? 1 : 0;
 }
 
 /** Accept either the bare invoice object or a { "invoice": { ... } } wrapper. */
@@ -273,6 +442,10 @@ export async function run(argv: string[], io?: Io): Promise<number> {
         return validateCommand(rest, { out, err, color });
       case 'generate':
         return generateCommand(rest, { out, err });
+      case 'regress':
+        return regressCommand(rest, { out, err, color });
+      case 'rulesets':
+        return rulesetsCommand({ out, color });
       default:
         err(`invoicegate: unknown command "${command}". Run \`invoicegate --help\` for usage.`);
         return 2;

@@ -280,6 +280,91 @@ describe('invoicegate generate', () => {
   });
 });
 
+describe('invoicegate regress', () => {
+  /** A folder of invoices: some already German-ready, some EU-core-only. */
+  function corpus(name: string, files: Array<{ file: string; buyerReference?: boolean }>): string {
+    const dir = mkdtempSync(join(tmpdir(), `invoicegate-${name}-`));
+    for (const f of files) {
+      writeFileSync(join(dir, f.file), ublSample({ buyerReference: f.buyerReference ?? true }), 'utf8');
+    }
+    return dir;
+  }
+
+  it('reports which documents would start failing under a stricter ruleset', async () => {
+    const dir = corpus('regress', [
+      { file: 'eu-only.xml', buyerReference: false },
+      { file: 'german-ready.xml' },
+    ]);
+    const cap = captured();
+
+    const code = await run(['regress', dir, '--from', 'en16931@2017', '--to', 'xrechnung@3.0'], cap.io);
+
+    // Non-zero so a CI pipeline fails the build before the rules take effect.
+    expect(code).toBe(1);
+    expect(cap.stdout()).toContain('1 document would START failing');
+    expect(cap.stdout()).toContain('BR-DE-15');
+    expect(cap.stdout()).toContain('eu-only.xml');
+  });
+
+  it('exits 0 when nothing regresses', async () => {
+    const dir = corpus('regress-ok', [{ file: 'german-ready.xml' }]);
+    const cap = captured();
+
+    const code = await run(['regress', dir, '--from', 'en16931@2017', '--to', 'xrechnung@3.0'], cap.io);
+
+    expect(code).toBe(0);
+    expect(cap.stdout()).toContain('No regressions');
+  });
+
+  it('emits a machine-readable report with --json, ranked by impact', async () => {
+    const dir = corpus('regress-json', [
+      { file: 'a.xml', buyerReference: false },
+      { file: 'b.xml', buyerReference: false },
+      { file: 'c.xml' },
+    ]);
+    const cap = captured();
+
+    const code = await run(
+      ['regress', dir, '--from', 'en16931@2017', '--to', 'xrechnung@3.0', '--json'],
+      cap.io,
+    );
+
+    expect(code).toBe(1);
+    const report = JSON.parse(cap.stdout());
+    expect(report.summary.total).toBe(3);
+    expect(report.summary.regressions).toBe(2);
+    expect(report.summary.unchangedPass).toBe(1);
+    expect(report.to.specVersion).toBe('XRechnung 3.0');
+    expect(report.byNewRule[0].ruleId).toBe('BR-DE-15');
+    expect(report.byNewRule[0].documents).toBe(2);
+  });
+
+  it('rejects an unknown ruleset', async () => {
+    const dir = corpus('regress-bad', [{ file: 'a.xml' }]);
+    const cap = captured();
+
+    const code = await run(['regress', dir, '--from', 'en16931@2017', '--to', 'nope@1.0'], cap.io);
+
+    expect(code).toBe(2);
+    expect(cap.stderr()).toContain('Unknown ruleset');
+  });
+
+  it('requires --from and --to', async () => {
+    const dir = corpus('regress-usage', [{ file: 'a.xml' }]);
+    const cap = captured();
+    expect(await run(['regress', dir], cap.io)).toBe(2);
+    expect(cap.stderr()).toContain('--from');
+  });
+
+  it('lists the available rule sets', async () => {
+    const cap = captured();
+    const code = await run(['rulesets'], cap.io);
+    expect(code).toBe(0);
+    expect(cap.stdout()).toContain('en16931@2017');
+    expect(cap.stdout()).toContain('xrechnung@3.0');
+  });
+});
+
 describe('invoicegate (top level)', () => {
   it('prints usage and exits 0 with no arguments', async () => {
     const cap = captured();

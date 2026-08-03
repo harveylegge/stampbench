@@ -60,6 +60,30 @@ npx invoicegate validate invoice.xml     # exit 0 = valid, 1 = errors — CI-rea
 npx invoicegate generate invoice.json -o invoice.xml
 ```
 
+## Regression testing — the bit nobody else does
+
+Rule sets change on a published schedule, and the artefacts are released *before* they
+become binding. So test the future rather than being switched onto it:
+
+```bash
+npx invoicegate regress ./invoices --from en16931@2017 --to xrechnung@3.0
+```
+
+```
+3 documents would START failing under XRechnung 3.0.
+
+Fix these rules first (most documents affected):
+  BR-DE-15     3 documents  Missing buyer reference (BT-10)…
+  BR-DE-2      3 documents  XRechnung requires a seller contact (BG-6)…
+
+5 checked · 3 regressions · 0 improvements · 2 unchanged pass · 0 unchanged fail
+```
+
+Exits `1` on any regression, so CI fails the build the day a new rule set lands — not on
+the enforcement date. Register a new specification release with `registerRuleset()` the
+day it is published; superseded rule sets stay available so you can re-check historical
+invoices against the rules that were in force when you issued them.
+
 ## The API
 
 ```bash

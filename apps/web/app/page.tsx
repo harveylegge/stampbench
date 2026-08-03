@@ -28,6 +28,10 @@ const features = [
     body: 'The full rule engine is MIT-licensed — validate and generate locally, unlimited, forever. The hosted platform sells what code alone can’t promise: always-current rules without dependency upgrades, volume, and compliance posture.',
   },
   {
+    title: 'Know what breaks before it breaks',
+    body: 'Rule sets change on a published schedule — and the artefacts land before they become binding. Point InvoiceGate at your invoices, diff them against the next rule set, and get a ranked list of what to fix. Nobody else lets you test the future; they just switch the rules on you.',
+  },
+  {
     title: 'Built for the mandate wave',
     body: 'Germany requires all companies to receive e-invoices since 2025 and to issue them from 2027. France and others follow. Ship compliance now, before your customers ask.',
   },

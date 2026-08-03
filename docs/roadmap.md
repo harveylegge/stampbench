@@ -26,6 +26,27 @@ can be trusted. Supersedes the previous launch-first ordering.
 - [x] Playground: drag-and-drop + CII auto-detect (waitlist unnecessary — CII shipped).
 - [x] Version-pinned results (`meta.specVersions` in every response).
 
+## Differentiator of record — regression testing (SHIPPED 2026-08-03)
+Market check (2 research agents, 68 searches across Invopop, InvoiceXML, Storecove,
+Avalara, Sovos, Fonoa, Vertex, Basware, Pagero, ecosio, KoSIT, Mustang, phive):
+**nobody sells future-ruleset regression testing.** Incumbents are explicitly
+reactive — InvoiceXML: *"your pipeline starts catching regressions the moment they
+take effect"* (i.e. in production, on the switchover date). The gap exists because
+it contradicts the managed-compliance pitch ("you don't need to test, we handle it").
+- [x] Versioned, registerable rulesets (`en16931@2017`, `xrechnung@3.0`, + custom)
+- [x] `compareRulesets()` — per-document transitions + rules ranked by blast radius
+- [x] `invoicegate regress` / `invoicegate rulesets`, exit 1 on regression for CI
+- [ ] Hosted batch endpoint (corpus upload) — CLI is local-first by design; API next
+- [ ] Register each new published spec release as a `candidate` ruleset on release day
+
+Also verified and *rejected* as differentiators: Peppol participant lookup (free from
+OpenPeppol + 6 vendors — bundle it into validation or skip), per-rule explainer pages
+(Invoice Navigator already has 1,388 with failing/fixed XML — generate ours from the
+rule engine as a by-product, don't treat as an SEO moat). Still open: CI line-level PR
+annotations (GitHub Marketplace has *zero* invoice-validation Actions; the moat is
+XPath→line mapping, which our own evaluator can emit natively), rule-indexed invalid
+fixture generation, and JSON-Patch remediation with per-hunk rule provenance.
+
 ## Phase 2 — Monetise urgency (months 2–3)
 - [ ] Launch cascade (Show HN → dev.to → r/webdev → German channels), parity page front and centre
 - [ ] Agency motion: white-label validation reports; outreach to German agencies/ERP

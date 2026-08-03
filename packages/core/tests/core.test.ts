@@ -1,15 +1,20 @@
 import { describe, expect, it } from 'vitest';
 import {
+  compareRulesets,
   computeTotals,
   generateXRechnungUbl,
+  getRuleset,
+  listRulesets,
   parseCiiInvoice,
   parseUblInvoice,
+  registerRuleset,
   round2,
   validateInvoice,
   validateUblXml,
   validateXml,
   withComputedTotals,
   withXRechnungDefaults,
+  type Rule,
 } from '../src/index.js';
 import { RAW_CII_SAMPLE, RAW_UBL_SAMPLE, validInvoice } from './fixtures.js';
 
@@ -322,6 +327,110 @@ describe('VAT category families (BR-S/Z/E/AE/K/G/O)', () => {
     ];
     const ids = validateInvoice(inv).violations.map((v) => v.ruleId);
     expect(ids).toContain('BR-E-09');
+  });
+});
+
+describe('ruleset regression comparison', () => {
+  /** An EU-core-valid invoice that has never needed German CIUS fields. */
+  function euOnlyInvoice() {
+    const inv = validInvoice();
+    delete inv.buyerReference; // BT-10 — required by XRechnung, not by EN 16931 core
+    delete inv.seller!.contact; // BG-6 — likewise
+    return inv;
+  }
+
+  it('flags documents that pass today but would fail under the target ruleset', () => {
+    const report = compareRulesets(
+      [
+        { id: 'eu-only.xml', invoice: euOnlyInvoice() },
+        { id: 'already-german.xml', invoice: validInvoice() },
+      ],
+      'en16931@2017',
+      'xrechnung@3.0',
+    );
+
+    expect(report.summary.total).toBe(2);
+    expect(report.summary.regressions).toBe(1);
+    expect(report.summary.unchangedPass).toBe(1);
+
+    const regressed = report.entries.find((e) => e.id === 'eu-only.xml')!;
+    expect(regressed.transition).toBe('regression');
+    expect(regressed.from.valid).toBe(true);
+    expect(regressed.to.valid).toBe(false);
+    expect(regressed.newRuleIds).toContain('BR-DE-15'); // missing buyer reference
+    expect(regressed.newMessages.join(' ')).toMatch(/buyer reference/i);
+
+    const unchanged = report.entries.find((e) => e.id === 'already-german.xml')!;
+    expect(unchanged.transition).toBe('unchanged-pass');
+    expect(unchanged.newRuleIds).toEqual([]);
+  });
+
+  it('ranks the newly failing rules by how many documents they break', () => {
+    const docs = [
+      { id: 'a.xml', invoice: euOnlyInvoice() },
+      { id: 'b.xml', invoice: euOnlyInvoice() },
+      { id: 'c.xml', invoice: validInvoice() },
+    ];
+    const report = compareRulesets(docs, 'en16931@2017', 'xrechnung@3.0');
+    expect(report.byNewRule.length).toBeGreaterThan(0);
+    // Sorted most-breaking first, and every count is bounded by the corpus size.
+    expect(report.byNewRule[0]!.documents).toBe(2);
+    for (const r of report.byNewRule) expect(r.documents).toBeLessThanOrEqual(docs.length);
+    expect(report.byNewRule.map((r) => r.ruleId)).toContain('BR-DE-15');
+  });
+
+  it('reports improvements when the target ruleset is less strict', () => {
+    const report = compareRulesets(
+      [{ id: 'eu-only.xml', invoice: euOnlyInvoice() }],
+      'xrechnung@3.0',
+      'en16931@2017',
+    );
+    expect(report.summary.improvements).toBe(1);
+    expect(report.entries[0]!.transition).toBe('improvement');
+    expect(report.entries[0]!.resolvedRuleIds).toContain('BR-DE-15');
+  });
+
+  it('exposes rulesets with pinned spec versions, and rejects unknown ids', () => {
+    const ids = listRulesets().map((r) => r.id);
+    expect(ids).toContain('en16931@2017');
+    expect(ids).toContain('xrechnung@3.0');
+    expect(getRuleset('xrechnung@3.0').specVersion).toBe('XRechnung 3.0');
+    expect(() => getRuleset('xrechnung@9.9')).toThrow(/Unknown ruleset/);
+  });
+
+  it('supports registering a candidate ruleset and diffing against it', () => {
+    // Stand-in for a future published release: the current German set plus one
+    // additional house rule. This is the mechanism customers use the day a real
+    // new specification is published, ahead of its effective date.
+    const strictBuyerEmail: Rule = {
+      id: 'X-BUYER-EMAIL',
+      severity: 'error',
+      profile: 'xrechnung',
+      description: 'Buyer must have an electronic address.',
+      check: (inv) =>
+        inv.buyer?.electronicAddress
+          ? null
+          : [{ ruleId: 'X-BUYER-EMAIL', severity: 'error', message: 'Buyer electronic address is required.' }],
+    };
+    registerRuleset({
+      id: 'xrechnung@candidate-test',
+      label: 'Candidate release (test)',
+      profile: 'xrechnung',
+      specVersion: 'XRechnung candidate',
+      status: 'candidate',
+      rules: [...getRuleset('xrechnung@3.0').rules, strictBuyerEmail],
+    });
+
+    const inv = validInvoice();
+    delete inv.buyer!.electronicAddress;
+    const report = compareRulesets(
+      [{ id: 'invoice.xml', invoice: inv }],
+      'xrechnung@3.0',
+      'xrechnung@candidate-test',
+    );
+    expect(report.summary.regressions).toBe(1);
+    expect(report.entries[0]!.newRuleIds).toEqual(['X-BUYER-EMAIL']);
+    expect(report.to.specVersion).toBe('XRechnung candidate');
   });
 });
 

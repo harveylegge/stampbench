@@ -28,6 +28,7 @@ function H2({ id, children }: { id: string; children: React.ReactNode }) {
 export default function DocsPage() {
   const sections = [
     ['quickstart', 'Quickstart'],
+    ['regression', 'Regression testing'],
     ['auth', 'Authentication'],
     ['validate', 'POST /api/v1/validate'],
     ['generate', 'POST /api/v1/generate'],
@@ -67,6 +68,62 @@ export default function DocsPage() {
         <p className="text-sm leading-relaxed text-muted">
           For real usage, <Link href="/register" className="text-accent-hi hover:underline">create a free account</Link>,
           generate an API key in the dashboard, and send it as a Bearer token.
+        </p>
+
+        <H2 id="regression">Regression testing against a future rule set</H2>
+        <p className="text-sm leading-relaxed text-muted">
+          E-invoicing rule sets change on a published cadence, and standards bodies release the
+          artefacts <em>before</em> they become legally binding. That gap is your opportunity: you
+          can find out which of your invoices will start failing while you still have time to fix
+          them, instead of on the switchover date.
+        </p>
+        <Code>{`# Which rule sets can I compare?
+npx invoicegate rulesets
+
+# Will my invoices survive the German rules?
+npx invoicegate regress ./invoices --from en16931@2017 --to xrechnung@3.0`}</Code>
+        <Code>{`en16931@2017 → xrechnung@3.0  (40 → 56 rules)
+
+3 documents would START failing under XRechnung 3.0.
+
+Fix these rules first (most documents affected):
+  BR-DE-15     3 documents  Missing buyer reference (BT-10)…
+  BR-DE-2      3 documents  XRechnung requires a seller contact (BG-6)…
+
+Affected documents:
+  invoices/eu-invoice-001.xml  BR-DE-2, BR-DE-5, BR-DE-6, BR-DE-7, BR-DE-15
+
+5 checked · 3 regressions · 0 improvements · 2 unchanged pass · 0 unchanged fail`}</Code>
+        <p className="text-sm leading-relaxed text-muted">
+          It exits <code className="font-mono">1</code> when anything regresses, so you can drop it
+          into CI and fail the build the day a new rule set is published — long before it is
+          enforced. Add <code className="font-mono">--json</code> for a machine-readable report
+          (per-document transitions plus rules ranked by how many documents they break).
+        </p>
+        <p className="text-sm leading-relaxed text-muted">
+          The same machinery works in the library, including against a rule set you register
+          yourself — a newly published specification, or your own house rules:
+        </p>
+        <Code>{`import { compareRulesets, registerRuleset, getRuleset } from '@invoicegate/core';
+
+const report = compareRulesets(documents, 'en16931@2017', 'xrechnung@3.0');
+report.summary.regressions;  // documents that pass today and would not tomorrow
+report.byNewRule;            // ranked: fix the top one for the biggest win
+
+// Register a new specification release the day it is published
+registerRuleset({
+  id: 'xrechnung@3.1',
+  label: 'XRechnung 3.1',
+  profile: 'xrechnung',
+  specVersion: 'XRechnung 3.1',
+  status: 'candidate',          // published, not yet binding
+  effectiveFrom: '2027-01-01',
+  rules: [...getRuleset('xrechnung@3.0').rules, ...myNewRules],
+});`}</Code>
+        <p className="text-sm leading-relaxed text-muted">
+          Superseded rule sets stay registered too, so you can answer an audit question like
+          &ldquo;would this invoice have been valid when we issued it?&rdquo; by validating against
+          the version that was in force at the time.
         </p>
 
         <H2 id="auth">Authentication</H2>
