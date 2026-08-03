@@ -1,6 +1,7 @@
 import 'server-only';
 import { createHash, randomBytes, timingSafeEqual } from 'crypto';
 import { cookies } from 'next/headers';
+import { redirect } from 'next/navigation';
 import { cache } from 'react';
 import bcrypt from 'bcryptjs';
 import { db } from './db';
@@ -95,13 +96,29 @@ export const getCurrentUser = cache(async (): Promise<CurrentUser | null> => {
   };
 });
 
+/**
+ * Resolve the current user or redirect to /login. Use in dashboard/admin pages
+ * so page code never runs against a null user (App Router renders layout and
+ * page in parallel, so a layout-only guard is not sufficient on its own).
+ */
+export async function requireUser(): Promise<CurrentUser> {
+  const user = await getCurrentUser();
+  if (!user) redirect('/login');
+  return user;
+}
+
 export async function registerUser(email: string, password: string, name?: string) {
   const existing = await db.user.findUnique({ where: { email } });
   if (existing) return { error: 'An account with this email already exists.' as const };
   const passwordHash = await hashPassword(password);
-  // First registered user becomes admin (solo-founder bootstrap); or match ADMIN_EMAIL.
+  // Admin bootstrap: the first registered account becomes admin (the solo
+  // founder registers immediately on deploy). If ADMIN_EMAIL is set, the first
+  // account is admin ONLY when its email matches — so an attacker can't grab
+  // admin by racing to register first. Without email verification we must not
+  // grant admin on an email match alone at any other time.
   const userCount = await db.user.count();
-  const role = userCount === 0 || (env.adminEmail && email === env.adminEmail) ? 'admin' : 'user';
+  const isFirst = userCount === 0;
+  const role = isFirst && (!env.adminEmail || email === env.adminEmail) ? 'admin' : 'user';
   const user = await db.user.create({
     data: { email, passwordHash, name: name ?? null, role },
   });

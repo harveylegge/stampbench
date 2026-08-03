@@ -1,11 +1,11 @@
-import { getCurrentUser } from '@/lib/auth';
+import { requireUser } from '@/lib/auth';
 import { logoutAction } from '@/app/(auth)/actions';
 import { deleteAccountAction } from './actions';
 
 export const metadata = { title: 'Settings' };
 
 export default async function SettingsPage() {
-  const user = (await getCurrentUser())!;
+  const user = await requireUser();
 
   return (
     <div>

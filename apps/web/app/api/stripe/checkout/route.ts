@@ -44,6 +44,29 @@ export async function POST(request: Request) {
     await db.user.update({ where: { id: user.id }, data: { stripeCustomerId: customerId } });
   }
 
+  // Guard against duplicate subscriptions: Checkout in subscription mode always
+  // creates a NEW subscription, so a user who already has one must change plans
+  // through the billing portal, not a second checkout. Verify against Stripe
+  // (source of truth) rather than our possibly-stale mirror.
+  const existing = await s.subscriptions.list({
+    customer: customerId,
+    status: 'all',
+    limit: 10,
+  });
+  const active = existing.data.find((sub) =>
+    ['active', 'trialing', 'past_due', 'unpaid'].includes(sub.status),
+  );
+  if (active) {
+    const portal = await s.billingPortal.sessions.create({
+      customer: customerId,
+      return_url: `${env.appUrl}/dashboard/billing`,
+    });
+    return NextResponse.json({
+      url: portal.url,
+      note: 'You already have a subscription — manage or change your plan in the billing portal.',
+    });
+  }
+
   const session = await s.checkout.sessions.create({
     customer: customerId,
     mode: 'subscription',

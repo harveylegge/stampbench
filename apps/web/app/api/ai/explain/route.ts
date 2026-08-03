@@ -7,21 +7,25 @@ import { recordUsage } from '@/lib/usage';
 export const runtime = 'nodejs';
 export const maxDuration = 60; // Claude call can take a while
 
+// Bounds are deliberately tight: this endpoint is reachable anonymously and
+// every field is interpolated into a Claude prompt, so unbounded strings would
+// let a caller drive large, unattributable model spend. A real violation from
+// our own validator is well under these limits.
 const schema = z.object({
   violations: z
     .array(
       z.object({
-        ruleId: z.string(),
+        ruleId: z.string().max(20),
         severity: z.enum(['error', 'warning']),
-        message: z.string(),
-        terms: z.array(z.string()).optional(),
-        path: z.string().optional(),
-        value: z.union([z.string(), z.number()]).optional(),
+        message: z.string().max(500),
+        terms: z.array(z.string().max(12)).max(8).optional(),
+        path: z.string().max(100).optional(),
+        value: z.union([z.string().max(200), z.number()]).optional(),
       }),
     )
     .min(1)
-    .max(100),
-  invoiceContext: z.string().max(4000).optional(),
+    .max(60),
+  invoiceContext: z.string().max(2000).optional(),
 });
 
 /** POST /api/ai/explain — plain-language fixes for validation violations. */

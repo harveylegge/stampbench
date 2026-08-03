@@ -3,6 +3,7 @@ import {
   computeTotals,
   generateXRechnungUbl,
   parseUblInvoice,
+  round2,
   validateInvoice,
   validateUblXml,
   withComputedTotals,
@@ -86,6 +87,22 @@ describe('validateInvoice', () => {
     expect(ids).toContain('BR-CO-17');
   });
 
+  it('rejects a one-cent-wrong line sum (BR-CO-10 is exact, not ±0.01)', () => {
+    const inv = validInvoice();
+    // A classic off-by-one-cent aggregation: stated line sum 0.01 too high.
+    inv.totals!.sumOfLineNet = (inv.totals!.sumOfLineNet ?? 0) + 0.01;
+    const ids = validateInvoice(inv).violations.map((v) => v.ruleId);
+    expect(ids).toContain('BR-CO-10');
+  });
+
+  it('still tolerates a one-cent rounding difference on BR-CO-17 (multiplication)', () => {
+    const inv = validInvoice();
+    // Nudge a VAT amount by exactly one cent — allowed rounding slack.
+    inv.vatBreakdown![0]!.taxAmount = round2(inv.vatBreakdown![0]!.taxAmount + 0.01);
+    const co17 = validateInvoice(inv).violations.filter((v) => v.ruleId === 'BR-CO-17');
+    expect(co17).toEqual([]);
+  });
+
   it('flags an invoice without lines (BR-16) and without VAT breakdown (BR-CO-18)', () => {
     const ids = validateInvoice({}).violations.map((v) => v.ruleId);
     expect(ids).toContain('BR-16');
@@ -117,6 +134,60 @@ describe('validateInvoice', () => {
     inv.payment = { meansTypeCode: '58' };
     const ids = validateInvoice(inv).violations.map((v) => v.ruleId);
     expect(ids).toContain('IG-DE-23');
+  });
+});
+
+describe('generator correctness (review fixes)', () => {
+  it('preserves fractional unit prices instead of forcing 2 decimals', () => {
+    const inv = withComputedTotals({
+      currencyCode: 'EUR',
+      lines: [
+        { id: '1', quantity: 1000, unitCode: 'C62', item: { name: 'Widget' }, price: { netPrice: 0.125 }, vat: { categoryCode: 'S', rate: 19 } },
+      ],
+    });
+    const xml = generateXRechnungUbl(inv);
+    expect(xml).toContain('<cbc:PriceAmount currencyID="EUR">0.125</cbc:PriceAmount>');
+  });
+
+  it('emits SEPA direct-debit mandate (BT-89) and debited account (BT-91)', () => {
+    const inv = withComputedTotals({
+      currencyCode: 'EUR',
+      payment: {
+        meansTypeCode: '59',
+        mandateReference: 'MANDATE-001',
+        debitedAccountIban: 'DE89370400440532013000',
+      },
+      lines: [
+        { id: '1', quantity: 1, unitCode: 'C62', item: { name: 'X' }, price: { netPrice: 100 }, vat: { categoryCode: 'S', rate: 19 } },
+      ],
+    });
+    const parsed = parseUblInvoice(generateXRechnungUbl(inv));
+    expect(parsed.payment?.mandateReference).toBe('MANDATE-001');
+    expect(parsed.payment?.debitedAccountIban).toBe('DE89370400440532013000');
+  });
+
+  it('never emits a non-finite amount into the XML', () => {
+    const inv = {
+      currencyCode: 'EUR',
+      totals: { taxInclusive: Infinity, amountDue: Infinity },
+      vatBreakdown: [{ categoryCode: 'S', rate: 19, taxableAmount: Infinity, taxAmount: Infinity }],
+      lines: [{ id: '1', netAmount: Infinity, item: { name: 'X' }, price: { netPrice: Infinity } }],
+    };
+    const xml = generateXRechnungUbl(inv);
+    expect(xml).not.toContain('Infinity');
+    expect(xml).not.toContain('NaN');
+  });
+});
+
+describe('computeTotals allowance without VAT category', () => {
+  it('inherits the sole line VAT category instead of an empty-code group', () => {
+    const { vatBreakdown } = computeTotals(
+      [{ quantity: 1, price: { netPrice: 100 }, vat: { categoryCode: 'S', rate: 19 } }],
+      [{ isCharge: false, amount: 10, reason: 'Rabatt' }], // no vatCategoryCode
+    );
+    expect(vatBreakdown).toHaveLength(1);
+    expect(vatBreakdown[0]!.categoryCode).toBe('S');
+    expect(vatBreakdown[0]!.taxableAmount).toBe(90);
   });
 });
 

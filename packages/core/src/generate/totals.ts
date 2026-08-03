@@ -56,22 +56,35 @@ export function computeTotals(
   };
 
   let sumOfLineNet = 0;
+  const lineCategories = new Set<string>();
   for (const line of lines) {
     const net = lineNet(line);
     sumOfLineNet = round2(sumOfLineNet + net);
     add(line.vat?.categoryCode, line.vat?.rate, net);
+    if (line.vat?.categoryCode) lineCategories.add(`${line.vat.categoryCode}@${line.vat.rate ?? 0}`);
   }
+
+  // When a document-level allowance/charge omits its VAT category, EN 16931
+  // still requires one. If every line shares a single category/rate, inherit
+  // it (the common single-rate case) rather than creating an invalid
+  // empty-category VAT group. Mixed rates stay unresolved so validation flags it.
+  const soleCategory =
+    lineCategories.size === 1 ? [...lineCategories][0]!.split('@') : null;
+  const inheritedCategory = soleCategory ? soleCategory[0] : undefined;
+  const inheritedRate = soleCategory ? Number(soleCategory[1]) : undefined;
 
   let allowanceTotal = 0;
   let chargeTotal = 0;
   for (const ac of allowancesCharges) {
     const amount = round2(ac.amount);
+    const category = ac.vatCategoryCode ?? inheritedCategory;
+    const rate = ac.vatCategoryCode ? ac.vatRate : (ac.vatRate ?? inheritedRate);
     if (ac.isCharge) {
       chargeTotal = round2(chargeTotal + amount);
-      add(ac.vatCategoryCode, ac.vatRate, amount);
+      add(category, rate, amount);
     } else {
       allowanceTotal = round2(allowanceTotal + amount);
-      add(ac.vatCategoryCode, ac.vatRate, -amount);
+      add(category, rate, -amount);
     }
   }
 

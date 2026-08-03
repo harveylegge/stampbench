@@ -1,5 +1,6 @@
 import 'server-only';
 import { db } from './db';
+import { log } from './log';
 import { currentPeriodStart, planFor } from './plans';
 
 export type UsageKind = 'validate' | 'generate' | 'ai_explain';
@@ -21,15 +22,22 @@ export async function recordUsage(
   kind: UsageKind,
   opts: { apiKeyId?: string | null; profile?: string; ok?: boolean } = {},
 ): Promise<void> {
-  await db.usageEvent.create({
-    data: {
-      userId,
-      kind,
-      apiKeyId: opts.apiKeyId ?? null,
-      profile: opts.profile ?? null,
-      ok: opts.ok ?? true,
-    },
-  });
+  // Metering must never fail the request it is recording: the work already
+  // succeeded, so a transient DB error here is logged and swallowed rather than
+  // turned into a 500. Under-counting on a rare blip is the acceptable failure.
+  try {
+    await db.usageEvent.create({
+      data: {
+        userId,
+        kind,
+        apiKeyId: opts.apiKeyId ?? null,
+        profile: opts.profile ?? null,
+        ok: opts.ok ?? true,
+      },
+    });
+  } catch (e) {
+    log.error('usage.record_failed', { userId, kind, message: (e as Error).message });
+  }
 }
 
 /** Daily usage counts for the last `days` days — feeds the dashboard chart. */

@@ -15,7 +15,15 @@ import {
   ISO_DATE_RE,
   VAT_CATEGORY_CODES,
 } from '../../model/codes.js';
-import { amountsEqual, present, round2, violation, type Rule, type Violation } from '../rule.js';
+import {
+  ROUNDING_TOLERANCE,
+  amountsEqual,
+  present,
+  round2,
+  violation,
+  type Rule,
+  type Violation,
+} from '../rule.js';
 
 function req(
   id: string,
@@ -186,7 +194,8 @@ const arithmeticRules: Rule[] = [
       (inv.vatBreakdown ?? []).forEach((b: VatBreakdown, idx) => {
         if (!present(b.rate) || !present(b.taxableAmount) || !present(b.taxAmount)) return;
         const expected = round2((b.taxableAmount * (b.rate as number)) / 100);
-        if (!amountsEqual(expected, b.taxAmount)) {
+        // BR-CO-17 involves multiplication, so it keeps the ±0.01 rounding slack.
+        if (!amountsEqual(expected, b.taxAmount, ROUNDING_TOLERANCE)) {
           out.push(violation({ id: 'BR-CO-17', severity: 'error', terms: ['BT-117'] },
             `VAT breakdown ${b.categoryCode}${b.rate != null ? ` @ ${b.rate}%` : ''}: tax amount should be ${expected.toFixed(2)} (${b.taxableAmount.toFixed(2)} × ${b.rate}%) but is ${b.taxAmount.toFixed(2)}.`,
             { path: `vatBreakdown[${idx}].taxAmount`, value: b.taxAmount }));

@@ -19,11 +19,14 @@ export const VAT_CATEGORY_CODES = new Set([
 ]);
 
 /**
- * UNCL 1001 subset admitted by XRechnung (BR-DE-17).
- * 326 partial, 380 commercial, 381 credit note, 384 corrected,
- * 386 prepayment, 389 self-billed.
+ * UNCL 1001 subset admitted by XRechnung (BR-DE-17). Per the KoSIT code list:
+ * 326 partial, 380 commercial, 381 credit note, 384 corrected, 386 prepayment,
+ * 389 self-billed, and the German construction-invoice codes 875 (partial
+ * construction), 876 (partial final construction), 877 (final construction).
  */
-export const XRECHNUNG_TYPE_CODES = new Set(['326', '380', '381', '384', '386', '389']);
+export const XRECHNUNG_TYPE_CODES = new Set([
+  '326', '380', '381', '384', '386', '389', '875', '876', '877',
+]);
 
 /** Common ISO 4217 currency codes (subset — unknown codes warn, not error). */
 export const COMMON_CURRENCY_CODES = new Set([

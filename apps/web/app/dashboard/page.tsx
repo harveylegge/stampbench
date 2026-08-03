@@ -1,5 +1,5 @@
 import Link from 'next/link';
-import { getCurrentUser } from '@/lib/auth';
+import { requireUser } from '@/lib/auth';
 import { db } from '@/lib/db';
 import { planFor } from '@/lib/plans';
 import { monthlyUsage, usageByDay } from '@/lib/usage';
@@ -7,7 +7,7 @@ import { monthlyUsage, usageByDay } from '@/lib/usage';
 export const metadata = { title: 'Dashboard' };
 
 export default async function DashboardPage() {
-  const user = (await getCurrentUser())!;
+  const user = await requireUser();
   const plan = planFor(user.plan);
   const [used, daily, keyCount] = await Promise.all([
     monthlyUsage(user.id),

@@ -24,8 +24,25 @@ function esc(s: string): string {
     .replace(/'/g, '&apos;');
 }
 
+/** Monetary amounts (totals, line amounts, VAT amounts) are stated to 2 decimals. */
 function money(n: number): string {
+  // Defense in depth: never emit NaN/Infinity into XML (a non-finite value that
+  // slipped past input validation would otherwise serialise as "Infinity").
+  if (!Number.isFinite(n)) return '0.00';
   return round2(n).toFixed(2);
+}
+
+/**
+ * Unit price (BT-146) may carry more than 2 decimals — EN 16931 does not
+ * constrain it to 2dp, and forcing rounding corrupts fractional prices
+ * (e.g. €0.125/unit). Emit up to 4 decimals, trailing zeros trimmed, but
+ * always at least 2 so the value reads as a monetary figure.
+ */
+function priceAmount(n: number): string {
+  if (!Number.isFinite(n)) return '0.00';
+  const rounded = Math.round((n + Number.EPSILON) * 1e4) / 1e4;
+  const s = rounded.toFixed(4).replace(/(\.\d*?)0+$/, '$1').replace(/\.$/, '');
+  return s.includes('.') ? s : `${s}.00`;
 }
 
 class Xml {
@@ -69,17 +86,25 @@ class Xml {
   }
 }
 
-function emitParty(x: Xml, wrapperTag: string, party: Party | undefined, currencyNeeded = false): void {
-  void currencyNeeded;
+function emitParty(
+  x: Xml,
+  wrapperTag: string,
+  party: Party | undefined,
+  opts: { role?: 'seller' | 'buyer' | 'payee' } = {},
+): void {
   if (!party) return;
+  const isPayee = opts.role === 'payee';
   x.wrap(wrapperTag, () => {
     x.wrap('cac:Party', () => {
       x.leaf('cbc:EndpointID', party.electronicAddress, { schemeID: party.electronicAddressScheme });
       if (party.identifier) {
         x.wrap('cac:PartyIdentification', () => x.leaf('cbc:ID', party.identifier));
       }
-      if (party.tradingName) {
-        x.wrap('cac:PartyName', () => x.leaf('cbc:Name', party.tradingName));
+      // Payee name (BT-59) lives in PartyName/Name; seller/buyer names are the
+      // legal RegistrationName. Trading name also uses PartyName.
+      const partyName = isPayee ? party.name ?? party.tradingName : party.tradingName;
+      if (partyName) {
+        x.wrap('cac:PartyName', () => x.leaf('cbc:Name', partyName));
       }
       x.wrap('cac:PostalAddress', () => {
         x.leaf('cbc:StreetName', party.address?.streetName);
@@ -102,7 +127,9 @@ function emitParty(x: Xml, wrapperTag: string, party: Party | undefined, currenc
         });
       }
       x.wrap('cac:PartyLegalEntity', () => {
-        x.leaf('cbc:RegistrationName', party.name);
+        // For the payee, the name already went to PartyName (BT-59); here we
+        // only carry the legal registration id if present.
+        x.leaf('cbc:RegistrationName', isPayee ? undefined : party.name);
         x.leaf('cbc:CompanyID', party.legalRegistrationId);
       });
       if (party.contact) {
@@ -204,9 +231,9 @@ export function generateXRechnungUbl(invoice: Invoice, options?: GenerateOptions
       if (invoice.projectReference) {
         doc.wrap('cac:ProjectReference', () => doc.leaf('cbc:ID', invoice.projectReference));
       }
-      emitParty(doc, 'cac:AccountingSupplierParty', invoice.seller);
-      emitParty(doc, 'cac:AccountingCustomerParty', invoice.buyer);
-      if (invoice.payee) emitParty(doc, 'cac:PayeeParty', invoice.payee);
+      emitParty(doc, 'cac:AccountingSupplierParty', invoice.seller, { role: 'seller' });
+      emitParty(doc, 'cac:AccountingCustomerParty', invoice.buyer, { role: 'buyer' });
+      if (invoice.payee) emitParty(doc, 'cac:PayeeParty', invoice.payee, { role: 'payee' });
 
       if (invoice.payment) {
         const pm = invoice.payment;
@@ -221,6 +248,17 @@ export function generateXRechnungUbl(invoice: Invoice, options?: GenerateOptions
                 doc.leaf('cbc:Name', ct.accountName);
                 if (ct.bic) {
                   doc.wrap('cac:FinancialInstitutionBranch', () => doc.leaf('cbc:ID', ct.bic));
+                }
+              });
+            }
+            // BT-89 mandate reference / BT-91 debited account (SEPA direct debit).
+            if (pm.mandateReference || pm.debitedAccountIban) {
+              doc.wrap('cac:PaymentMandate', () => {
+                doc.leaf('cbc:ID', pm.mandateReference);
+                if (pm.debitedAccountIban) {
+                  doc.wrap('cac:PayerFinancialAccount', () =>
+                    doc.leaf('cbc:ID', pm.debitedAccountIban?.replace(/\s+/g, '')),
+                  );
                 }
               });
             }
@@ -300,7 +338,7 @@ export function generateXRechnungUbl(invoice: Invoice, options?: GenerateOptions
           });
           if (line.price?.netPrice !== undefined) {
             doc.wrap('cac:Price', () => {
-              doc.leaf('cbc:PriceAmount', money(line.price!.netPrice!), { currencyID: currency });
+              doc.leaf('cbc:PriceAmount', priceAmount(line.price!.netPrice!), { currencyID: currency });
               if (line.price?.baseQuantity !== undefined) {
                 doc.leaf('cbc:BaseQuantity', line.price.baseQuantity, { unitCode: line.price.baseQuantityUnit });
               }

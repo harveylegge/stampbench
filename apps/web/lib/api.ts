@@ -18,10 +18,24 @@ export type Caller =
   | { type: 'session'; userId: string; plan: string }
   | { type: 'anon'; ip: string };
 
-/** Resolve who is calling: API key, then browser session, then anonymous. */
-export async function resolveCaller(request: Request): Promise<Caller> {
+/** True when the caller presented an API-key credential (valid or not). */
+function presentedApiKey(request: Request): boolean {
+  const header = request.headers.get('authorization');
+  if (header?.toLowerCase().startsWith('bearer ')) return true;
+  return Boolean(request.headers.get('x-api-key'));
+}
+
+/**
+ * Resolve who is calling: API key, then browser session, then anonymous.
+ * Returns `'invalid_key'` when a credential was presented but does not
+ * authenticate — the caller must NOT be silently downgraded to the anonymous
+ * trial pool (that would mask revoked keys and let anyone bypass quota by
+ * sending a junk key).
+ */
+export async function resolveCaller(request: Request): Promise<Caller | 'invalid_key'> {
   const keyAuth = await authenticateApiKey(request);
   if (keyAuth) return { type: 'key', ...keyAuth };
+  if (presentedApiKey(request)) return 'invalid_key';
   const user = await getCurrentUser().catch(() => null);
   if (user) return { type: 'session', userId: user.id, plan: user.plan };
   return { type: 'anon', ip: clientIp(request) };
@@ -42,6 +56,11 @@ export async function gateRequest(
   request: Request,
 ): Promise<GateResult | NextResponse> {
   const caller = await resolveCaller(request);
+
+  if (caller === 'invalid_key') {
+    return apiError(401, 'invalid_api_key',
+      'The API key is missing, malformed, or has been revoked. Check your key in the dashboard.');
+  }
 
   if (caller.type === 'anon') {
     // 10 requests/hour per IP — enough to evaluate, not enough to freeload.

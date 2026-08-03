@@ -30,10 +30,27 @@ export interface Rule {
   check(invoice: Invoice): Violation[] | null;
 }
 
-/** Monetary comparison tolerance: EN 16931 arithmetic is on 2dp amounts. */
-export const AMOUNT_TOLERANCE = 0.011;
+/**
+ * Tolerance for the EN 16931 summation rules (BR-CO-10/13/14/15/16). These are
+ * *exact* equalities over amounts already stated to 2 decimals, so the only
+ * slack we allow is float-representation noise — half a cent is far below the
+ * smallest real 2dp difference (0.01) yet far above accumulated float error.
+ * A genuine one-cent discrepancy is a real error the official validator rejects,
+ * so it must fail here too.
+ */
+export const SUM_TOLERANCE = 0.005;
 
-export function amountsEqual(a: number, b: number, tolerance = AMOUNT_TOLERANCE): boolean {
+/**
+ * Tolerance for the multiplication rule BR-CO-17 (VAT amount = taxable × rate).
+ * EN 16931 permits ±0.01 here because rounding methods (half-up vs half-even)
+ * can legitimately differ by a cent on the product.
+ */
+export const ROUNDING_TOLERANCE = 0.01;
+
+/** @deprecated Use {@link SUM_TOLERANCE} or {@link ROUNDING_TOLERANCE}. */
+export const AMOUNT_TOLERANCE = SUM_TOLERANCE;
+
+export function amountsEqual(a: number, b: number, tolerance = SUM_TOLERANCE): boolean {
   return Math.abs(a - b) <= tolerance;
 }
 

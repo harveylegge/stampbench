@@ -49,17 +49,38 @@ export async function POST(request: Request) {
         const plan = planForPriceId(priceId);
         const active = sub.status === 'active' || sub.status === 'trialing';
         const periodEnd = sub.items.data[0]?.current_period_end;
-        if (plan && active) {
+        if (active && !plan) {
+          // Active subscription on a price we don't recognise — surface loudly
+          // rather than silently leaving the plan unchanged.
+          log.error('billing.webhook_unmapped_price', { customerId, priceId, subId: sub.id });
+        } else if (plan && active) {
           await setPlanByCustomer(customerId, plan, periodEnd ? new Date(periodEnd * 1000) : null, sub.id);
-        } else if (!active && (sub.status === 'canceled' || sub.status === 'unpaid' || sub.status === 'incomplete_expired')) {
+        } else if (
+          sub.status === 'canceled' ||
+          sub.status === 'unpaid' ||
+          sub.status === 'incomplete_expired'
+        ) {
           await setPlanByCustomer(customerId, 'free');
         }
+        // Note: `past_due` intentionally keeps the plan as a short grace period;
+        // Stripe fires subscription.deleted when dunning finally gives up.
         break;
       }
       case 'customer.subscription.deleted': {
         const sub = event.data.object;
         const customerId = typeof sub.customer === 'string' ? sub.customer : sub.customer.id;
-        await setPlanByCustomer(customerId, 'free');
+        // Only downgrade if this is the subscription we're tracking. Prevents an
+        // old/duplicate subscription's deletion from revoking access the user
+        // still pays for under a different, active subscription.
+        const tracked = await db.user.findFirst({
+          where: { stripeCustomerId: customerId },
+          select: { stripeSubscriptionId: true },
+        });
+        if (!tracked?.stripeSubscriptionId || tracked.stripeSubscriptionId === sub.id) {
+          await setPlanByCustomer(customerId, 'free');
+        } else {
+          log.info('billing.webhook_stale_delete', { customerId, deleted: sub.id, tracked: tracked.stripeSubscriptionId });
+        }
         break;
       }
       default:

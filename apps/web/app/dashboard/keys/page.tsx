@@ -1,11 +1,11 @@
-import { getCurrentUser } from '@/lib/auth';
+import { requireUser } from '@/lib/auth';
 import { db } from '@/lib/db';
 import { KeyManager } from './key-manager';
 
 export const metadata = { title: 'API keys' };
 
 export default async function KeysPage() {
-  const user = (await getCurrentUser())!;
+  const user = await requireUser();
   const keys = await db.apiKey.findMany({
     where: { userId: user.id },
     orderBy: { createdAt: 'desc' },

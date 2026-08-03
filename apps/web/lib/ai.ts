@@ -55,17 +55,22 @@ export async function explainViolations(
   }
 
   const client = new Anthropic({ apiKey: env.anthropicApiKey });
+  // Hard cap the prompt as defense in depth: the route schema already bounds
+  // each field, but this guarantees a fixed ceiling on model spend per call
+  // regardless of how many violations were sent.
+  const MAX_PROMPT_CHARS = 24_000;
+  const violationsJson = JSON.stringify(violations, null, 2).slice(0, MAX_PROMPT_CHARS);
   const userContent = [
     'Explain these e-invoice validation results and how to fix them:',
     '',
-    JSON.stringify(violations, null, 2),
+    violationsJson,
     invoiceContext ? `\nInvoice context (partial): ${invoiceContext.slice(0, 2000)}` : '',
   ].join('\n');
 
   try {
     const response = await client.beta.messages.create({
       model: 'claude-opus-5',
-      max_tokens: 2000,
+      max_tokens: 1500,
       betas: ['server-side-fallback-2026-07-01'],
       // @ts-expect-error — server-side fallbacks param is newer than the SDK typings
       fallbacks: 'default',

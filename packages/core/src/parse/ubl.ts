@@ -96,7 +96,9 @@ function parseParty(container: unknown): Party | undefined {
     const scheme = attr(endpoint, 'schemeID');
     if (scheme) out.electronicAddressScheme = scheme;
   }
-  const ident = text(obj(party['PartyIdentification'])?.['ID'] as Node);
+  // PartyIdentification may repeat; take the first ID rather than dropping all
+  // when the parser hands us an array instead of a single object.
+  const ident = text(arr(party['PartyIdentification'])[0]?.['ID'] as Node);
   if (ident) out.identifier = ident;
   const tradingName = text(obj(party['PartyName'])?.['Name'] as Node);
   const legalName = text(legal?.['RegistrationName'] as Node);

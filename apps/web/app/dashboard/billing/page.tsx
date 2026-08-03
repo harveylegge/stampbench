@@ -1,4 +1,4 @@
-import { getCurrentUser } from '@/lib/auth';
+import { requireUser } from '@/lib/auth';
 import { features } from '@/lib/env';
 import { planFor, PLANS } from '@/lib/plans';
 import { monthlyUsage } from '@/lib/usage';
@@ -7,7 +7,7 @@ import { BillingActions } from './billing-actions';
 export const metadata = { title: 'Billing' };
 
 export default async function BillingPage() {
-  const user = (await getCurrentUser())!;
+  const user = await requireUser();
   const plan = planFor(user.plan);
   const used = await monthlyUsage(user.id);
 

@@ -55,7 +55,7 @@ const invoiceSchema = z.object({
   purchaseOrderReference: z.string().optional(),
   contractReference: z.string().optional(),
   paymentTerms: z.string().optional(),
-  notes: z.array(z.string()).optional(),
+  notes: z.array(z.string().max(5000)).max(50).optional(),
   seller: partySchema,
   buyer: partySchema,
   payment: z
@@ -71,6 +71,7 @@ const invoiceSchema = z.object({
             bic: z.string().optional(),
           }),
         )
+        .max(20)
         .optional(),
       debitedAccountIban: z.string().optional(),
       mandateReference: z.string().optional(),
@@ -80,49 +81,51 @@ const invoiceSchema = z.object({
     .array(
       z.object({
         isCharge: z.boolean(),
-        amount: z.number(),
-        baseAmount: z.number().optional(),
-        percentage: z.number().optional(),
+        amount: z.number().finite(),
+        baseAmount: z.number().finite().optional(),
+        percentage: z.number().finite().optional(),
         reason: z.string().optional(),
         reasonCode: z.string().optional(),
         vatCategoryCode: z.string().optional(),
-        vatRate: z.number().optional(),
+        vatRate: z.number().finite().optional(),
       }),
     )
+    .max(200)
     .optional(),
   totals: z
     .object({
-      sumOfLineNet: z.number().optional(),
-      allowanceTotal: z.number().optional(),
-      chargeTotal: z.number().optional(),
-      taxExclusive: z.number().optional(),
-      taxTotal: z.number().optional(),
-      taxInclusive: z.number().optional(),
-      paidAmount: z.number().optional(),
-      roundingAmount: z.number().optional(),
-      amountDue: z.number().optional(),
+      sumOfLineNet: z.number().finite().optional(),
+      allowanceTotal: z.number().finite().optional(),
+      chargeTotal: z.number().finite().optional(),
+      taxExclusive: z.number().finite().optional(),
+      taxTotal: z.number().finite().optional(),
+      taxInclusive: z.number().finite().optional(),
+      paidAmount: z.number().finite().optional(),
+      roundingAmount: z.number().finite().optional(),
+      amountDue: z.number().finite().optional(),
     })
     .optional(),
   vatBreakdown: z
     .array(
       z.object({
         categoryCode: z.string(),
-        rate: z.number().optional(),
-        taxableAmount: z.number(),
-        taxAmount: z.number(),
+        rate: z.number().finite().optional(),
+        taxableAmount: z.number().finite(),
+        taxAmount: z.number().finite(),
         exemptionReason: z.string().optional(),
         exemptionReasonCode: z.string().optional(),
       }),
     )
+    .max(100)
     .optional(),
   lines: z
     .array(
       z.object({
         id: z.string().optional(),
         note: z.string().optional(),
-        quantity: z.number().optional(),
+        quantity: z.number().finite().optional(),
         unitCode: z.string().optional(),
-        netAmount: z.number().optional(),
+        netAmount: z.number().finite().optional(),
         orderLineReference: z.string().optional(),
         item: z
           .object({
@@ -134,16 +137,17 @@ const invoiceSchema = z.object({
           .optional(),
         price: z
           .object({
-            netPrice: z.number().optional(),
-            baseQuantity: z.number().optional(),
+            netPrice: z.number().finite().optional(),
+            baseQuantity: z.number().finite().optional(),
             baseQuantityUnit: z.string().optional(),
           })
           .optional(),
         vat: z
-          .object({ categoryCode: z.string().optional(), rate: z.number().optional() })
+          .object({ categoryCode: z.string().optional(), rate: z.number().finite().optional() })
           .optional(),
       }),
     )
+    .max(1000)
     .optional(),
 });
 

@@ -122,7 +122,9 @@ export function KeyManager({ initialKeys }: { initialKeys: KeyRow[] }) {
                 <td className="px-4 py-2.5">{k.name}</td>
                 <td className="px-4 py-2.5 font-mono text-xs text-muted">{k.prefix}…</td>
                 <td className="px-4 py-2.5 text-muted">
-                  {k.lastUsedAt ? new Date(k.lastUsedAt).toLocaleDateString() : 'Never'}
+                  {/* ISO date slice is locale/timezone-stable, avoiding an SSR
+                      hydration mismatch in this client component. */}
+                  {k.lastUsedAt ? k.lastUsedAt.slice(0, 10) : 'Never'}
                 </td>
                 <td className="px-4 py-2.5">
                   {k.revokedAt ? (
