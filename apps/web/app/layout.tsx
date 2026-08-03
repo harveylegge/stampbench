@@ -83,7 +83,7 @@ function Footer() {
             certification-grade checks also run the official KoSIT validator.
           </p>
         </div>
-        <div className="flex gap-12">
+        <div className="flex flex-wrap gap-12">
           <div className="flex flex-col gap-2">
             <span className="font-medium text-muted">Product</span>
             <a href="/playground" className="hover:text-muted">Playground</a>
@@ -94,6 +94,17 @@ function Footer() {
             <span className="font-medium text-muted">Open source</span>
             <a href="/docs#library" className="hover:text-muted">@invoicegate/core</a>
             <a href="/docs#rules" className="hover:text-muted">Rules coverage</a>
+          </div>
+          <div className="flex flex-col gap-2">
+            <span className="font-medium text-muted">Trust</span>
+            <a href="/trust" className="hover:text-muted">Test evidence</a>
+            <a href="/security" className="hover:text-muted">Security</a>
+          </div>
+          <div className="flex flex-col gap-2">
+            <span className="font-medium text-muted">Legal</span>
+            <a href="/terms" className="hover:text-muted">Terms</a>
+            <a href="/privacy" className="hover:text-muted">Privacy</a>
+            <a href="/impressum" className="hover:text-muted">Impressum</a>
           </div>
         </div>
       </div>

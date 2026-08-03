@@ -175,6 +175,50 @@ export default function LandingPage() {
         </div>
       </section>
 
+      {/* Proof */}
+      <section className="border-t border-border py-20">
+        <div className="mx-auto max-w-6xl px-4">
+          <h2 className="mb-3 text-2xl font-semibold tracking-tight">
+            Don&apos;t take our word for it
+          </h2>
+          <p className="mb-10 max-w-2xl leading-relaxed text-muted">
+            A compliance tool is only worth using if it is right. Here is what we actually test —
+            with the numbers, and the three documents we currently flag, published openly.
+          </p>
+          <div className="mb-8 grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
+            {[
+              { figure: '57', label: 'Automated tests passing', sub: 'Library, CLI and API' },
+              { figure: '86', label: 'Official test documents run', sub: '45 UBL + 41 CII, 0 crashes' },
+              { figure: '56', label: 'Validation rules active', sub: 'EN 16931 + VAT families + BR-DE' },
+              { figure: '25', label: 'Review findings triaged', sub: 'Adversarially verified' },
+            ].map((s) => (
+              <div key={s.label} className="rounded-xl border border-border bg-surface p-5">
+                <div className="text-2xl font-semibold tracking-tight text-accent-hi">{s.figure}</div>
+                <div className="mt-1 text-sm">{s.label}</div>
+                <div className="mt-1 text-xs text-faint">{s.sub}</div>
+              </div>
+            ))}
+          </div>
+          <div className="flex flex-wrap items-center gap-4">
+            <Link
+              href="/trust"
+              className="rounded-lg border border-border bg-surface px-5 py-2.5 text-sm font-medium transition hover:border-border-hi"
+            >
+              See the full test evidence →
+            </Link>
+            <Link
+              href="/security"
+              className="rounded-lg border border-border bg-surface px-5 py-2.5 text-sm font-medium transition hover:border-border-hi"
+            >
+              Security practices →
+            </Link>
+            <span className="text-sm text-faint">
+              MIT-licensed engine — run it locally, verify every number yourself.
+            </span>
+          </div>
+        </div>
+      </section>
+
       {/* CTA */}
       <section className="border-t border-border bg-surface/40 py-20">
         <div className="mx-auto max-w-6xl px-4 text-center">
