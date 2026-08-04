@@ -13,7 +13,8 @@
   ],
   "scripts": {
     "build": "tsc -p tsconfig.build.json",
-    "test": "vitest run"
+    "test": "vitest run",
+    "prepublishOnly": "npm run build"
   },
   "keywords": [
     "xrechnung",
@@ -31,5 +32,8 @@
     "@types/node": "^22",
     "typescript": "^5.8.3",
     "vitest": "^3.1.4"
+  },
+  "engines": {
+    "node": ">=20"
   }
 }

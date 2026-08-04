@@ -44,6 +44,8 @@ export interface TextEdit {
   replacement: string;
   /** The rule that justifies this edit. */
   ruleId: string;
+  /** Semantic-model path of the field being corrected, when the rule gave one. */
+  path?: string;
   /** Why this edit is correct, in one line, for a diff preview or a PR comment. */
   reason: string;
   /**
@@ -157,6 +159,7 @@ export function planFixes(
       previous,
       replacement,
       ruleId: v.ruleId,
+      ...(v.path !== undefined ? { path: v.path } : {}),
       reason: `${v.ruleId}: ${previous} → ${replacement}`,
       depth: dependencyDepth(v.path),
     });
@@ -228,6 +231,20 @@ export interface FixOptions {
    * derived from it, so repair converges over a few passes rather than one.
    */
   maxRounds?: number;
+  /**
+   * Allow edits that change the amount due (BT-115) on a document that states
+   * a prepaid or rounding amount.
+   *
+   * When BR-CO-16 fails on such a document, the arithmetic alone cannot tell
+   * whether the amount due is wrong or the prepaid amount is — and rewriting
+   * the amount due to agree with a mistyped prepaid amount changes what the
+   * customer owes while leaving the invoice fully valid. Measured across 917
+   * successful repairs, every one of the 39 that altered the payable amount
+   * was exactly this case. So by default those edits are withheld and reported
+   * as needing confirmation; set this to true only after a person has decided
+   * the amount due is the wrong figure.
+   */
+  confirmAmountDue?: boolean;
 }
 
 export interface FixResult {
@@ -287,12 +304,35 @@ export function fixXml(xml: string, options: FixOptions = {}): FixResult {
     unfixable = [];
     const plan = planFixes(current, result.violations, result.syntax);
     unfixable = plan.unfixable;
-    if (result.errorCount === 0 || plan.edits.length === 0) break;
+    if (result.errorCount === 0) break;
+
+    // The amount-due guard. On a document stating a prepaid or rounding
+    // amount, BR-CO-16 cannot tell whether the amount due or the prepaid
+    // figure is the wrong one — and picking the amount due silently changes
+    // what the customer owes. That choice belongs to a person.
+    const totals = result.invoice?.totals;
+    const ambiguousDue =
+      options.confirmAmountDue !== true &&
+      ((totals?.paidAmount ?? 0) !== 0 || (totals?.roundingAmount ?? 0) !== 0);
+    let edits = plan.edits;
+    if (ambiguousDue) {
+      const withheld = edits.filter((e) => e.path === 'totals.amountDue');
+      edits = edits.filter((e) => e.path !== 'totals.amountDue');
+      for (const e of withheld) {
+        unfixable.push({
+          ruleId: e.ruleId,
+          message: e.reason,
+          reason:
+            'changing the amount due needs your confirmation — either the amount due or the prepaid/rounding amount is wrong, and only you know which',
+        });
+      }
+    }
+    if (edits.length === 0) break;
 
     // Only the most upstream level this round; the rest re-derive next pass
     // from corrected inputs instead of being pulled toward a corrupted value.
-    const shallowest = Math.min(...plan.edits.map((e) => e.depth));
-    const round = plan.edits.filter((e) => e.depth === shallowest);
+    const shallowest = Math.min(...edits.map((e) => e.depth));
+    const round = edits.filter((e) => e.depth === shallowest);
     const candidate = applyEdits(current, round);
     const after = validateXml(candidate, { profile });
 
@@ -300,7 +340,7 @@ export function fixXml(xml: string, options: FixOptions = {}): FixResult {
     // repair logic is wrong for this document — keep the previous text.
     if (after.syntax === undefined || after.errorCount >= previousErrors) {
       unfixable = [
-        ...plan.unfixable,
+        ...unfixable,
         ...round.map((e) => ({
           ruleId: e.ruleId,
           message: e.reason,

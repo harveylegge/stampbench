@@ -439,6 +439,29 @@ describe('invoicegate fix', () => {
     expect(cap.stdout()).toContain('human decision');
   });
 
+  it('withholds a fix that would change the amount due until confirmed', async () => {
+    // With a prepaid amount stated, BR-CO-16 cannot tell whether the amount
+    // due or the prepaid figure is wrong — rewriting the amount due would
+    // change what the customer owes. That decision needs a person.
+    const ambiguous = ublSample().replace(
+      '<cbc:PayableAmount currencyID="EUR">1190.00</cbc:PayableAmount>',
+      '<cbc:PrepaidAmount currencyID="EUR">190.00</cbc:PrepaidAmount>\n    <cbc:PayableAmount currencyID="EUR">1190.00</cbc:PayableAmount>',
+    );
+    const file = join(tmp, 'fix-amount-due.xml');
+    writeFileSync(file, ambiguous, 'utf8');
+
+    const preview = captured();
+    const code = await run(['fix', file, '--write'], preview.io);
+    expect(code).toBe(1);
+    expect(readFileSync(file, 'utf8')).toBe(ambiguous); // untouched
+    expect(preview.stdout()).toContain('confirmation');
+
+    const confirmed = captured();
+    const code2 = await run(['fix', file, '--write', '--fix-amount-due'], confirmed.io);
+    expect(code2).toBe(0);
+    expect(readFileSync(file, 'utf8')).toContain('<cbc:PayableAmount currencyID="EUR">1000.00</cbc:PayableAmount>');
+  });
+
   it('exits 0 and touches nothing when the invoice is already valid', async () => {
     const file = join(tmp, 'fix-clean.xml');
     writeFileSync(file, ublSample(), 'utf8');

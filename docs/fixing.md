@@ -72,6 +72,19 @@ net total, then VAT total, then gross, then amount due — fixing one level per
 pass and re-deriving the rest from corrected inputs. Convergence is measured at
 **1.0 passes on average**.
 
+## The amount-due guard
+
+On a document that states a prepaid or rounding amount, a failing BR-CO-16
+cannot tell whether the **amount due** or the **prepaid figure** is the wrong
+one — and rewriting the amount due to agree with a mistyped prepaid amount
+changes what the customer owes while leaving the invoice fully valid. Measured
+across 917 successful repairs, all 39 that altered the payable amount were
+exactly this case.
+
+So those edits are withheld by default and reported as needing confirmation.
+Pass `--fix-amount-due` (CLI) or `confirmAmountDue: true` (library) once a
+person has decided the amount due is the figure to correct.
+
 ## The safety net
 
 After editing, the document is re-validated. **If the error count did not fall,

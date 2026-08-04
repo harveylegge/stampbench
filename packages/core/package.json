@@ -19,7 +19,8 @@
   "scripts": {
     "build": "tsc -p tsconfig.build.json",
     "test": "vitest run",
-    "test:watch": "vitest"
+    "test:watch": "vitest",
+    "prepublishOnly": "npm run build"
   },
   "keywords": [
     "xrechnung",
@@ -41,5 +42,8 @@
   "devDependencies": {
     "typescript": "^5.8.3",
     "vitest": "^3.1.4"
+  },
+  "engines": {
+    "node": ">=20"
   }
 }

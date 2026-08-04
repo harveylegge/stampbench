@@ -56,7 +56,7 @@ Usage:
   invoicegate validate <file.xml|dir...> [--profile xrechnung|en16931]
                        [--format human|json|github|sarif] [--fail-on error|warning]
                        [--max-annotations <n>] [--json] [--quiet]
-  invoicegate fix <file.xml|dir...> [--write] [--profile xrechnung|en16931] [--json]
+  invoicegate fix <file.xml|dir...> [--write] [--fix-amount-due] [--profile xrechnung|en16931] [--json]
   invoicegate generate <invoice.json> [-o out.xml] [--no-validate]
   invoicegate regress <dir|file...> --from <ruleset> --to <ruleset> [--json] [--quiet]
   invoicegate rulesets
@@ -475,10 +475,12 @@ function fixCommand(args: string[], ctx: { out: Io['out']; err: Io['err']; color
   let write = false;
   let json = false;
   let quiet = false;
+  let confirmAmountDue = false;
 
   for (let i = 0; i < args.length; i++) {
     const a = args[i]!;
     if (a === '--write' || a === '-w') write = true;
+    else if (a === '--fix-amount-due') confirmAmountDue = true;
     else if (a === '--json') json = true;
     else if (a === '--quiet' || a === '-q') quiet = true;
     else if (a === '--profile' || a.startsWith('--profile=')) {
@@ -495,7 +497,7 @@ function fixCommand(args: string[], ctx: { out: Io['out']; err: Io['err']; color
   }
 
   if (paths.length === 0) {
-    ctx.err('invoicegate: missing file. Usage: invoicegate fix <file.xml|dir...> [--write] [--profile xrechnung|en16931] [--json]');
+    ctx.err('invoicegate: missing file. Usage: invoicegate fix <file.xml|dir...> [--write] [--fix-amount-due] [--fix-amount-due] [--profile xrechnung|en16931] [--json]');
     return 2;
   }
 
@@ -535,7 +537,7 @@ function fixCommand(args: string[], ctx: { out: Io['out']; err: Io['err']; color
       return 2;
     }
 
-    const result = fixXml(xml, { profile });
+    const result = fixXml(xml, { profile, confirmAmountDue });
     // Warnings are never repaired, so "remaining" counts errors only.
     const remaining = result.unfixable.filter((u) => result.errorsAfter > 0);
     totalFixes += result.applied.length;

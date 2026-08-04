@@ -1,0 +1,43 @@
+name: CI
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+
+permissions:
+  contents: read
+
+jobs:
+  test:
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    strategy:
+      matrix:
+        node: [20, 22]
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: ${{ matrix.node }}
+          cache: npm
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Build packages
+        run: |
+          npm run build -w @invoicegate/core
+          npm run build -w invoicegate
+
+      # Corpus-backed suites skip gracefully when the KoSIT test suite is not
+      # downloaded; the weekly parity workflow runs the full dual-run.
+      - name: Test @invoicegate/core
+        run: npm run test -w @invoicegate/core
+
+      - name: Test CLI
+        run: npm run test -w invoicegate
+
+      - name: Smoke-test the built CLI
+        run: node packages/cli/dist/cli.js --version

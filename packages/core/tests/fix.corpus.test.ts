@@ -93,7 +93,9 @@ describe.skipIf(FILES.length === 0)('fixXml against the official XRechnung corpu
         if (broken === undefined) continue;
         if (validateXml(broken.xml, { profile: 'xrechnung' }).errorCount === 0) continue;
 
-        const result = fixXml(broken.xml, { profile: 'xrechnung' });
+        // confirmAmountDue simulates the user confirming the amount due is the
+        // wrong figure — this sweep corrupts it deliberately, so it is.
+        const result = fixXml(broken.xml, { profile: 'xrechnung', confirmAmountDue: true });
         repaired++;
         const name = `${file.split(/[\\/]/).pop()} [${element}]`;
 
