@@ -156,7 +156,7 @@ function familyRule(def: FamilyDef): Rule {
         if (present(b.taxableAmount) && !amountsEqual(sum, b.taxableAmount)) {
           out.push(violation({ id: `BR-${code}-08`, severity: 'error', terms: ['BT-116'] },
             `VAT breakdown ${code}${code === 'S' && b.rate != null ? ` @ ${b.rate}%` : ''}: taxable amount (BT-116) should be ${sum.toFixed(2)} (sum of lines − allowances + charges in this category${code === 'S' ? '/rate' : ''}) but is ${b.taxableAmount.toFixed(2)}.`,
-            { path: `vatBreakdown[${index}].taxableAmount`, value: b.taxableAmount }));
+            { path: `vatBreakdown[${index}].taxableAmount`, value: b.taxableAmount, expected: sum.toFixed(2) }));
         }
 
         // -09: VAT amount per group.
@@ -166,13 +166,13 @@ function familyRule(def: FamilyDef): Rule {
             if (!amountsEqual(expected, b.taxAmount, ROUNDING_TOLERANCE)) {
               out.push(violation({ id: `BR-${code}-09`, severity: 'error', terms: ['BT-117'] },
                 `VAT breakdown ${code} @ ${b.rate}%: VAT amount (BT-117) should be ${expected.toFixed(2)} but is ${b.taxAmount.toFixed(2)}.`,
-                { path: `vatBreakdown[${index}].taxAmount`, value: b.taxAmount }));
+                { path: `vatBreakdown[${index}].taxAmount`, value: b.taxAmount, expected: expected.toFixed(2) }));
             }
           }
         } else if (present(b.taxAmount) && !amountsEqual(b.taxAmount, 0)) {
           out.push(violation({ id: `BR-${code}-09`, severity: 'error', terms: ['BT-117'] },
             `VAT breakdown ${code} (${def.label}): VAT amount (BT-117) must be 0, got ${b.taxAmount.toFixed(2)}.`,
-            { path: `vatBreakdown[${index}].taxAmount`, value: b.taxAmount }));
+            { path: `vatBreakdown[${index}].taxAmount`, value: b.taxAmount, expected: "0.00" }));
         }
 
         // -10: exemption reason presence/absence.

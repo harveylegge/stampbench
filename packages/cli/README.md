@@ -59,6 +59,33 @@ invoicegate validate ./invoices --format sarif > invoicegate.sarif
 See [CI annotations](../../docs/ci-annotations.md) for the GitHub Action, an
 example workflow, and how precise the line numbers actually are.
 
+### `invoicegate fix <file.xml|dir...>`
+
+Repairs the problems that have exactly one correct answer — totals and VAT
+amounts that disagree with the figures they are derived from — by editing those
+values in your file and nothing else.
+
+```sh
+invoicegate fix invoice.xml            # show what would change; writes nothing
+invoicegate fix ./invoices --write     # apply the fixes
+invoicegate fix ./invoices --json      # machine-readable plan
+```
+
+```
+invoice.xml
+  fix   line 77    BR-CO-17, BR-S-09  99.99 → 22.04
+  keep            BR-DE-15  no derivable correct value — this needs a human decision, not arithmetic
+1 fix applied, 1 error needing a person
+```
+
+It never regenerates the document — that would silently discard the ~26% of
+elements our semantic model does not represent — and it never invents business
+data. Anything needing a human decision is reported, never guessed. See
+[Repair](../../docs/fixing.md).
+
+Without `--write` it changes nothing and exits `1` while fixes are outstanding,
+so it works as a CI gate like `prettier --check`.
+
 ### `invoicegate generate <invoice.json>`
 
 Builds XRechnung 3.0 UBL XML from a JSON semantic model (either the bare

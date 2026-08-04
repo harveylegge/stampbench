@@ -3,6 +3,18 @@
  *
  * Elements are emitted in UBL schema order (order is not optional in XSD
  * sequences). Only present fields are emitted. All text is XML-escaped.
+ *
+ * **This is for authoring new invoices, not for round-tripping existing ones.**
+ * The semantic model is a documented subset of UBL, so anything it does not
+ * model is gone after `parse → generate`. Measured over the 45 UBL documents of
+ * the official XRechnung test suite: **74.1% of elements survive the round
+ * trip**; 72 distinct element names lose content, including `SubInvoiceLine`
+ * (nested lines entirely), line-level `AllowanceCharge`, `InvoicePeriod`,
+ * `CompanyLegalForm` and `AddressLine`.
+ *
+ * So never "repair" a customer's document by regenerating it — that silently
+ * deletes a quarter of it. Edit the original text in place instead, using the
+ * positions from `locate/` to change only the offending value.
  */
 import type { AllowanceCharge, Invoice, Party } from '../model/invoice.js';
 import { XRECHNUNG_30_SPEC_ID } from '../model/codes.js';

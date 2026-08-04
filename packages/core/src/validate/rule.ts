@@ -17,6 +17,17 @@ export interface Violation {
   path?: string;
   /** The offending value, when useful. */
   value?: string | number;
+  /**
+   * The value the document should have carried, when the rule can derive it
+   * deterministically from the rest of the document — a total that disagrees
+   * with the figures it sums, for instance.
+   *
+   * Only set this where the answer is arithmetic and unambiguous. It must
+   * never be a guess at business data: a missing VAT identifier or buyer
+   * reference has no correct value that can be computed, and inventing one
+   * would be worse than leaving the document invalid.
+   */
+  expected?: string | number;
 }
 
 export interface Rule {
@@ -70,7 +81,7 @@ export function present(v: unknown): boolean {
 export function violation(
   rule: Pick<Rule, 'id' | 'severity' | 'terms'>,
   message: string,
-  extra?: Partial<Pick<Violation, 'path' | 'value' | 'terms'>>,
+  extra?: Partial<Pick<Violation, 'path' | 'value' | 'terms' | 'expected'>>,
 ): Violation {
   return {
     ruleId: rule.id,
@@ -79,5 +90,6 @@ export function violation(
     terms: extra?.terms ?? rule.terms,
     ...(extra?.path !== undefined ? { path: extra.path } : {}),
     ...(extra?.value !== undefined ? { value: extra.value } : {}),
+    ...(extra?.expected !== undefined ? { expected: extra.expected } : {}),
   };
 }

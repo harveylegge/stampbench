@@ -86,6 +86,33 @@ describe.skipIf(FILES.length === 0)('locateViolations against the official XRech
     expect(bad.slice(0, 15)).toEqual([]);
   });
 
+  it('points valueLine/valueColumn at the offending value itself', () => {
+    // A consumer rewriting or highlighting the value must not have to search
+    // the line for it — the same amount appears many times in an invoice.
+    const bad: string[] = [];
+    let checked = 0;
+
+    for (const file of FILES) {
+      const xml = readFileSync(file, 'utf8');
+      const result = validateXml(xml, { profile: 'xrechnung' });
+      if (result.syntax === undefined) continue;
+      const lines = xml.split(/\r\n|\r|\n/);
+
+      for (const v of locateViolations(xml, result.violations, result.syntax)) {
+        const { valueLine, valueColumn, value } = v.location;
+        if (valueLine === undefined || valueColumn === undefined || value === undefined) continue;
+        checked++;
+        const found = lines[valueLine - 1]?.slice(valueColumn - 1, valueColumn - 1 + value.length);
+        if (found !== value) {
+          bad.push(`${file.split(/[\\/]/).pop()}:${valueLine}:${valueColumn} holds "${found}" not "${value}"`);
+        }
+      }
+    }
+
+    expect(bad.slice(0, 10)).toEqual([]);
+    expect(checked).toBeGreaterThan(0);
+  });
+
   it('gives every violation a location', () => {
     for (const file of FILES.slice(0, 10)) {
       const xml = readFileSync(file, 'utf8');

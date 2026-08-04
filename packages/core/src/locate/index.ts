@@ -29,6 +29,16 @@ export interface ViolationLocation {
   column: number;
   /** 1-based line where the anchor element closes. */
   endLine: number;
+  /**
+   * 1-based position of the offending *value* itself, when the anchor has one.
+   * Distinct from `line`/`column`, which point at the element or attribute
+   * name. A consumer that wants to rewrite or highlight the value needs this:
+   * searching the line for `value` instead is ambiguous the moment the same
+   * text appears twice, which is routine in an invoice full of repeated
+   * amounts and currency codes.
+   */
+  valueLine?: number;
+  valueColumn?: number;
   /** The document path that was resolved. */
   xpath: string;
   precision: LocationPrecision;
@@ -200,6 +210,10 @@ export function locateViolations(
         via,
       };
       if (hit.value !== undefined) location.value = hit.value;
+      if (hit.valueLine !== undefined) {
+        location.valueLine = hit.valueLine;
+        location.valueColumn = hit.valueColumn;
+      }
       return { ...violation, location };
     };
 

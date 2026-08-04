@@ -126,7 +126,7 @@ const arithmeticRules: Rule[] = [
         ? null
         : [violation({ id: 'BR-CO-10', severity: 'error', terms: ['BT-106', 'BT-131'] },
             `Sum of line net amounts is ${computed.toFixed(2)} but BT-106 states ${(stated as number).toFixed(2)}.`,
-            { path: 'totals.sumOfLineNet', value: stated as number })];
+            { path: 'totals.sumOfLineNet', value: stated as number, expected: computed.toFixed(2) })];
     },
   },
   {
@@ -140,7 +140,7 @@ const arithmeticRules: Rule[] = [
         ? null
         : [violation({ id: 'BR-CO-13', severity: 'error', terms: ['BT-109'] },
             `Total without VAT (BT-109) should be ${expected.toFixed(2)} (BT-106 − BT-107 + BT-108) but is ${(t.taxExclusive as number).toFixed(2)}.`,
-            { path: 'totals.taxExclusive', value: t.taxExclusive as number })];
+            { path: 'totals.taxExclusive', value: t.taxExclusive as number, expected: expected.toFixed(2) })];
     },
   },
   {
@@ -155,7 +155,7 @@ const arithmeticRules: Rule[] = [
         ? null
         : [violation({ id: 'BR-CO-14', severity: 'error', terms: ['BT-110'] },
             `Sum of VAT breakdown amounts is ${computed.toFixed(2)} but total VAT (BT-110) states ${(stated as number).toFixed(2)}.`,
-            { path: 'totals.taxTotal', value: stated as number })];
+            { path: 'totals.taxTotal', value: stated as number, expected: computed.toFixed(2) })];
     },
   },
   {
@@ -169,7 +169,7 @@ const arithmeticRules: Rule[] = [
         ? null
         : [violation({ id: 'BR-CO-15', severity: 'error', terms: ['BT-112'] },
             `Total with VAT (BT-112) should be ${expected.toFixed(2)} (BT-109 + BT-110) but is ${(t.taxInclusive as number).toFixed(2)}.`,
-            { path: 'totals.taxInclusive', value: t.taxInclusive as number })];
+            { path: 'totals.taxInclusive', value: t.taxInclusive as number, expected: expected.toFixed(2) })];
     },
   },
   {
@@ -183,7 +183,7 @@ const arithmeticRules: Rule[] = [
         ? null
         : [violation({ id: 'BR-CO-16', severity: 'error', terms: ['BT-115'] },
             `Amount due (BT-115) should be ${expected.toFixed(2)} (BT-112 − BT-113 + BT-114) but is ${(t.amountDue as number).toFixed(2)}.`,
-            { path: 'totals.amountDue', value: t.amountDue as number })];
+            { path: 'totals.amountDue', value: t.amountDue as number, expected: expected.toFixed(2) })];
     },
   },
   {
@@ -198,7 +198,7 @@ const arithmeticRules: Rule[] = [
         if (!amountsEqual(expected, b.taxAmount, ROUNDING_TOLERANCE)) {
           out.push(violation({ id: 'BR-CO-17', severity: 'error', terms: ['BT-117'] },
             `VAT breakdown ${b.categoryCode}${b.rate != null ? ` @ ${b.rate}%` : ''}: tax amount should be ${expected.toFixed(2)} (${b.taxableAmount.toFixed(2)} × ${b.rate}%) but is ${b.taxAmount.toFixed(2)}.`,
-            { path: `vatBreakdown[${idx}].taxAmount`, value: b.taxAmount }));
+            { path: `vatBreakdown[${idx}].taxAmount`, value: b.taxAmount, expected: expected.toFixed(2) }));
         }
       });
       return out.length ? out : null;

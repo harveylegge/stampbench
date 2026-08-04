@@ -14,6 +14,7 @@ import { join } from 'node:path';
 import {
   compareRulesets,
   generateXRechnungUbl,
+  fixXml,
   listRulesets,
   locateViolations,
   parseCiiInvoice,
@@ -55,6 +56,7 @@ Usage:
   invoicegate validate <file.xml|dir...> [--profile xrechnung|en16931]
                        [--format human|json|github|sarif] [--fail-on error|warning]
                        [--max-annotations <n>] [--json] [--quiet]
+  invoicegate fix <file.xml|dir...> [--write] [--profile xrechnung|en16931] [--json]
   invoicegate generate <invoice.json> [-o out.xml] [--no-validate]
   invoicegate regress <dir|file...> --from <ruleset> --to <ruleset> [--json] [--quiet]
   invoicegate rulesets
@@ -65,6 +67,18 @@ Commands:
   validate   Check UBL or CII (ZUGFeRD / Factur-X) invoices against the
              EN 16931 business rules, plus the German BR-DE rules when the
              profile is xrechnung (the default). Accepts files and directories.
+  fix        Repair the problems that have one correct answer — totals and VAT
+             amounts that disagree with the figures they are computed from —
+             by editing those values in the file and nothing else. Anything
+             needing a human decision is reported, never guessed. Shows what it
+             would change; pass --write to apply it.
+  generate   Build XRechnung 3.0 UBL XML from a JSON semantic model
+             (either the bare invoice object or { "invoice": { ... } }).
+  regress    Re-check a folder of invoices against a different rule set and
+             report which documents would START failing. Use it before a new
+             specification takes effect, so you fix invoices on your schedule
+             instead of on the switchover date.
+  rulesets   List the rule sets available to --from / --to.
 
 Output formats (validate):
   human    Readable report with line numbers (default).
@@ -75,17 +89,10 @@ Output formats (validate):
 
   A line marked "~" is approximate: the field is absent from the document,
   so the nearest enclosing element is reported instead.
-  generate   Build XRechnung 3.0 UBL XML from a JSON semantic model
-             (either the bare invoice object or { "invoice": { ... } }).
-  regress    Re-check a folder of invoices against a different rule set and
-             report which documents would START failing. Use it before a new
-             specification takes effect, so you fix invoices on your schedule
-             instead of on the switchover date.
-  rulesets   List the rule sets available to --from / --to.
 
 Exit codes:
-  0  valid / success / no regressions
-  1  validation errors found / regressions found
+  0  valid / success / no regressions / nothing left to fix
+  1  validation errors found / regressions found / fixes outstanding
   2  usage or IO error`;
 
 const ESC = String.fromCharCode(27); // the ANSI escape character, kept out of the source as a literal byte
@@ -458,6 +465,145 @@ function regressCommand(args: string[], ctx: { out: Io['out']; err: Io['err']; c
   return report.summary.regressions > 0 ? 1 : 0;
 }
 
+// ————————————————————————————————————————————————————————————————
+// fix — repair what can be repaired, refuse the rest
+// ————————————————————————————————————————————————————————————————
+
+function fixCommand(args: string[], ctx: { out: Io['out']; err: Io['err']; color: boolean }): number {
+  const paths: string[] = [];
+  let profile: Profile = 'xrechnung';
+  let write = false;
+  let json = false;
+  let quiet = false;
+
+  for (let i = 0; i < args.length; i++) {
+    const a = args[i]!;
+    if (a === '--write' || a === '-w') write = true;
+    else if (a === '--json') json = true;
+    else if (a === '--quiet' || a === '-q') quiet = true;
+    else if (a === '--profile' || a.startsWith('--profile=')) {
+      const value = a.startsWith('--profile=') ? a.slice('--profile='.length) : args[++i];
+      if (value !== 'xrechnung' && value !== 'en16931') {
+        ctx.err(`invoicegate: --profile must be "xrechnung" or "en16931" (got "${value ?? ''}").`);
+        return 2;
+      }
+      profile = value;
+    } else if (a.startsWith('-')) {
+      ctx.err(`invoicegate: unknown option "${a}" for fix.`);
+      return 2;
+    } else paths.push(a);
+  }
+
+  if (paths.length === 0) {
+    ctx.err('invoicegate: missing file. Usage: invoicegate fix <file.xml|dir...> [--write] [--profile xrechnung|en16931] [--json]');
+    return 2;
+  }
+
+  let files: string[];
+  if (paths.length === 1 && isFile(paths[0]!)) files = [paths[0]!];
+  else {
+    try {
+      files = collectXmlFiles(paths);
+    } catch (e) {
+      ctx.err(`invoicegate: cannot read input: ${errorMessage(e)}`);
+      return 2;
+    }
+    if (files.length === 0) {
+      ctx.err(`invoicegate: no .xml files found in ${paths.join(', ')}.`);
+      return 2;
+    }
+  }
+
+  const c = makeColors(ctx.color);
+  const report: {
+    file: string;
+    applied: { line: number; ruleId: string; previous: string; replacement: string }[];
+    unfixable: { ruleId: string; reason: string; message: string }[];
+    valid: boolean;
+    written: boolean;
+  }[] = [];
+  let totalFixes = 0;
+  let totalRemaining = 0;
+  let failedWrite = false;
+
+  for (const file of files) {
+    let xml: string;
+    try {
+      xml = readFileSync(file, 'utf8');
+    } catch (e) {
+      ctx.err(`invoicegate: cannot read ${file}: ${errorMessage(e)}`);
+      return 2;
+    }
+
+    const result = fixXml(xml, { profile });
+    // Warnings are never repaired, so "remaining" counts errors only.
+    const remaining = result.unfixable.filter((u) => result.errorsAfter > 0);
+    totalFixes += result.applied.length;
+    totalRemaining += result.errorsAfter;
+
+    let written = false;
+    if (write && result.applied.length > 0) {
+      try {
+        writeFileSync(file, result.xml, 'utf8');
+        written = true;
+      } catch (e) {
+        ctx.err(`invoicegate: cannot write ${file}: ${errorMessage(e)}`);
+        failedWrite = true;
+      }
+    }
+
+    report.push({
+      file,
+      applied: result.applied.map((e) => ({
+        line: e.line,
+        ruleId: e.ruleId,
+        previous: e.previous,
+        replacement: e.replacement,
+      })),
+      unfixable: remaining.map((u) => ({ ruleId: u.ruleId, reason: u.reason, message: u.message })),
+      valid: result.valid,
+      written,
+    });
+  }
+
+  if (failedWrite) return 2;
+
+  if (json) {
+    ctx.out(
+      JSON.stringify(
+        { files: report, summary: { files: report.length, fixes: totalFixes, errorsRemaining: totalRemaining, written: write } },
+        null,
+        2,
+      ),
+    );
+  } else if (!quiet) {
+    for (const entry of report) {
+      if (entry.applied.length === 0 && entry.unfixable.length === 0) continue;
+      ctx.out(c.bold(entry.file));
+      for (const e of entry.applied) {
+        ctx.out(`  ${c.green('fix')}   line ${String(e.line).padEnd(5)} ${c.bold(e.ruleId)}  ${e.previous} → ${c.bold(e.replacement)}`);
+      }
+      for (const u of entry.unfixable) {
+        ctx.out(`  ${c.yellow('keep')}  ${' '.repeat(10)}${c.bold(u.ruleId)}  ${c.dim(u.reason)}`);
+      }
+    }
+  }
+
+  if (!json) {
+    const verb = write ? 'applied' : 'available';
+    const fixes = `${totalFixes} fix${totalFixes === 1 ? '' : 'es'}`;
+    const summary = `${fixes} ${verb}, ${plural(totalRemaining, 'error')} needing a person`;
+    if (totalFixes === 0 && totalRemaining === 0) ctx.out(c.green('Nothing to fix.'));
+    else ctx.out(totalRemaining > 0 ? c.yellow(summary) : c.green(summary));
+    if (!write && totalFixes > 0) ctx.err('invoicegate: nothing was written — re-run with --write to apply these fixes.');
+  }
+
+  // Preview mode fails the build when work is outstanding, like a --check flag;
+  // with --write only genuinely unrepairable problems fail it.
+  if (write) return totalRemaining > 0 ? 1 : 0;
+  return totalFixes > 0 || totalRemaining > 0 ? 1 : 0;
+}
+
 /** Accept either the bare invoice object or a { "invoice": { ... } } wrapper. */
 function unwrapInvoice(parsed: unknown): Record<string, unknown> | undefined {
   if (typeof parsed !== 'object' || parsed === null || Array.isArray(parsed)) return undefined;
@@ -584,6 +730,8 @@ export async function run(argv: string[], io?: Io): Promise<number> {
         return validateCommand(rest, { out, err, color });
       case 'generate':
         return generateCommand(rest, { out, err });
+      case 'fix':
+        return fixCommand(rest, { out, err, color });
       case 'regress':
         return regressCommand(rest, { out, err, color });
       case 'rulesets':

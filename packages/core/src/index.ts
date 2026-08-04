@@ -99,6 +99,9 @@ export type {
   XmlNode,
 } from './locate/index.js';
 
+export { applyEdits, fixXml, planFixes } from './fix/index.js';
+export type { FixOptions, FixPlan, FixResult, TextEdit, Unfixable } from './fix/index.js';
+
 export { DEFAULT_PROCESS_ID, generateXRechnungUbl, withXRechnungDefaults } from './generate/ubl.js';
 export type { GenerateOptions } from './generate/ubl.js';
 

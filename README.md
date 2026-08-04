@@ -61,6 +61,32 @@ npx invoicegate validate ./invoices      # a whole folder
 npx invoicegate generate invoice.json -o invoice.xml
 ```
 
+## Repair — not just "your invoice is invalid"
+
+Every validator tells you a document is wrong. `fix` answers the next question:
+
+```bash
+npx invoicegate fix ./invoices --write
+```
+
+```
+rechnung-2026-08.xml
+  fix   line 77    BR-CO-17, BR-S-09  99.99 → 22.04
+  fix   line 91    BR-CO-16  999.00 → 336.90
+  keep            BR-DE-15  no derivable correct value — this needs a human decision, not arithmetic
+2 fixes applied, 1 error needing a person
+```
+
+It edits the wrong value **in your file** and nothing else — formatting,
+comments, namespace prefixes and every element we don't model stay byte-for-byte
+intact. It never regenerates the document (that would discard 26% of it), and it
+never invents business data: a missing VAT ID has no computable answer, so it is
+reported, not guessed.
+
+Measured on the official XRechnung suite — corrupt a derived figure in each of
+the 83 clean documents: **248/248 repaired to valid, 186 of them byte-identical
+to the pristine original.** [How it works, and its limits](docs/fixing.md).
+
 ## In CI — on the failing line
 
 ```yaml
@@ -127,6 +153,7 @@ Full reference: [/docs](https://invoicegate.dev/docs) (or `apps/web/app/docs/pag
 ## Documentation
 
 - [Architecture](docs/architecture.md)
+- [Repair](docs/fixing.md) — what `fix` will and will not change, and why
 - [CI annotations](docs/ci-annotations.md) — the GitHub Action, SARIF, and how precise the line numbers are
 - [Deployment guide](docs/deployment.md) — Vercel + Neon + Stripe + Anthropic
 - [Roadmap](docs/roadmap.md)

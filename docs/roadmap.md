@@ -45,7 +45,33 @@ Also verified and *rejected* as differentiators: Peppol participant lookup (free
 OpenPeppol + 6 vendors — bundle it into validation or skip), per-rule explainer pages
 (Invoice Navigator already has 1,388 with failing/fixed XML — generate ours from the
 rule engine as a by-product, don't treat as an SEO moat). Still open: rule-indexed
-invalid fixture generation, and JSON-Patch remediation with per-hunk rule provenance.
+invalid fixture generation.
+
+## In-place repair (SHIPPED 2026-08-04)
+
+`invoicegate fix` — see `docs/fixing.md`. Every competitor tells you the document is
+invalid; this answers "what do I change" for the class of failures with exactly one
+computable answer (the EN 16931 arithmetic chain), by editing that value in the
+user's own file.
+
+**The architectural point, and why it is not trivially copied.** Repair is a *text
+edit* at a position computed by `packages/core/src/locate/`, not a regeneration.
+Measured: `parse → generate` retains only **74.1%** of elements over the 45 UBL
+corpus documents (72 element names lose content, incl. whole `SubInvoiceLine`
+trees), so any tool that "fixes" by rebuilding the document destroys a quarter of
+it. Doing this safely requires per-element source positions — which is the same
+machinery the CI annotations needed, and which a Schematron/XPath engine or a
+hosted API that never sees the caller's bytes does not have.
+
+Measured on the official suite: corrupt one derived figure in each of the 83 clean
+documents → **248/248 repaired to valid, 186 (75%) byte-identical to the pristine
+original**, mean 1.0 passes. Guarded by `packages/core/tests/fix.corpus.test.ts`.
+
+Two invariants are load-bearing and must not be relaxed: never regenerate the
+document, and never invent business data (a missing VAT ID has no derivable value;
+guessing one converts "invalid" into "quietly wrong", which is worse because it then
+passes validation). After editing, the result is re-validated and the whole attempt
+discarded if the error count did not fall.
 
 ## CI line-level PR annotations (SHIPPED 2026-08-03)
 

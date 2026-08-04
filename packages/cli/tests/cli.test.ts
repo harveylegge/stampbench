@@ -386,6 +386,114 @@ describe('invoicegate validate — CI output', () => {
   });
 });
 
+describe('invoicegate fix', () => {
+  /** The sample with a VAT amount that disagrees with taxable × rate. */
+  function wrongVat(): string {
+    return ublSample().replace(
+      '<cbc:TaxAmount currencyID="EUR">190.00</cbc:TaxAmount>\n      <cac:TaxCategory>',
+      '<cbc:TaxAmount currencyID="EUR">999.00</cbc:TaxAmount>\n      <cac:TaxCategory>',
+    );
+  }
+
+  it('repairs a derived amount and leaves the rest of the file untouched', async () => {
+    const file = join(tmp, 'fix-vat.xml');
+    const broken = wrongVat();
+    expect(broken).not.toBe(ublSample());
+    writeFileSync(file, broken, 'utf8');
+    const cap = captured();
+
+    const code = await run(['fix', file, '--write'], cap.io);
+
+    expect(code).toBe(0);
+    const repaired = readFileSync(file, 'utf8');
+    // The corrected file is exactly the original sample again.
+    expect(repaired).toBe(ublSample());
+    expect(cap.stdout()).toContain('999.00 → 190.00');
+  });
+
+  it('writes nothing unless --write is given, and says so', async () => {
+    const file = join(tmp, 'fix-preview.xml');
+    const broken = wrongVat();
+    writeFileSync(file, broken, 'utf8');
+    const cap = captured();
+
+    const code = await run(['fix', file], cap.io);
+
+    // Non-zero so a pipeline fails while fixes are outstanding, like --check.
+    expect(code).toBe(1);
+    expect(readFileSync(file, 'utf8')).toBe(broken);
+    expect(cap.stderr()).toContain('--write');
+  });
+
+  it('refuses to invent a value it cannot derive', async () => {
+    const file = join(tmp, 'fix-missing.xml');
+    writeFileSync(file, ublSample({ buyerReference: false }), 'utf8');
+    const cap = captured();
+
+    const code = await run(['fix', file, '--write'], cap.io);
+
+    // Nothing was repairable, and the file is untouched.
+    expect(code).toBe(1);
+    expect(readFileSync(file, 'utf8')).toBe(ublSample({ buyerReference: false }));
+    expect(cap.stdout()).toContain('BR-DE-15');
+    expect(cap.stdout()).toContain('human decision');
+  });
+
+  it('exits 0 and touches nothing when the invoice is already valid', async () => {
+    const file = join(tmp, 'fix-clean.xml');
+    writeFileSync(file, ublSample(), 'utf8');
+    const cap = captured();
+
+    const code = await run(['fix', file], cap.io);
+
+    expect(code).toBe(0);
+    expect(readFileSync(file, 'utf8')).toBe(ublSample());
+    expect(cap.stdout()).toContain('Nothing to fix');
+  });
+
+  it('reports fixes and refusals in --json', async () => {
+    const file = join(tmp, 'fix-json.xml');
+    writeFileSync(file, wrongVat(), 'utf8');
+    const cap = captured();
+
+    await run(['fix', file, '--json'], cap.io);
+
+    const parsed = JSON.parse(cap.stdout()) as {
+      files: Array<{
+        applied: Array<{ line: number; ruleId: string; previous: string; replacement: string }>;
+        unfixable: Array<{ ruleId: string; reason: string }>;
+      }>;
+      summary: { fixes: number; written: boolean };
+    };
+    expect(parsed.summary.written).toBe(false);
+    expect(parsed.summary.fixes).toBe(1);
+    const edit = parsed.files[0]!.applied[0]!;
+    expect(edit.previous).toBe('999.00');
+    expect(edit.replacement).toBe('190.00');
+    expect(edit.line).toBeGreaterThan(0);
+  });
+
+  it('fixes a whole directory', async () => {
+    const dir = mkdtempSync(join(tmpdir(), 'invoicegate-fixdir-'));
+    writeFileSync(join(dir, 'a.xml'), wrongVat(), 'utf8');
+    writeFileSync(join(dir, 'b.xml'), ublSample(), 'utf8');
+    const cap = captured();
+
+    const code = await run(['fix', dir, '--write'], cap.io);
+
+    expect(code).toBe(0);
+    expect(readFileSync(join(dir, 'a.xml'), 'utf8')).toBe(ublSample());
+    expect(readFileSync(join(dir, 'b.xml'), 'utf8')).toBe(ublSample());
+  });
+
+  it('rejects an unknown option', async () => {
+    const cap = captured();
+    const code = await run(['fix', join(tmp, 'fix-clean.xml'), '--repair-everything'], cap.io);
+    expect(code).toBe(2);
+    expect(cap.stderr()).toContain('unknown option');
+  });
+});
+
 describe('invoicegate generate', () => {
   it('generates XML from a JSON invoice and exits 0', async () => {
     const file = join(tmp, 'invoice.json');

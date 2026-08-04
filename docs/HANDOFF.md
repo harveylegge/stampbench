@@ -26,14 +26,21 @@ a real risk — the plan is built to batch them into one session.
 
 | Package | What | Tests |
 |---|---|---|
-| `packages/core` | Rule engine: UBL **and** CII parsing, EN 16931 + VAT families + BR-DE rules, XRechnung generation, auto-computed totals, versioned rulesets + regression diff, **source-position index + violation→line locator** (`src/locate/`) | 101 ✅ |
-| `packages/cli` | `validate`, `generate`, `regress`, `rulesets` — CI exit codes, **`--format github\|sarif`, multi-file, `--fail-on`** | 42 ✅ |
+| `packages/core` | Rule engine: UBL **and** CII parsing, EN 16931 + VAT families + BR-DE rules, XRechnung generation, auto-computed totals, versioned rulesets + regression diff, source-position index + violation→line locator (`src/locate/`), **in-place repair** (`src/fix/`) | 110 ✅ |
+| `packages/cli` | `validate`, **`fix`**, `generate`, `regress`, `rulesets` — CI exit codes, `--format github\|sarif`, multi-file, `--fail-on` | 49 ✅ |
 | `apps/web` | Landing, playground, docs, auth, API keys, metering, Stripe, trust/security/legal pages | 6 ✅ |
 | `action.yml` | Composite GitHub Action wrapping the CLI | — |
 | `tools/parity` | KoSIT parity harness (pinned validator 1.6.2 + XRechnung 3.0.2 corpus) | — |
 
-**149 tests green. Production build clean. All flows browser-verified locally.**
+**165 tests green. Production build clean. All flows browser-verified locally.**
 (Root `npm test` now includes the CLI workspace — it previously skipped it.)
+
+**Two facts to reuse, both measured, both load-bearing:**
+- `parse → generate` retains only **74.1%** of elements (45 UBL corpus docs; 72
+  element names lose content). Never "repair" or round-trip a customer document by
+  regenerating it — edit the original text using `src/locate/` positions.
+- Repair on the official suite: **248/248 corrupted derived figures restored to
+  valid, 186 (75%) byte-identical** to the pristine original.
 
 ### Verified facts (do not re-derive; these are on the public /trust page)
 - 68 tests total (44 core / 18 CLI / 6 web)
