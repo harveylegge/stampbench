@@ -28,16 +28,16 @@ jobs:
 
       - name: Build packages
         run: |
-          npm run build -w @invoicegate/core
-          npm run build -w invoicegate
+          npm run build -w @stampbench/core
+          npm run build -w stampbench
 
       # Corpus-backed suites skip gracefully when the KoSIT test suite is not
       # downloaded; the weekly parity workflow runs the full dual-run.
-      - name: Test @invoicegate/core
-        run: npm run test -w @invoicegate/core
+      - name: Test @stampbench/core
+        run: npm run test -w @stampbench/core
 
       - name: Test CLI
-        run: npm run test -w invoicegate
+        run: npm run test -w stampbench
 
       - name: Smoke-test the built CLI
         run: node packages/cli/dist/cli.js --version

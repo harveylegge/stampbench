@@ -4,7 +4,7 @@ import { Fill } from '@/components/legal';
 
 export const metadata: Metadata = {
   title: 'Impressum / Legal notice',
-  description: 'Anbieterkennzeichnung nach § 5 DDG — provider identification for InvoiceGate.',
+  description: 'Anbieterkennzeichnung nach § 5 DDG — provider identification for Stampbench.',
 };
 
 /**
@@ -50,7 +50,7 @@ export default function ImpressumPage() {
       <section className="mb-8">
         <h2 className="mb-3 text-lg font-semibold tracking-tight">Kontakt / Contact</h2>
         <p className="text-sm leading-relaxed text-muted">
-          E-Mail: <Fill>[hello@invoicegate.dev]</Fill>
+          E-Mail: <Fill>[hello@stampbench.com]</Fill>
           <br />
           Telefon: <Fill>[phone number — required for direct electronic contact]</Fill>
         </p>
@@ -92,15 +92,15 @@ export default function ImpressumPage() {
         </p>
         <p className="mt-2 text-sm leading-relaxed text-muted">
           We are neither willing nor obliged to participate in dispute resolution proceedings before
-          a consumer arbitration board. (InvoiceGate is offered to businesses, not consumers.)
+          a consumer arbitration board. (Stampbench is offered to businesses, not consumers.)
         </p>
       </section>
 
       <section className="mb-8">
         <h2 className="mb-3 text-lg font-semibold tracking-tight">Haftung / Liability</h2>
         <p className="text-sm leading-relaxed text-muted">
-          InvoiceGate ist Entwicklerwerkzeug und stellt keine Rechts- oder Steuerberatung dar. Eine
-          erfolgreiche Prüfung durch InvoiceGate ist keine Garantie dafür, dass eine Rechnung von
+          Stampbench ist Entwicklerwerkzeug und stellt keine Rechts- oder Steuerberatung dar. Eine
+          erfolgreiche Prüfung durch Stampbench ist keine Garantie dafür, dass eine Rechnung von
           einer Behörde, einem Kunden oder einem Zugangspunkt akzeptiert wird. Einzelheiten dazu
           finden Sie in unseren{' '}
           <Link href="/terms" className="text-accent-hi hover:underline">

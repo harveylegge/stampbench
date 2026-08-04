@@ -4,7 +4,7 @@ import Link from 'next/link';
 export const metadata: Metadata = {
   title: 'Trust & test evidence',
   description:
-    'How InvoiceGate proves correctness: 57 automated tests, 86 official XRechnung test-suite instances, an adversarial security review, and a published KoSIT parity harness — including what we have not yet proven.',
+    'How Stampbench proves correctness: 57 automated tests, 86 official XRechnung test-suite instances, an adversarial security review, and a published KoSIT parity harness — including what we have not yet proven.',
 };
 
 /**
@@ -15,8 +15,8 @@ export const metadata: Metadata = {
  */
 
 const TEST_SUITES = [
-  { name: '@invoicegate/core', count: 39, covers: 'Rule engine, UBL + CII parsing, generation, totals arithmetic, round-trips' },
-  { name: 'invoicegate (CLI)', count: 12, covers: 'Validate/generate commands, CI exit codes, JSON output, error paths' },
+  { name: '@stampbench/core', count: 39, covers: 'Rule engine, UBL + CII parsing, generation, totals arithmetic, round-trips' },
+  { name: 'stampbench (CLI)', count: 12, covers: 'Validate/generate commands, CI exit codes, JSON output, error paths' },
   { name: 'Web application', count: 6, covers: 'Plan/quota logic, API-key hashing, rate limiting' },
 ];
 
@@ -42,7 +42,7 @@ export default function TrustPage() {
       <h1 className="mb-3 text-3xl font-semibold tracking-tight">Trust &amp; test evidence</h1>
       <p className="mb-10 max-w-2xl leading-relaxed text-muted">
         A compliance tool is only worth using if it is right. This page shows exactly how we test
-        InvoiceGate, what the results are, and — just as importantly — what we have{' '}
+        Stampbench, what the results are, and — just as importantly — what we have{' '}
         <strong className="text-text">not</strong> yet proven. Every figure below comes from an
         artefact in our repository, not from an estimate.
       </p>
@@ -214,7 +214,7 @@ export default function TrustPage() {
         </p>
         <ul className="list-disc space-y-2 pl-5 text-sm leading-relaxed text-muted">
           <li>
-            <strong className="text-text">This is not legal advice</strong>, and passing InvoiceGate
+            <strong className="text-text">This is not legal advice</strong>, and passing Stampbench
             is not a legal guarantee that an authority or access point will accept your invoice.
             For certification-grade sign-off, run the official KoSIT validator too. Our job is to
             make that run pass.

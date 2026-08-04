@@ -1,6 +1,6 @@
-# InvoiceGate — SEO Strategy
+# Stampbench — SEO Strategy
 
-Search is InvoiceGate's primary acquisition channel: no founder audience, no sales team, and a market where every buyer's journey starts with a Google search — either a panicked German business query ("e-rechnung pflicht 2027") or a developer query ("xrechnung nodejs"). The strategy has three layers: **programmatic rule pages** (the moat), **developer intent pages**, and **mandate/informational content** that feeds the first two.
+Search is Stampbench's primary acquisition channel: no founder audience, no sales team, and a market where every buyer's journey starts with a Google search — either a panicked German business query ("e-rechnung pflicht 2027") or a developer query ("xrechnung nodejs"). The strategy has three layers: **programmatic rule pages** (the moat), **developer intent pages**, and **mandate/informational content** that feeds the first two.
 
 ## 1. Target keywords (20)
 
@@ -44,7 +44,7 @@ Notes:
 2. **Plain-language explanation** — what the rule means, why it exists, who typically hits it (2–3 sentences, generated once with AI, then human-reviewed and frozen).
 3. **The official rule text** — quoted exactly, cited to EN 16931 / XRechnung CIUS with version number.
 4. **Failing XML snippet → fixed XML snippet** — minimal diff, syntax-highlighted.
-5. **Fix in TypeScript** — the `@invoicegate/core` code that makes this rule pass (for generation-side rules like BR-CO, note that InvoiceGate satisfies it by construction).
+5. **Fix in TypeScript** — the `@stampbench/core` code that makes this rule pass (for generation-side rules like BR-CO, note that Stampbench satisfies it by construction).
 6. **CTA:** "Paste your invoice into the validator to see every failing rule explained" → playground, pre-filtered to this rule.
 7. **Related rules** — same business group (e.g. all BR-CO arithmetic rules cross-link).
 

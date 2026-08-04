@@ -5,7 +5,7 @@ import { Clause, Fill, LegalPage } from '@/components/legal';
 export const metadata: Metadata = {
   title: 'Privacy Policy',
   description:
-    'What personal data InvoiceGate processes, why, on what legal basis, who our sub-processors are, and how to exercise your GDPR rights.',
+    'What personal data Stampbench processes, why, on what legal basis, who our sub-processors are, and how to exercise your GDPR rights.',
 };
 
 /**
@@ -155,7 +155,7 @@ export default function PrivacyPage() {
           delete your account and its data yourself at any time from Settings.
         </p>
         <p>
-          To exercise any right, email <Fill>[privacy@invoicegate.dev]</Fill>. We aim to respond
+          To exercise any right, email <Fill>[privacy@stampbench.com]</Fill>. We aim to respond
           within 30 days. If you believe we have handled your data improperly you may complain to
           your supervisory authority — in the UK, the Information Commissioner&apos;s Office; in
           Germany, your state data protection authority.

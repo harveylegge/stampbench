@@ -8,7 +8,7 @@
 ## 1. What this is, in one paragraph
 
 A developer-first **e-invoicing compliance** business. An MIT-licensed TypeScript library
-(`@invoicegate/core`) plus a CLI (`invoicegate`) validate and generate structured e-invoices
+(`@stampbench/core`) plus a CLI (`stampbench`) validate and generate structured e-invoices
 (EN 16931 / XRechnung / ZUGFeRD-Factur-X), with a Next.js SaaS on top (playground, hosted API,
 accounts, metering, Stripe billing, AI error explanations). Chosen over 39 other ideas by a
 15-agent research workflow because demand is **legally forced** (Germany: receiving mandatory
@@ -54,7 +54,7 @@ a real risk — the plan is built to batch them into one session.
 ```bash
 npm test                    # all suites
 npm run dev                 # http://localhost:3000
-npx invoicegate regress ./invoices --from en16931@2017 --to xrechnung@3.0
+npx stampbench regress ./invoices --from en16931@2017 --to xrechnung@3.0
 ```
 
 ---
@@ -80,10 +80,9 @@ before it can be trusted. Full detail in `docs/roadmap.md`.
 
 ---
 
-## 4. ⚠️ The rebrand — unresolved, blocks launch
+## 4. ✅ The rebrand — RESOLVED 2026-08-04: **Stampbench**
 
-**`einvoicegate.com` already exists in this market.** A new name is needed before any
-publish. Two research rounds done; the checking method is proven and reusable.
+**Stampbench** was chosen (stampbench.com + npm `stampbench` + `@stampbench/core` all verified free at decision time). The repo folder on disk is still `Downloadsinvoicegate`; only the product/package names changed. History below kept for the record. Two research rounds done; the checking method is proven and reusable.
 
 ### Method (reuse it — it works)
 `scratchpad/rdap-check.mjs` queries **Verisign RDAP** (authoritative for `.com`):
@@ -121,8 +120,8 @@ clearance. Budget a paid EUIPO/DPMA search in Nice classes 9/35/36/42 before fil
 
 ### Blocked on Harvey (one ~3-hour session; batch them all)
 1. Pick the name → buy domain
-2. `npm publish` `@invoicegate/core` + `invoicegate` (both names verified free).
-   **This also switches on the GitHub Action**, which runs `npx invoicegate@<version>` —
+2. `npm publish` `@stampbench/core` + `stampbench` (both names verified free).
+   **This also switches on the GitHub Action**, which runs `npx stampbench@<version>` —
    the Action is written and tested but cannot resolve the package until it is published.
 3. Deploy: Vercel + Neon Postgres (switch the `provider` line in `prisma/schema.prisma`,
    set `SESSION_SECRET` + `DATABASE_URL`). **Vercel MCP can deploy directly — no GitHub needed.**
@@ -162,6 +161,6 @@ clearance. Budget a paid EUIPO/DPMA search in Nice classes 9/35/36/42 before fil
 
 ## 7. Suggested opening message for the new chat
 
-> Continuing InvoiceGate (`C:\Users\harvey\Downloads\invoicegate`). Read `docs/HANDOFF.md`
+> Continuing Stampbench (`C:\Users\harvey\Downloads\stampbench`). Read `docs/HANDOFF.md`
 > first, then `docs/roadmap.md`. Next task: **<pick one — finish the name screen / build CI PR
 > annotations / prep the 3-hour founder session checklist>**.

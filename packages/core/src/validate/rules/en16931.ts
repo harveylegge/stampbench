@@ -227,7 +227,7 @@ const arithmeticRules: Rule[] = [
   },
 ];
 
-/** Format/code-list diagnostics. IG-* ids are InvoiceGate's own checks. */
+/** Format/code-list diagnostics. IG-* ids are Stampbench's own checks. */
 const formatRules: Rule[] = [
   {
     id: 'IG-FMT-01', severity: 'error', profile: 'en16931', terms: ['BT-2', 'BT-9'],

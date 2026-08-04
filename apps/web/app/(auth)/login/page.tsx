@@ -9,7 +9,7 @@ export default function LoginPage() {
   return (
     <div className="mx-auto flex max-w-sm flex-col px-4 py-24">
       <h1 className="mb-1 text-2xl font-semibold tracking-tight">Welcome back</h1>
-      <p className="mb-8 text-sm text-muted">Sign in to your InvoiceGate account.</p>
+      <p className="mb-8 text-sm text-muted">Sign in to your Stampbench account.</p>
       <form action={formAction} className="flex flex-col gap-4">
         <label className="flex flex-col gap-1.5 text-sm">
           <span className="text-muted">Email</span>

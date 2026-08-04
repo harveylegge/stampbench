@@ -33,7 +33,7 @@ The repo is a npm-workspaces monorepo; the deployable app is `apps/web`.
 |---|---|---|
 | `DATABASE_URL` | ✅ | Neon pooled string |
 | `SESSION_SECRET` | ✅ | `openssl rand -hex 32` — auth refuses to run without it |
-| `NEXT_PUBLIC_APP_URL` | ✅ | `https://invoicegate.dev` |
+| `NEXT_PUBLIC_APP_URL` | ✅ | `https://stampbench.com` |
 | `ANTHROPIC_API_KEY` | recommended | enables live AI explanations |
 | `STRIPE_SECRET_KEY` | for billing | sk_live_… |
 | `STRIPE_WEBHOOK_SECRET` | for billing | from the webhook endpoint below |
@@ -65,10 +65,10 @@ The repo is a npm-workspaces monorepo; the deployable app is `apps/web`.
 ```bash
 cd packages/core
 npm run build && npm test
-npm publish --access public        # name @invoicegate/core is verified available
+npm publish --access public        # name @stampbench/core is verified available
 ```
 
-Alternatively publish the unscoped `invoicegate` name as an alias package later.
+Alternatively publish the unscoped `stampbench` name as an alias package later.
 
 ## Rate-limit note
 

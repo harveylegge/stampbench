@@ -4,7 +4,7 @@ import Link from 'next/link';
 export const metadata: Metadata = {
   title: 'Security',
   description:
-    'How InvoiceGate handles your invoice data, credentials and infrastructure: encryption, key handling, XML parsing safety, rate limiting, and responsible disclosure.',
+    'How Stampbench handles your invoice data, credentials and infrastructure: encryption, key handling, XML parsing safety, rate limiting, and responsible disclosure.',
 };
 
 /**
@@ -100,7 +100,7 @@ export default function SecurityPage() {
         <p className="text-sm leading-relaxed text-muted">
           If your security review says invoice data must never leave your infrastructure, you do not
           need to argue with us about our controls — use{' '}
-          <code className="font-mono text-xs text-accent-hi">@invoicegate/core</code> locally. It is
+          <code className="font-mono text-xs text-accent-hi">@stampbench/core</code> locally. It is
           MIT-licensed, runs offline, has no telemetry, and contains the same rule engine the hosted
           API uses. The hosted product exists to save you maintenance, not to hold your data.
         </p>
@@ -139,7 +139,7 @@ export default function SecurityPage() {
         <h2 className="mb-2 text-lg font-semibold tracking-tight">Reporting a vulnerability</h2>
         <p className="mb-3 text-sm leading-relaxed text-muted">
           If you believe you have found a security issue, please report it privately to{' '}
-          <span className="font-mono text-accent-hi">security@invoicegate.dev</span> before
+          <span className="font-mono text-accent-hi">security@stampbench.com</span> before
           disclosing it publicly. Include enough detail to reproduce the issue.
         </p>
         <ul className="space-y-1.5 text-sm text-muted">

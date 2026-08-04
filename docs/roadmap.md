@@ -6,7 +6,7 @@ current, at volume, with liability posture. Sequenced so nothing markets before 
 can be trusted. Supersedes the previous launch-first ordering.
 
 ## Phase 0 — The One Founder Session (single 3-hour block; the only credential-gated step)
-- [ ] Publish `@invoicegate/core` (+ `invoicegate` alias) to npm
+- [ ] Publish `@stampbench/core` (+ `stampbench` alias) to npm
 - [ ] Deploy to Vercel (Frankfurt/fra1) + Neon (Frankfurt); domain
 - [ ] Legal posture for the German market: Impressum, AVV/DPA template, explicit
       no-retention statement for invoice payloads, AI-explanation opt-in note
@@ -21,10 +21,10 @@ can be trusted. Supersedes the previous launch-first ordering.
 - [ ] **KoSIT parity harness**: dual-run our validator and the official validator over
       the public XRechnung test suite in CI; publish a live zero-divergence page.
       This page IS the launch asset. (Harness in tools/parity; full dual-run in CI.)
-- [x] `npx invoicegate validate` CLI — shipped (packages/cli, CI exit codes).
+- [x] `npx stampbench validate` CLI — shipped (packages/cli, CI exit codes).
 - [x] **GitHub Action + line-level PR annotations** — shipped (`action.yml`,
-      `--format github|sarif`). Activates once `invoicegate` is on npm, since the
-      Action runs `npx invoicegate@<version>`.
+      `--format github|sarif`). Activates once `stampbench` is on npm, since the
+      Action runs `npx stampbench@<version>`.
 - [x] Playground: drag-and-drop + CII auto-detect (waitlist unnecessary — CII shipped).
 - [x] Version-pinned results (`meta.specVersions` in every response).
 
@@ -37,7 +37,7 @@ take effect"* (i.e. in production, on the switchover date). The gap exists becau
 it contradicts the managed-compliance pitch ("you don't need to test, we handle it").
 - [x] Versioned, registerable rulesets (`en16931@2017`, `xrechnung@3.0`, + custom)
 - [x] `compareRulesets()` — per-document transitions + rules ranked by blast radius
-- [x] `invoicegate regress` / `invoicegate rulesets`, exit 1 on regression for CI
+- [x] `stampbench regress` / `stampbench rulesets`, exit 1 on regression for CI
 - [ ] Hosted batch endpoint (corpus upload) — CLI is local-first by design; API next
 - [ ] Register each new published spec release as a `candidate` ruleset on release day
 
@@ -49,7 +49,7 @@ invalid fixture generation.
 
 ## In-place repair (SHIPPED 2026-08-04)
 
-`invoicegate fix` — see `docs/fixing.md`. Every competitor tells you the document is
+`stampbench fix` — see `docs/fixing.md`. Every competitor tells you the document is
 invalid; this answers "what do I change" for the class of failures with exactly one
 computable answer (the EN 16931 arithmetic chain), by editing that value in the
 user's own file.
@@ -75,7 +75,7 @@ discarded if the error count did not fall.
 
 ## CI line-level PR annotations (SHIPPED 2026-08-03)
 
-`invoicegate validate --format github|sarif` plus a composite GitHub Action
+`stampbench validate --format github|sarif` plus a composite GitHub Action
 (`action.yml`). Violations are anchored to the line and column of the offending
 element via a source-position index over the raw XML (`packages/core/src/locate/`).
 Measured by deleting one required field at a time from all 86 corpus documents

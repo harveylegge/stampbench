@@ -1,4 +1,4 @@
-# InvoiceGate — Blog Pipeline (15 posts, prioritised by SEO value)
+# Stampbench — Blog Pipeline (15 posts, prioritised by SEO value)
 
 Priority bands: **P1** = high volume or high commercial intent, write first. **P2** = solid supporting content. **P3** = community/link-building value more than search volume. German-language posts noted `[DE]` — they are written in German, not translated afterthoughts. Every post links to at least one rule page and one product surface (see internal linking plan in `seo-strategy.md`).
 

@@ -1,6 +1,6 @@
 import { join } from 'node:path';
 import { describe, expect, it } from 'vitest';
-import type { LocatedViolation } from '@invoicegate/core';
+import type { LocatedViolation } from '@stampbench/core';
 import { formatGithub, formatSarif, workspacePath, type FileReport } from '../src/report.js';
 
 function violation(overrides: Partial<LocatedViolation> = {}): LocatedViolation {
@@ -44,7 +44,7 @@ describe('formatGithub', () => {
     expect(emitted).toBe(1);
     expect(suppressed).toBe(0);
     expect(lines[0]).toBe(
-      '::error file=invoices/a.xml,line=12,endLine=12,col=3,title=BR-DE-15 — InvoiceGate::Missing buyer reference. (BT-10)',
+      '::error file=invoices/a.xml,line=12,endLine=12,col=3,title=BR-DE-15 — Stampbench::Missing buyer reference. (BT-10)',
     );
   });
 
@@ -119,7 +119,7 @@ describe('formatSarif', () => {
     const sarif = parsed();
     expect(sarif.version).toBe('2.1.0');
     expect(sarif.$schema).toContain('sarif-2.1.0');
-    expect(sarif.runs[0]!.tool.driver.name).toBe('InvoiceGate');
+    expect(sarif.runs[0]!.tool.driver.name).toBe('Stampbench');
     expect(sarif.runs[0]!.tool.driver.version).toBe('9.9.9');
   });
 
@@ -144,8 +144,8 @@ describe('formatSarif', () => {
     };
     const moved = report({ violations: [violation({ location: { ...violation().location, line: 99 } })] });
     const b = JSON.parse(formatSarif([moved], { version: '1' })) as typeof a;
-    expect(a.runs[0]!.results[0]!.partialFingerprints['invoicegate/v1']).toBe(
-      b.runs[0]!.results[0]!.partialFingerprints['invoicegate/v1'],
+    expect(a.runs[0]!.results[0]!.partialFingerprints['stampbench/v1']).toBe(
+      b.runs[0]!.results[0]!.partialFingerprints['stampbench/v1'],
     );
   });
 

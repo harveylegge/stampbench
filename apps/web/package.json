@@ -14,7 +14,7 @@
   },
   "dependencies": {
     "@anthropic-ai/sdk": "^0.57.0",
-    "@invoicegate/core": "*",
+    "@stampbench/core": "*",
     "@prisma/client": "^6.8.2",
     "bcryptjs": "^3.0.2",
     "next": "^15.3.3",

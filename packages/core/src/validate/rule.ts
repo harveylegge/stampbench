@@ -6,7 +6,7 @@ export type Profile = 'en16931' | 'xrechnung';
 
 /** A single failed check. */
 export interface Violation {
-  /** Rule identifier — official EN 16931 / XRechnung ids (BR-*, BR-CO-*, BR-DE-*) or InvoiceGate diagnostics (IG-*). */
+  /** Rule identifier — official EN 16931 / XRechnung ids (BR-*, BR-CO-*, BR-DE-*) or Stampbench diagnostics (IG-*). */
   ruleId: string;
   severity: Severity;
   /** Human-readable description of what failed, in our own words. */

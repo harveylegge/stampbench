@@ -1,5 +1,5 @@
 import { NextResponse } from 'next/server';
-import { validateXml, RULESET_VERSION } from '@invoicegate/core';
+import { validateXml, RULESET_VERSION } from '@stampbench/core';
 import { apiError, gateRequest, readBoundedText } from '@/lib/api';
 import { recordUsage } from '@/lib/usage';
 import { log } from '@/lib/log';

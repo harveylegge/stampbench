@@ -4,7 +4,7 @@ import Link from 'next/link';
 export const metadata: Metadata = {
   title: 'Documentation',
   description:
-    'InvoiceGate API reference: validate and generate XRechnung / EN 16931 e-invoices via REST or the @invoicegate/core TypeScript library.',
+    'Stampbench API reference: validate and generate XRechnung / EN 16931 e-invoices via REST or the @stampbench/core TypeScript library.',
 };
 
 function Code({ children }: { children: string }) {
@@ -55,14 +55,14 @@ export default function DocsPage() {
         <h1 className="text-3xl font-semibold tracking-tight">Documentation</h1>
         <p className="mt-2 text-muted">
           Everything you need to validate and generate compliant e-invoices. Base URL:{' '}
-          <code className="font-mono text-sm text-accent-hi">https://invoicegate.dev</code>
+          <code className="font-mono text-sm text-accent-hi">https://stampbench.com</code>
         </p>
 
         <H2 id="quickstart">Quickstart</H2>
         <p className="text-sm leading-relaxed text-muted">
           Validate a document straight away — anonymous calls are allowed (10/hour per IP):
         </p>
-        <Code>{`curl -s https://invoicegate.dev/api/v1/validate \\
+        <Code>{`curl -s https://stampbench.com/api/v1/validate \\
   -H "Content-Type: application/xml" \\
   --data-binary @invoice.xml`}</Code>
         <p className="text-sm leading-relaxed text-muted">
@@ -78,10 +78,10 @@ export default function DocsPage() {
           them, instead of on the switchover date.
         </p>
         <Code>{`# Which rule sets can I compare?
-npx invoicegate rulesets
+npx stampbench rulesets
 
 # Will my invoices survive the German rules?
-npx invoicegate regress ./invoices --from en16931@2017 --to xrechnung@3.0`}</Code>
+npx stampbench regress ./invoices --from en16931@2017 --to xrechnung@3.0`}</Code>
         <Code>{`en16931@2017 → xrechnung@3.0  (40 → 56 rules)
 
 3 documents would START failing under XRechnung 3.0.
@@ -104,7 +104,7 @@ Affected documents:
           The same machinery works in the library, including against a rule set you register
           yourself — a newly published specification, or your own house rules:
         </p>
-        <Code>{`import { compareRulesets, registerRuleset, getRuleset } from '@invoicegate/core';
+        <Code>{`import { compareRulesets, registerRuleset, getRuleset } from '@stampbench/core';
 
 const report = compareRulesets(documents, 'en16931@2017', 'xrechnung@3.0');
 report.summary.regressions;  // documents that pass today and would not tomorrow
@@ -243,17 +243,17 @@ registerRuleset({
 
         <H2 id="library">The open-source library</H2>
         <p className="text-sm leading-relaxed text-muted">
-          <code className="font-mono text-accent-hi">@invoicegate/core</code> (MIT) runs the same
+          <code className="font-mono text-accent-hi">@stampbench/core</code> (MIT) runs the same
           validation and generation locally — unlimited, offline, free forever:
         </p>
-        <Code>{`npm install @invoicegate/core
+        <Code>{`npm install @stampbench/core
 
 import {
   validateUblXml,       // XML → violations
   validateInvoice,      // semantic model → violations
   generateXRechnungUbl, // semantic model → XRechnung UBL
   withComputedTotals,   // fills BG-22 totals + BG-23 VAT breakdown
-} from '@invoicegate/core';
+} from '@stampbench/core';
 
 const result = validateUblXml(xml, { profile: 'xrechnung' });
 if (!result.valid) console.table(result.violations);`}</Code>
@@ -264,7 +264,7 @@ if (!result.valid) console.table(result.violations);`}</Code>
 
         <H2 id="rules">Rules coverage</H2>
         <p className="text-sm leading-relaxed text-muted">
-          InvoiceGate implements a documented, growing subset of the official rule sets — currently:
+          Stampbench implements a documented, growing subset of the official rule sets — currently:
         </p>
         <ul className="my-3 list-disc pl-5 text-sm leading-relaxed text-muted">
           <li>EN 16931 structural rules: BR-01…BR-16, per-line BR-21…BR-27, BR-CO-04</li>
@@ -280,7 +280,7 @@ if (!result.valid) console.table(result.violations);`}</Code>
           Syntax coverage: <strong className="text-text">UBL and CII</strong> (ZUGFeRD/Factur-X
           XML) for validation, UBL for generation. Every result is version-pinned to the spec
           release it was checked against (EN 16931-1:2017, XRechnung 3.0 — see{' '}
-          <code className="font-mono">meta.specVersions</code>). InvoiceGate is developer tooling,
+          <code className="font-mono">meta.specVersions</code>). Stampbench is developer tooling,
           not legal advice — for certification-grade sign-off, also run the official KoSIT
           validator in CI. Our goal is that by the time you run it, it passes — and we publish our
           divergence from the KoSIT validator rather than asking you to take that on faith.

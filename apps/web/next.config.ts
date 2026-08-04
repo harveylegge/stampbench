@@ -23,7 +23,7 @@ const securityHeaders = [
 ];
 
 const nextConfig: NextConfig = {
-  transpilePackages: ['@invoicegate/core'],
+  transpilePackages: ['@stampbench/core'],
   poweredByHeader: false,
   async headers() {
     return [{ source: '/(.*)', headers: securityHeaders }];

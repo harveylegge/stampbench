@@ -265,7 +265,7 @@ export function Playground() {
             <div className="min-h-105 rounded-xl border border-border bg-bg p-4">
               {!genResult && !error && (
                 <p className="text-sm text-faint">
-                  Send lines with quantities, prices and VAT categories — InvoiceGate computes the
+                  Send lines with quantities, prices and VAT categories — Stampbench computes the
                   totals (BT-106…BT-115) and the VAT breakdown so the BR-CO arithmetic rules pass by
                   construction.
                 </p>

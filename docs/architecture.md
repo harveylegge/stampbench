@@ -12,7 +12,7 @@
  curl / SDKs ───────────────► │  /api/v1/*    │  /api/stripe/*  /api/keys  /api/ai/*
                               ▼               ▼
                        ┌─────────────┐  ┌───────────┐   ┌────────────┐
-                       │ @invoicegate│  │  Prisma   │   │  Stripe    │
+                       │ @stampbench│  │  Prisma   │   │  Stripe    │
                        │   /core     │  │ SQLite/PG │   │  Anthropic │
                        └─────────────┘  └───────────┘   └────────────┘
 ```

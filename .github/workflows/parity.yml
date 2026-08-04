@@ -1,7 +1,7 @@
 name: KoSIT parity
 
 # Dual-runs the official KoSIT validator (legal reference for XRechnung) and
-# @invoicegate/core over the official XRechnung test-suite, and publishes the
+# @stampbench/core over the official XRechnung test-suite, and publishes the
 # delta report as an artifact + job summary. See tools/parity/README.md.
 
 on:
@@ -33,8 +33,8 @@ jobs:
       - name: Install dependencies
         run: npm ci
 
-      - name: Build @invoicegate/core
-        run: npm run build -w @invoicegate/core
+      - name: Build @stampbench/core
+        run: npm run build -w @stampbench/core
 
       - name: Download pinned KoSIT tooling (validator, config, test-suite)
         run: node tools/parity/download.mjs

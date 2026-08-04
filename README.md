@@ -1,4 +1,4 @@
-# InvoiceGate
+# Stampbench
 
 **E-invoicing compliance, minus the pain.** Validate and generate XRechnung / EN 16931
 e-invoices with a TypeScript-first library and hosted API — with AI-written, plain-language
@@ -6,20 +6,20 @@ explanations for cryptic rule violations.
 
 Germany requires every company to be able to *receive* e-invoices since January 2025 and to
 *issue* them from January 2027 (2028 for the smallest businesses). France and other EU states
-follow. InvoiceGate is the developer-facing layer for that mandate wave.
+follow. Stampbench is the developer-facing layer for that mandate wave.
 
 ## Repository layout
 
 ```
-packages/core     @invoicegate/core — MIT-licensed library (npm)
+packages/core     @stampbench/core — MIT-licensed library (npm)
                   UBL + CII (ZUGFeRD/Factur-X) parsing · EN 16931 rule engine incl.
                   VAT category families (BR-S/E/AE/Z/K/G/O) + BR-DE · XRechnung
                   generation · auto-computed totals (BR-CO passes by construction)
-packages/cli      invoicegate — `npx invoicegate validate invoice.xml` (CI-friendly
+packages/cli      stampbench — `npx stampbench validate invoice.xml` (CI-friendly
                   exit codes) and `generate` from JSON
 tools/parity      KoSIT parity harness — dual-runs our validator against the official
                   reference validator over the public XRechnung test suite
-apps/web          invoicegate.dev — Next.js 15 SaaS
+apps/web          stampbench.com — Next.js 15 SaaS
                   landing · playground · docs · auth · API keys · usage metering ·
                   Stripe billing · AI error explanations (Claude) · admin
 docs/             architecture, deployment, roadmap, marketing launch pack
@@ -44,7 +44,7 @@ npm run build          # full production build
 ## The library
 
 ```ts
-import { validateXml, generateXRechnungUbl, withComputedTotals } from '@invoicegate/core';
+import { validateXml, generateXRechnungUbl, withComputedTotals } from '@stampbench/core';
 
 const result = validateXml(xml); // auto-detects UBL or CII (ZUGFeRD/Factur-X)
 // → { valid, syntax: "cii", violations: [{ ruleId: "BR-DE-15", severity: "error", … }] }
@@ -56,9 +56,9 @@ const ubl = generateXRechnungUbl(invoice); // XRechnung 3.0 UBL
 ## The CLI
 
 ```bash
-npx invoicegate validate invoice.xml     # exit 0 = valid, 1 = errors — CI-ready
-npx invoicegate validate ./invoices      # a whole folder
-npx invoicegate generate invoice.json -o invoice.xml
+npx stampbench validate invoice.xml     # exit 0 = valid, 1 = errors — CI-ready
+npx stampbench validate ./invoices      # a whole folder
+npx stampbench generate invoice.json -o invoice.xml
 ```
 
 ## Repair — not just "your invoice is invalid"
@@ -66,7 +66,7 @@ npx invoicegate generate invoice.json -o invoice.xml
 Every validator tells you a document is wrong. `fix` answers the next question:
 
 ```bash
-npx invoicegate fix ./invoices --write
+npx stampbench fix ./invoices --write
 ```
 
 ```
@@ -91,7 +91,7 @@ to the pristine original.** [How it works, and its limits](docs/fixing.md).
 
 ```yaml
 - uses: actions/checkout@v4
-- uses: invoicegate/invoicegate@v1
+- uses: stampbench/stampbench@v1
   with:
     paths: ./invoices
 ```
@@ -120,7 +120,7 @@ Rule sets change on a published schedule, and the artefacts are released *before
 become binding. So test the future rather than being switched onto it:
 
 ```bash
-npx invoicegate regress ./invoices --from en16931@2017 --to xrechnung@3.0
+npx stampbench regress ./invoices --from en16931@2017 --to xrechnung@3.0
 ```
 
 ```
@@ -141,14 +141,14 @@ invoices against the rules that were in force when you issued them.
 ## The API
 
 ```bash
-curl -s https://invoicegate.dev/api/v1/validate \
+curl -s https://stampbench.com/api/v1/validate \
   -H "Authorization: Bearer ig_live_…" \
   -H "Content-Type: application/xml" \
   --data-binary @invoice.xml
 ```
 
 Endpoints: `POST /api/v1/validate`, `POST /api/v1/generate`, `POST /api/ai/explain`.
-Full reference: [/docs](https://invoicegate.dev/docs) (or `apps/web/app/docs/page.tsx`).
+Full reference: [/docs](https://stampbench.com/docs) (or `apps/web/app/docs/page.tsx`).
 
 ## Documentation
 
@@ -161,9 +161,9 @@ Full reference: [/docs](https://invoicegate.dev/docs) (or `apps/web/app/docs/pag
 
 ## Positioning honesty
 
-InvoiceGate is developer tooling, not legal advice. Rule coverage is a documented subset of
+Stampbench is developer tooling, not legal advice. Rule coverage is a documented subset of
 EN 16931 + XRechnung (see the docs page); for certification-grade sign-off also run the
-official KoSIT validator — InvoiceGate's job is that by the time you run it, it passes.
+official KoSIT validator — Stampbench's job is that by the time you run it, it passes.
 
 ## License
 

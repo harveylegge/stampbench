@@ -5,13 +5,13 @@ import { PLANS } from '@/lib/plans';
 export const metadata: Metadata = {
   title: 'Pricing',
   description:
-    'InvoiceGate pricing: free tier with 100 API calls/month, paid plans from £19/month. Unlimited local validation with the open-source library.',
+    'Stampbench pricing: free tier with 100 API calls/month, paid plans from £19/month. Unlimited local validation with the open-source library.',
 };
 
 const faqs = [
   {
     q: 'What counts as a document?',
-    a: 'Each request to /api/v1/validate or /api/v1/generate counts as one document. Local validation with the open-source @invoicegate/core library is unlimited and free forever — the quota only applies to the hosted API.',
+    a: 'Each request to /api/v1/validate or /api/v1/generate counts as one document. Local validation with the open-source @stampbench/core library is unlimited and free forever — the quota only applies to the hosted API.',
   },
   {
     q: 'What does the Platform tier actually include?',
@@ -27,7 +27,7 @@ const faqs = [
   },
   {
     q: 'Is this legal advice? Will my invoice be accepted?',
-    a: 'InvoiceGate is developer tooling, not legal advice. We implement the published EN 16931 and XRechnung rules and document our coverage precisely; for certification-grade sign-off, also run the official KoSIT validator (we make passing it much easier).',
+    a: 'Stampbench is developer tooling, not legal advice. We implement the published EN 16931 and XRechnung rules and document our coverage precisely; for certification-grade sign-off, also run the official KoSIT validator (we make passing it much easier).',
   },
   {
     q: 'Can I cancel anytime?',

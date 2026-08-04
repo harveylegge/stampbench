@@ -1,6 +1,6 @@
 import Link from 'next/link';
 
-const HERO_SNIPPET = `import { validateUblXml } from '@invoicegate/core';
+const HERO_SNIPPET = `import { validateUblXml } from '@stampbench/core';
 
 const result = validateUblXml(xml);
 // {
@@ -21,7 +21,7 @@ const features = [
   },
   {
     title: 'Totals computed by construction',
-    body: 'Send lines with quantities, prices and VAT categories. InvoiceGate derives BT-106 through BT-115 and the VAT breakdown so the BR-CO arithmetic rules pass every time — the part hand-rolled generators always get wrong.',
+    body: 'Send lines with quantities, prices and VAT categories. Stampbench derives BT-106 through BT-115 and the VAT breakdown so the BR-CO arithmetic rules pass every time — the part hand-rolled generators always get wrong.',
   },
   {
     title: 'Open source where it counts',
@@ -29,7 +29,7 @@ const features = [
   },
   {
     title: 'Know what breaks before it breaks',
-    body: 'Rule sets change on a published schedule — and the artefacts land before they become binding. Point InvoiceGate at your invoices, diff them against the next rule set, and get a ranked list of what to fix. Nobody else lets you test the future; they just switch the rules on you.',
+    body: 'Rule sets change on a published schedule — and the artefacts land before they become binding. Point Stampbench at your invoices, diff them against the next rule set, and get a ranked list of what to fix. Nobody else lets you test the future; they just switch the rules on you.',
   },
   {
     title: 'Built for the mandate wave',
@@ -84,7 +84,7 @@ export default function LandingPage() {
               </Link>
             </div>
             <div className="mt-8 font-mono text-sm text-faint">
-              npm install <span className="text-accent-hi">@invoicegate/core</span>
+              npm install <span className="text-accent-hi">@stampbench/core</span>
             </div>
           </div>
           <div className="rounded-xl border border-border-hi bg-surface shadow-2xl shadow-accent/10">
@@ -112,7 +112,7 @@ export default function LandingPage() {
             Millions of European businesses are being forced onto structured e-invoices, and the
             tooling assumes you enjoy reading Schematron. The reference stack is Java, the error
             messages cite clauses instead of fields, and one wrong VAT rounding rejects the whole
-            document. InvoiceGate is the layer that makes it just work.
+            document. Stampbench is the layer that makes it just work.
           </p>
           <div className="grid gap-6 sm:grid-cols-2 lg:grid-cols-3">
             {features.map((f) => (
@@ -139,7 +139,7 @@ export default function LandingPage() {
                 POST /api/v1/validate
               </div>
               <pre className="overflow-x-auto p-5 font-mono text-xs leading-relaxed text-muted">
-{`curl -s https://invoicegate.dev/api/v1/validate \\
+{`curl -s https://stampbench.com/api/v1/validate \\
   -H "Content-Type: application/xml" \\
   --data-binary @invoice.xml
 
@@ -161,7 +161,7 @@ export default function LandingPage() {
                 POST /api/v1/generate
               </div>
               <pre className="overflow-x-auto p-5 font-mono text-xs leading-relaxed text-muted">
-{`curl -s https://invoicegate.dev/api/v1/generate \\
+{`curl -s https://stampbench.com/api/v1/generate \\
   -H "Content-Type: application/json" \\
   -d '{ "invoice": {
         "number": "RE-2026-0043",

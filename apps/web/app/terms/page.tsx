@@ -4,7 +4,7 @@ import { Clause, Fill, LegalPage } from '@/components/legal';
 
 export const metadata: Metadata = {
   title: 'Terms of Service',
-  description: 'The terms governing use of the InvoiceGate hosted API, website and open-source library.',
+  description: 'The terms governing use of the Stampbench hosted API, website and open-source library.',
 };
 
 /**
@@ -22,7 +22,7 @@ export default function TermsPage() {
       updated="3 August 2026"
       intro={
         <p>
-          These terms govern your use of the InvoiceGate website, hosted API and dashboard (the
+          These terms govern your use of the Stampbench website, hosted API and dashboard (the
           &ldquo;Service&rdquo;), operated by <Fill>[LEGAL ENTITY NAME]</Fill> of{' '}
           <Fill>[REGISTERED ADDRESS]</Fill> (&ldquo;we&rdquo;, &ldquo;us&rdquo;). By creating an
           account or calling the API you agree to them. The open-source library is licensed
@@ -32,7 +32,7 @@ export default function TermsPage() {
     >
       <Clause n="1." title="The Service">
         <p>
-          InvoiceGate provides software that validates and generates structured electronic invoices
+          Stampbench provides software that validates and generates structured electronic invoices
           against published technical standards (including EN 16931 and the German XRechnung
           specification). We provide developer tooling. We do not provide legal, tax or accounting
           advice, and we do not act as your tax agent or as an accredited transmission network.
@@ -120,7 +120,7 @@ export default function TermsPage() {
       <Clause n="7." title="No compliance guarantee">
         <p className="text-text">
           This clause matters more than any other, so we state it plainly: a passing result from
-          InvoiceGate is not a guarantee that any tax authority, customer, access point or
+          Stampbench is not a guarantee that any tax authority, customer, access point or
           validator will accept your invoice.
         </p>
         <p>
@@ -161,7 +161,7 @@ export default function TermsPage() {
 
       <Clause n="9." title="The open-source library">
         <p>
-          <code>@invoicegate/core</code> and the <code>invoicegate</code> CLI are provided under the
+          <code>@stampbench/core</code> and the <code>stampbench</code> CLI are provided under the
           MIT licence, which includes its own disclaimer of warranty and liability. These terms do
           not restrict your rights under that licence.
         </p>
@@ -198,7 +198,7 @@ export default function TermsPage() {
         <p>
           <Fill>[LEGAL ENTITY NAME]</Fill>, <Fill>[REGISTERED ADDRESS]</Fill>
           <br />
-          Email: <Fill>[legal@invoicegate.dev]</Fill>
+          Email: <Fill>[legal@stampbench.com]</Fill>
           <br />
           <Fill>[VAT number, if registered]</Fill>
         </p>

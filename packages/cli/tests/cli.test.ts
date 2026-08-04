@@ -2,10 +2,10 @@ import { mkdtempSync, readFileSync, writeFileSync } from 'node:fs';
 import { tmpdir } from 'node:os';
 import { join } from 'node:path';
 import { describe, expect, it } from 'vitest';
-import { XRECHNUNG_30_SPEC_ID } from '@invoicegate/core';
+import { XRECHNUNG_30_SPEC_ID } from '@stampbench/core';
 import { run } from '../src/run.js';
 
-const tmp = mkdtempSync(join(tmpdir(), 'invoicegate-cli-'));
+const tmp = mkdtempSync(join(tmpdir(), 'stampbench-cli-'));
 
 function captured() {
   const outLines: string[] = [];
@@ -161,7 +161,7 @@ function validInvoiceJson(): Record<string, unknown> {
   };
 }
 
-describe('invoicegate validate', () => {
+describe('stampbench validate', () => {
   it('exits 0 for a valid UBL invoice', async () => {
     const file = join(tmp, 'valid.xml');
     writeFileSync(file, ublSample(), 'utf8');
@@ -210,7 +210,7 @@ describe('invoicegate validate', () => {
   });
 });
 
-describe('invoicegate validate — CI output', () => {
+describe('stampbench validate — CI output', () => {
   /** 1-based line of the first line containing `needle`. */
   function lineOf(xml: string, needle: string): number {
     const found = xml.split('\n').findIndex((l) => l.includes(needle));
@@ -323,7 +323,7 @@ describe('invoicegate validate — CI output', () => {
   });
 
   it('validates a whole directory and summarises across files', async () => {
-    const dir = mkdtempSync(join(tmpdir(), 'invoicegate-dir-'));
+    const dir = mkdtempSync(join(tmpdir(), 'stampbench-dir-'));
     writeFileSync(join(dir, 'ok.xml'), ublSample(), 'utf8');
     writeFileSync(join(dir, 'bad.xml'), ublSample({ buyerReference: false }), 'utf8');
     const cap = captured();
@@ -337,7 +337,7 @@ describe('invoicegate validate — CI output', () => {
   });
 
   it('reports every file in the multi-file --json shape', async () => {
-    const dir = mkdtempSync(join(tmpdir(), 'invoicegate-dirjson-'));
+    const dir = mkdtempSync(join(tmpdir(), 'stampbench-dirjson-'));
     writeFileSync(join(dir, 'a.xml'), ublSample(), 'utf8');
     writeFileSync(join(dir, 'b.xml'), ublSample({ buyerReference: false }), 'utf8');
     const cap = captured();
@@ -386,7 +386,7 @@ describe('invoicegate validate — CI output', () => {
   });
 });
 
-describe('invoicegate fix', () => {
+describe('stampbench fix', () => {
   /** The sample with a VAT amount that disagrees with taxable × rate. */
   function wrongVat(): string {
     return ublSample().replace(
@@ -497,7 +497,7 @@ describe('invoicegate fix', () => {
   });
 
   it('fixes a whole directory', async () => {
-    const dir = mkdtempSync(join(tmpdir(), 'invoicegate-fixdir-'));
+    const dir = mkdtempSync(join(tmpdir(), 'stampbench-fixdir-'));
     writeFileSync(join(dir, 'a.xml'), wrongVat(), 'utf8');
     writeFileSync(join(dir, 'b.xml'), ublSample(), 'utf8');
     const cap = captured();
@@ -517,7 +517,7 @@ describe('invoicegate fix', () => {
   });
 });
 
-describe('invoicegate generate', () => {
+describe('stampbench generate', () => {
   it('generates XML from a JSON invoice and exits 0', async () => {
     const file = join(tmp, 'invoice.json');
     writeFileSync(file, JSON.stringify(validInvoiceJson()), 'utf8');
@@ -587,10 +587,10 @@ describe('invoicegate generate', () => {
   });
 });
 
-describe('invoicegate regress', () => {
+describe('stampbench regress', () => {
   /** A folder of invoices: some already German-ready, some EU-core-only. */
   function corpus(name: string, files: Array<{ file: string; buyerReference?: boolean }>): string {
-    const dir = mkdtempSync(join(tmpdir(), `invoicegate-${name}-`));
+    const dir = mkdtempSync(join(tmpdir(), `stampbench-${name}-`));
     for (const f of files) {
       writeFileSync(join(dir, f.file), ublSample({ buyerReference: f.buyerReference ?? true }), 'utf8');
     }
@@ -672,7 +672,7 @@ describe('invoicegate regress', () => {
   });
 });
 
-describe('invoicegate (top level)', () => {
+describe('stampbench (top level)', () => {
   it('prints usage and exits 0 with no arguments', async () => {
     const cap = captured();
     const code = await run([], cap.io);

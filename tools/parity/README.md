@@ -2,7 +2,7 @@
 
 **The trust artifact: we publish our delta against the legal reference validator.**
 
-`@invoicegate/core` validates XRechnung / EN 16931 e-invoices in pure TypeScript. The
+`@stampbench/core` validates XRechnung / EN 16931 e-invoices in pure TypeScript. The
 legal reference for XRechnung, however, is the [KoSIT validator](https://github.com/itplr-kosit/validator)
 with the official [XRechnung configuration](https://github.com/itplr-kosit/validator-configuration-xrechnung).
 Anyone can *claim* compliance; this harness measures it. It runs **both** validators over
@@ -33,7 +33,7 @@ macOS; GitHub's ubuntu runners ship `unzip`). No npm dependencies.
 
 ```sh
 # from the repo root
-npm run build -w @invoicegate/core     # our validator must be built
+npm run build -w @stampbench/core     # our validator must be built
 node tools/parity/download.mjs         # fetch pinned KoSIT tooling into tools/parity/vendor/ (gitignored)
 node tools/parity/run.mjs              # full dual run -> tools/parity/report/
 ```
@@ -42,7 +42,7 @@ Useful flags for `run.mjs`:
 
 - `--limit N` — smoke-run only N instances (interleaved UBL/CII). Partial numbers are
   marked as partial in the report and must not be published as parity results.
-- `--skip-kosit` — run only the InvoiceGate half (for machines without Java). Every
+- `--skip-kosit` — run only the Stampbench half (for machines without Java). Every
   KoSIT verdict is recorded literally as `"skipped"` and **no agreement rate is
   computed**. This mode exists to test the harness, never to produce parity claims.
 - `--java <path>` — explicit Java binary.
@@ -50,7 +50,7 @@ Useful flags for `run.mjs`:
 Output:
 
 - `tools/parity/report/parity-report.json` — machine-readable; per file
-  `{ file, syntax, kosit: accept|reject, invoicegate: valid|invalid, agreement }`
+  `{ file, syntax, kosit: accept|reject, stampbench: valid|invalid, agreement }`
   plus rule ids on both sides, tool versions, and the summary block.
 - `tools/parity/report/summary.md` — the same as a human-readable table (also written
   to the GitHub Actions job summary).
@@ -64,7 +64,7 @@ dual-run on `ubuntu-latest` (Node 20 + Temurin 17) on manual dispatch and weekly
 
 ## Reading the report: the two divergence categories
 
-For every instance, KoSIT says **accept**/**reject** and InvoiceGate says
+For every instance, KoSIT says **accept**/**reject** and Stampbench says
 **valid**/**invalid**. Two ways to disagree — they are *not* symmetric:
 
 - **False green** (`koSitRejectWeAccept`) — KoSIT rejects the file, we call it valid.
@@ -74,7 +74,7 @@ For every instance, KoSIT says **accept**/**reject** and InvoiceGate says
   `topDivergentRules`).
 - **False alarm** (`koSitAcceptWeReject`) — we reject a file KoSIT accepts. Annoying
   (we are stricter than the reference, or wrong), but fails safe. The report lists
-  which of our rule ids fired (`invoicegate-only`).
+  which of our rule ids fired (`stampbench-only`).
 
 `agreementRate` is computed **only** over files where both validators produced a
 definite verdict; skipped/errored/unknown files are counted separately and never
@@ -98,5 +98,5 @@ is the natural next step for probing the false-green direction.
   on 2026-08-03).
 - Local machine used for development has no Java, so the full dual-run has only been
   exercised half-way locally (`--skip-kosit`); the download/extract/verify path and
-  the InvoiceGate half run for real. The full comparison runs in CI.
+  the Stampbench half run for real. The full comparison runs in CI.
 - No parity numbers are published until a full CI run produces them.

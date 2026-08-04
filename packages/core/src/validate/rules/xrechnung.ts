@@ -4,7 +4,7 @@
  * from the 2025–2028 B2B mandate, increasingly between German businesses.
  *
  * Rule ids follow the official BR-DE numbering for the well-established
- * rules; IG-DE-* are InvoiceGate's own supporting diagnostics. Messages are
+ * rules; IG-DE-* are Stampbench's own supporting diagnostics. Messages are
  * our own wording.
  */
 import type { Invoice } from '../../model/invoice.js';

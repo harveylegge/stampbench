@@ -1,5 +1,5 @@
 /**
- * invoicegate CLI — validate and generate XRechnung / EN 16931 e-invoices.
+ * stampbench CLI — validate and generate XRechnung / EN 16931 e-invoices.
  *
  * All logic lives here (not in cli.ts) so tests can call run() directly
  * without spawning a child process.
@@ -23,7 +23,7 @@ import {
   validateXml,
   withComputedTotals,
   withXRechnungDefaults,
-} from '@invoicegate/core';
+} from '@stampbench/core';
 import type {
   DocumentInput,
   Invoice,
@@ -33,7 +33,7 @@ import type {
   ValidateXmlResult,
   ValidationResult,
   Violation,
-} from '@invoicegate/core';
+} from '@stampbench/core';
 import { formatGithub, formatSarif, type FileReport } from './report.js';
 
 /** Injectable output streams; each call receives one full line (no trailing \n). */
@@ -50,18 +50,18 @@ interface Colors {
   dim: (s: string) => string;
 }
 
-const USAGE = `invoicegate — validate and generate XRechnung / EN 16931 e-invoices
+const USAGE = `stampbench — validate and generate XRechnung / EN 16931 e-invoices
 
 Usage:
-  invoicegate validate <file.xml|dir...> [--profile xrechnung|en16931]
+  stampbench validate <file.xml|dir...> [--profile xrechnung|en16931]
                        [--format human|json|github|sarif] [--fail-on error|warning]
                        [--max-annotations <n>] [--json] [--quiet]
-  invoicegate fix <file.xml|dir...> [--write] [--fix-amount-due] [--profile xrechnung|en16931] [--json]
-  invoicegate generate <invoice.json> [-o out.xml] [--no-validate]
-  invoicegate regress <dir|file...> --from <ruleset> --to <ruleset> [--json] [--quiet]
-  invoicegate rulesets
-  invoicegate --version
-  invoicegate --help
+  stampbench fix <file.xml|dir...> [--write] [--fix-amount-due] [--profile xrechnung|en16931] [--json]
+  stampbench generate <invoice.json> [-o out.xml] [--no-validate]
+  stampbench regress <dir|file...> --from <ruleset> --to <ruleset> [--json] [--quiet]
+  stampbench rulesets
+  stampbench --version
+  stampbench --help
 
 Commands:
   validate   Check UBL or CII (ZUGFeRD / Factur-X) invoices against the
@@ -158,14 +158,14 @@ function validateCommand(args: string[], ctx: { out: Io['out']; err: Io['err']; 
     else if (a === '--format' || a.startsWith('--format=')) {
       const value = a.startsWith('--format=') ? a.slice('--format='.length) : args[++i];
       if (value === undefined || !OUTPUT_FORMATS.has(value)) {
-        ctx.err(`invoicegate: --format must be one of human, json, github, sarif (got "${value ?? ''}").`);
+        ctx.err(`stampbench: --format must be one of human, json, github, sarif (got "${value ?? ''}").`);
         return 2;
       }
       format = value as OutputFormat;
     } else if (a === '--fail-on' || a.startsWith('--fail-on=')) {
       const value = a.startsWith('--fail-on=') ? a.slice('--fail-on='.length) : args[++i];
       if (value !== 'error' && value !== 'warning') {
-        ctx.err(`invoicegate: --fail-on must be "error" or "warning" (got "${value ?? ''}").`);
+        ctx.err(`stampbench: --fail-on must be "error" or "warning" (got "${value ?? ''}").`);
         return 2;
       }
       failOn = value;
@@ -173,26 +173,26 @@ function validateCommand(args: string[], ctx: { out: Io['out']; err: Io['err']; 
       const value = a.startsWith('--max-annotations=') ? a.slice('--max-annotations='.length) : args[++i];
       const parsed = Number(value);
       if (!Number.isInteger(parsed) || parsed < 0) {
-        ctx.err(`invoicegate: --max-annotations must be a non-negative integer (got "${value ?? ''}").`);
+        ctx.err(`stampbench: --max-annotations must be a non-negative integer (got "${value ?? ''}").`);
         return 2;
       }
       maxAnnotations = parsed;
     } else if (a === '--profile' || a.startsWith('--profile=')) {
       const value = a.startsWith('--profile=') ? a.slice('--profile='.length) : args[++i];
       if (value !== 'xrechnung' && value !== 'en16931') {
-        ctx.err(`invoicegate: --profile must be "xrechnung" or "en16931" (got "${value ?? ''}").`);
+        ctx.err(`stampbench: --profile must be "xrechnung" or "en16931" (got "${value ?? ''}").`);
         return 2;
       }
       profile = value;
     } else if (a.startsWith('-')) {
-      ctx.err(`invoicegate: unknown option "${a}" for validate.`);
+      ctx.err(`stampbench: unknown option "${a}" for validate.`);
       return 2;
     } else paths.push(a);
   }
 
   if (paths.length === 0) {
     ctx.err(
-      'invoicegate: missing file. Usage: invoicegate validate <file.xml|dir...> [--profile xrechnung|en16931] [--format human|json|github|sarif] [--fail-on error|warning] [--quiet]',
+      'stampbench: missing file. Usage: stampbench validate <file.xml|dir...> [--profile xrechnung|en16931] [--format human|json|github|sarif] [--fail-on error|warning] [--quiet]',
     );
     return 2;
   }
@@ -207,11 +207,11 @@ function validateCommand(args: string[], ctx: { out: Io['out']; err: Io['err']; 
     try {
       files = collectXmlFiles(paths);
     } catch (e) {
-      ctx.err(`invoicegate: cannot read input: ${errorMessage(e)}`);
+      ctx.err(`stampbench: cannot read input: ${errorMessage(e)}`);
       return 2;
     }
     if (files.length === 0) {
-      ctx.err(`invoicegate: no .xml files found in ${paths.join(', ')}.`);
+      ctx.err(`stampbench: no .xml files found in ${paths.join(', ')}.`);
       return 2;
     }
   }
@@ -223,7 +223,7 @@ function validateCommand(args: string[], ctx: { out: Io['out']; err: Io['err']; 
     try {
       xml = readFileSync(file, 'utf8');
     } catch (e) {
-      ctx.err(`invoicegate: cannot read ${file}: ${errorMessage(e)}`);
+      ctx.err(`stampbench: cannot read ${file}: ${errorMessage(e)}`);
       return 2;
     }
     const result = validateXml(xml, { profile });
@@ -244,7 +244,7 @@ function validateCommand(args: string[], ctx: { out: Io['out']; err: Io['err']; 
   // and SARIF post-processing, so the log always states the true totals.
   const emitTally = (): void => {
     ctx.err(
-      `invoicegate: ${plural(totals.errors, 'error')}, ${plural(totals.warnings, 'warning')} in ${plural(reports.length, 'file')}.`,
+      `stampbench: ${plural(totals.errors, 'error')}, ${plural(totals.warnings, 'warning')} in ${plural(reports.length, 'file')}.`,
     );
   };
 
@@ -271,7 +271,7 @@ function validateCommand(args: string[], ctx: { out: Io['out']; err: Io['err']; 
       const { lines, suppressed } = formatGithub(reports, { limit: maxAnnotations });
       for (const line of lines) ctx.out(line);
       if (suppressed > 0) {
-        ctx.err(`invoicegate: ${suppressed} further problems not annotated (--max-annotations ${maxAnnotations}).`);
+        ctx.err(`stampbench: ${suppressed} further problems not annotated (--max-annotations ${maxAnnotations}).`);
       }
       emitTally();
       break;
@@ -408,15 +408,15 @@ function regressCommand(args: string[], ctx: { out: Io['out']; err: Io['err']; c
     } else if (a === '--to' || a.startsWith('--to=')) {
       to = a.startsWith('--to=') ? a.slice('--to='.length) : args[++i];
     } else if (a.startsWith('-')) {
-      ctx.err(`invoicegate: unknown option "${a}" for regress.`);
+      ctx.err(`stampbench: unknown option "${a}" for regress.`);
       return 2;
     } else paths.push(a);
   }
 
   if (paths.length === 0 || from === undefined || to === undefined) {
     ctx.err(
-      'invoicegate: usage: invoicegate regress <dir|file...> --from <ruleset> --to <ruleset>\n' +
-        '            Run `invoicegate rulesets` to see the available rule sets.',
+      'stampbench: usage: stampbench regress <dir|file...> --from <ruleset> --to <ruleset>\n' +
+        '            Run `stampbench rulesets` to see the available rule sets.',
     );
     return 2;
   }
@@ -425,11 +425,11 @@ function regressCommand(args: string[], ctx: { out: Io['out']; err: Io['err']; c
   try {
     files = collectXmlFiles(paths);
   } catch (e) {
-    ctx.err(`invoicegate: cannot read input: ${errorMessage(e)}`);
+    ctx.err(`stampbench: cannot read input: ${errorMessage(e)}`);
     return 2;
   }
   if (files.length === 0) {
-    ctx.err(`invoicegate: no .xml files found in ${paths.join(', ')}.`);
+    ctx.err(`stampbench: no .xml files found in ${paths.join(', ')}.`);
     return 2;
   }
 
@@ -449,7 +449,7 @@ function regressCommand(args: string[], ctx: { out: Io['out']; err: Io['err']; c
   try {
     report = compareRulesets(documents, from, to);
   } catch (e) {
-    ctx.err(`invoicegate: ${errorMessage(e)}`);
+    ctx.err(`stampbench: ${errorMessage(e)}`);
     return 2;
   }
 
@@ -486,18 +486,18 @@ function fixCommand(args: string[], ctx: { out: Io['out']; err: Io['err']; color
     else if (a === '--profile' || a.startsWith('--profile=')) {
       const value = a.startsWith('--profile=') ? a.slice('--profile='.length) : args[++i];
       if (value !== 'xrechnung' && value !== 'en16931') {
-        ctx.err(`invoicegate: --profile must be "xrechnung" or "en16931" (got "${value ?? ''}").`);
+        ctx.err(`stampbench: --profile must be "xrechnung" or "en16931" (got "${value ?? ''}").`);
         return 2;
       }
       profile = value;
     } else if (a.startsWith('-')) {
-      ctx.err(`invoicegate: unknown option "${a}" for fix.`);
+      ctx.err(`stampbench: unknown option "${a}" for fix.`);
       return 2;
     } else paths.push(a);
   }
 
   if (paths.length === 0) {
-    ctx.err('invoicegate: missing file. Usage: invoicegate fix <file.xml|dir...> [--write] [--fix-amount-due] [--fix-amount-due] [--profile xrechnung|en16931] [--json]');
+    ctx.err('stampbench: missing file. Usage: stampbench fix <file.xml|dir...> [--write] [--fix-amount-due] [--fix-amount-due] [--profile xrechnung|en16931] [--json]');
     return 2;
   }
 
@@ -507,11 +507,11 @@ function fixCommand(args: string[], ctx: { out: Io['out']; err: Io['err']; color
     try {
       files = collectXmlFiles(paths);
     } catch (e) {
-      ctx.err(`invoicegate: cannot read input: ${errorMessage(e)}`);
+      ctx.err(`stampbench: cannot read input: ${errorMessage(e)}`);
       return 2;
     }
     if (files.length === 0) {
-      ctx.err(`invoicegate: no .xml files found in ${paths.join(', ')}.`);
+      ctx.err(`stampbench: no .xml files found in ${paths.join(', ')}.`);
       return 2;
     }
   }
@@ -533,7 +533,7 @@ function fixCommand(args: string[], ctx: { out: Io['out']; err: Io['err']; color
     try {
       xml = readFileSync(file, 'utf8');
     } catch (e) {
-      ctx.err(`invoicegate: cannot read ${file}: ${errorMessage(e)}`);
+      ctx.err(`stampbench: cannot read ${file}: ${errorMessage(e)}`);
       return 2;
     }
 
@@ -549,7 +549,7 @@ function fixCommand(args: string[], ctx: { out: Io['out']; err: Io['err']; color
         writeFileSync(file, result.xml, 'utf8');
         written = true;
       } catch (e) {
-        ctx.err(`invoicegate: cannot write ${file}: ${errorMessage(e)}`);
+        ctx.err(`stampbench: cannot write ${file}: ${errorMessage(e)}`);
         failedWrite = true;
       }
     }
@@ -597,7 +597,7 @@ function fixCommand(args: string[], ctx: { out: Io['out']; err: Io['err']; color
     const summary = `${fixes} ${verb}, ${plural(totalRemaining, 'error')} needing a person`;
     if (totalFixes === 0 && totalRemaining === 0) ctx.out(c.green('Nothing to fix.'));
     else ctx.out(totalRemaining > 0 ? c.yellow(summary) : c.green(summary));
-    if (!write && totalFixes > 0) ctx.err('invoicegate: nothing was written — re-run with --write to apply these fixes.');
+    if (!write && totalFixes > 0) ctx.err('stampbench: nothing was written — re-run with --write to apply these fixes.');
   }
 
   // Preview mode fails the build when work is outstanding, like a --check flag;
@@ -628,22 +628,22 @@ function generateCommand(args: string[], ctx: { out: Io['out']; err: Io['err'] }
     else if (a === '-o' || a === '--output' || a.startsWith('--output=')) {
       const value = a.startsWith('--output=') ? a.slice('--output='.length) : args[++i];
       if (value === undefined || value === '') {
-        ctx.err('invoicegate: -o needs a file path.');
+        ctx.err('stampbench: -o needs a file path.');
         return 2;
       }
       outPath = value;
     } else if (a.startsWith('-')) {
-      ctx.err(`invoicegate: unknown option "${a}" for generate.`);
+      ctx.err(`stampbench: unknown option "${a}" for generate.`);
       return 2;
     } else if (file === undefined) file = a;
     else {
-      ctx.err(`invoicegate: generate takes a single file, got "${a}" as well as "${file}".`);
+      ctx.err(`stampbench: generate takes a single file, got "${a}" as well as "${file}".`);
       return 2;
     }
   }
 
   if (file === undefined) {
-    ctx.err('invoicegate: missing file. Usage: invoicegate generate <invoice.json> [-o out.xml] [--no-validate]');
+    ctx.err('stampbench: missing file. Usage: stampbench generate <invoice.json> [-o out.xml] [--no-validate]');
     return 2;
   }
 
@@ -651,7 +651,7 @@ function generateCommand(args: string[], ctx: { out: Io['out']; err: Io['err'] }
   try {
     rawText = readFileSync(file, 'utf8');
   } catch (e) {
-    ctx.err(`invoicegate: cannot read ${file}: ${errorMessage(e)}`);
+    ctx.err(`stampbench: cannot read ${file}: ${errorMessage(e)}`);
     return 2;
   }
 
@@ -659,13 +659,13 @@ function generateCommand(args: string[], ctx: { out: Io['out']; err: Io['err'] }
   try {
     parsed = JSON.parse(rawText);
   } catch (e) {
-    ctx.err(`invoicegate: ${file} is not valid JSON: ${errorMessage(e)}`);
+    ctx.err(`stampbench: ${file} is not valid JSON: ${errorMessage(e)}`);
     return 2;
   }
 
   const model = unwrapInvoice(parsed);
   if (model === undefined) {
-    ctx.err(`invoicegate: ${file} must contain a JSON object — the invoice itself, or { "invoice": { ... } }.`);
+    ctx.err(`stampbench: ${file} must contain a JSON object — the invoice itself, or { "invoice": { ... } }.`);
     return 2;
   }
 
@@ -675,7 +675,7 @@ function generateCommand(args: string[], ctx: { out: Io['out']; err: Io['err'] }
     invoice = withComputedTotals(withXRechnungDefaults(model as unknown as Invoice));
     xml = generateXRechnungUbl(invoice);
   } catch (e) {
-    ctx.err(`invoicegate: could not generate XML from ${file}: ${errorMessage(e)}`);
+    ctx.err(`stampbench: could not generate XML from ${file}: ${errorMessage(e)}`);
     return 2;
   }
 
@@ -684,7 +684,7 @@ function generateCommand(args: string[], ctx: { out: Io['out']; err: Io['err'] }
     try {
       writeFileSync(outPath, xml, 'utf8');
     } catch (e) {
-      ctx.err(`invoicegate: cannot write ${outPath}: ${errorMessage(e)}`);
+      ctx.err(`stampbench: cannot write ${outPath}: ${errorMessage(e)}`);
       return 2;
     }
     ctx.err(`wrote ${outPath}`);
@@ -695,7 +695,7 @@ function generateCommand(args: string[], ctx: { out: Io['out']; err: Io['err'] }
   if (doValidate) {
     const result = validateInvoice(invoice);
     if (result.errorCount > 0) {
-      ctx.err(`invoicegate: generated document has ${plural(result.errorCount, 'validation error')}:`);
+      ctx.err(`stampbench: generated document has ${plural(result.errorCount, 'validation error')}:`);
       for (const v of result.violations) {
         if (v.severity === 'error') ctx.err(`  ${v.ruleId}  ${v.message}`);
       }
@@ -739,12 +739,12 @@ export async function run(argv: string[], io?: Io): Promise<number> {
       case 'rulesets':
         return rulesetsCommand({ out, color });
       default:
-        err(`invoicegate: unknown command "${command}". Run \`invoicegate --help\` for usage.`);
+        err(`stampbench: unknown command "${command}". Run \`stampbench --help\` for usage.`);
         return 2;
     }
   } catch (e) {
     // Last-resort guard: nothing above should throw, but never crash the CLI.
-    err(`invoicegate: ${errorMessage(e)}`);
+    err(`stampbench: ${errorMessage(e)}`);
     return 2;
   }
 }

@@ -1,6 +1,6 @@
 #!/usr/bin/env node
 /**
- * run.mjs — dual-run the official KoSIT validator and @invoicegate/core over
+ * run.mjs — dual-run the official KoSIT validator and @stampbench/core over
  * the official XRechnung test-suite and emit a machine-readable delta report.
  *
  * Prerequisites: `node tools/parity/download.mjs` (creates vendor/), Java 17+
@@ -11,7 +11,7 @@
  *
  *   --limit N      only run the first N instances (interleaved UBL/CII) — for
  *                  quick local smoke runs. The published report must be a full run.
- *   --skip-kosit   run only the InvoiceGate half; every KoSIT verdict is
+ *   --skip-kosit   run only the Stampbench half; every KoSIT verdict is
  *                  recorded literally as "skipped" and NO agreement numbers are
  *                  computed. Exists so the harness can be exercised on machines
  *                  without Java. Never a substitute for the real comparison.
@@ -22,7 +22,7 @@
  *   - agreement is only computed for files where BOTH validators produced a
  *     definite verdict; everything else is counted separately, never imputed.
  *   - divergences are broken down by rule id (topDivergentRules), because
- *     @invoicegate/core implements a documented subset of the rules and the
+ *     @stampbench/core implements a documented subset of the rules and the
  *     interesting question is *which* rules diverge, not just how many files.
  */
 
@@ -67,9 +67,9 @@ const testsuiteDir = join(here, manifest.testsuiteDir);
 
 // ---------- load our validator ----------
 const coreEntry = join(repoRoot, 'packages', 'core', 'dist', 'index.js');
-if (!existsSync(coreEntry)) fail(`@invoicegate/core not built: ${coreEntry} missing (run: npm run build -w @invoicegate/core)`);
+if (!existsSync(coreEntry)) fail(`@stampbench/core not built: ${coreEntry} missing (run: npm run build -w @stampbench/core)`);
 const core = await import(pathToFileURL(coreEntry).href);
-if (typeof core.validateXml !== 'function') fail('@invoicegate/core dist does not export validateXml');
+if (typeof core.validateXml !== 'function') fail('@stampbench/core dist does not export validateXml');
 
 // ---------- collect test instances ----------
 /**
@@ -122,21 +122,21 @@ if (limit && limit > 0 && limit < instances.length) {
   log(`--limit ${limit}: running ${instances.length} instances (${instances.filter((i) => i.syntax === 'ubl').length} UBL, ${instances.filter((i) => i.syntax === 'cii').length} CII)`);
 }
 
-// ---------- InvoiceGate half ----------
+// ---------- Stampbench half ----------
 for (const inst of instances) {
   const xml = readFileSync(inst.file, 'utf8');
   try {
     const r = core.validateXml(xml);
-    inst.invoicegate = r.valid ? 'valid' : 'invalid';
-    inst.invoicegateRuleIds = [...new Set(r.violations.filter((v) => v.severity === 'error').map((v) => v.ruleId))].sort();
-    inst.invoicegateSyntax = r.syntax ?? null;
+    inst.stampbench = r.valid ? 'valid' : 'invalid';
+    inst.stampbenchRuleIds = [...new Set(r.violations.filter((v) => v.severity === 'error').map((v) => v.ruleId))].sort();
+    inst.stampbenchSyntax = r.syntax ?? null;
   } catch (e) {
-    inst.invoicegate = 'error';
-    inst.invoicegateRuleIds = [];
-    inst.invoicegateError = String(e?.message ?? e).slice(0, 300);
+    inst.stampbench = 'error';
+    inst.stampbenchRuleIds = [];
+    inst.stampbenchError = String(e?.message ?? e).slice(0, 300);
   }
 }
-log(`InvoiceGate half done: ${instances.filter((i) => i.invoicegate === 'valid').length} valid, ${instances.filter((i) => i.invoicegate === 'invalid').length} invalid, ${instances.filter((i) => i.invoicegate === 'error').length} errors`);
+log(`Stampbench half done: ${instances.filter((i) => i.stampbench === 'valid').length} valid, ${instances.filter((i) => i.stampbench === 'invalid').length} invalid, ${instances.filter((i) => i.stampbench === 'error').length} errors`);
 
 // ---------- KoSIT half ----------
 let javaVersion = null;
@@ -224,25 +224,25 @@ function parseKositReport(xml) {
 
 // ---------- delta ----------
 const files = instances.map((inst) => {
-  const definite = (inst.kosit === 'accept' || inst.kosit === 'reject') && (inst.invoicegate === 'valid' || inst.invoicegate === 'invalid');
-  const agreement = definite ? (inst.kosit === 'accept') === (inst.invoicegate === 'valid') : null;
+  const definite = (inst.kosit === 'accept' || inst.kosit === 'reject') && (inst.stampbench === 'valid' || inst.stampbench === 'invalid');
+  const agreement = definite ? (inst.kosit === 'accept') === (inst.stampbench === 'valid') : null;
   return {
     file: inst.rel,
     syntax: inst.syntax,
     kosit: inst.kosit,
-    invoicegate: inst.invoicegate,
+    stampbench: inst.stampbench,
     agreement,
     kositRuleIds: inst.kositRuleIds ?? undefined,
-    invoicegateRuleIds: inst.invoicegateRuleIds ?? undefined,
-    invoicegateError: inst.invoicegateError ?? undefined,
+    stampbenchRuleIds: inst.stampbenchRuleIds ?? undefined,
+    stampbenchError: inst.stampbenchError ?? undefined,
     kositError: inst.kositError ?? undefined,
   };
 });
 
 const comparable = files.filter((f) => f.agreement !== null);
 const agree = comparable.filter((f) => f.agreement).length;
-const falseGreens = comparable.filter((f) => f.kosit === 'reject' && f.invoicegate === 'valid');
-const falseAlarms = comparable.filter((f) => f.kosit === 'accept' && f.invoicegate === 'invalid');
+const falseGreens = comparable.filter((f) => f.kosit === 'reject' && f.stampbench === 'valid');
+const falseAlarms = comparable.filter((f) => f.kosit === 'accept' && f.stampbench === 'invalid');
 const notComparable = files.length - comparable.length;
 
 // Rule-id breakdown of divergences. For false-greens the informative side is
@@ -256,8 +256,8 @@ for (const f of falseGreens) {
   }
 }
 for (const f of falseAlarms) {
-  for (const id of f.invoicegateRuleIds ?? []) {
-    const key = `${id} invoicegate-only`;
+  for (const id of f.stampbenchRuleIds ?? []) {
+    const key = `${id} stampbench-only`;
     ruleCounts.set(key, (ruleCounts.get(key) ?? 0) + 1);
   }
 }
@@ -293,7 +293,7 @@ const report = {
     kositValidator: skipKosit ? null : `${versions.validator.repo}@${versions.validator.tag}`,
     kositConfiguration: skipKosit ? null : `${versions.configuration.repo}@${versions.configuration.tag}`,
     java: javaVersion,
-    invoicegateCore: `@invoicegate/core ruleset ${core.RULESET_VERSION ?? 'unknown'}`,
+    stampbenchCore: `@stampbench/core ruleset ${core.RULESET_VERSION ?? 'unknown'}`,
     node: process.version,
   },
   summary,
@@ -309,7 +309,7 @@ const lines = [];
 lines.push('# KoSIT parity report');
 lines.push('');
 if (skipKosit) {
-  lines.push('> **KoSIT half was skipped** (`--skip-kosit`). This run only exercises the InvoiceGate half of the pipeline. There are **no parity numbers** in this report.');
+  lines.push('> **KoSIT half was skipped** (`--skip-kosit`). This run only exercises the Stampbench half of the pipeline. There are **no parity numbers** in this report.');
   lines.push('');
 }
 if (limit && !report.mode.fullCorpus) {
@@ -318,7 +318,7 @@ if (limit && !report.mode.fullCorpus) {
 }
 lines.push(`- Corpus: \`${report.corpus.testsuite}\` (XRechnung ${report.corpus.xrechnungVersion}) — ${files.length} instances run (${files.filter((f) => f.syntax === 'ubl').length} UBL, ${files.filter((f) => f.syntax === 'cii').length} CII)`);
 lines.push(`- Reference: ${skipKosit ? '_skipped_' : `\`${report.tools.kositValidator}\` with \`${report.tools.kositConfiguration}\` (${javaVersion})`}`);
-lines.push(`- Ours: \`${report.tools.invoicegateCore}\` (node ${process.version})`);
+lines.push(`- Ours: \`${report.tools.stampbenchCore}\` (node ${process.version})`);
 lines.push(`- Generated: ${report.generatedAt}`);
 lines.push('');
 lines.push('| Metric | Value |');
@@ -334,7 +334,7 @@ lines.push('');
 if (topDivergentRules.length > 0) {
   lines.push('## Top divergent rules');
   lines.push('');
-  lines.push('`kosit-only` = KoSIT flags this rule on files we accept (coverage gap on our side). `invoicegate-only` = we flag it on files KoSIT accepts (we are stricter or wrong).');
+  lines.push('`kosit-only` = KoSIT flags this rule on files we accept (coverage gap on our side). `stampbench-only` = we flag it on files KoSIT accepts (we are stricter or wrong).');
   lines.push('');
   lines.push('| Rule | Direction | Files |');
   lines.push('| --- | --- | --- |');
@@ -345,11 +345,11 @@ const divergent = [...falseGreens, ...falseAlarms];
 if (divergent.length > 0) {
   lines.push('## Divergent files');
   lines.push('');
-  lines.push('| File | Syntax | KoSIT | InvoiceGate | Rule ids (flagging side) |');
+  lines.push('| File | Syntax | KoSIT | Stampbench | Rule ids (flagging side) |');
   lines.push('| --- | --- | --- | --- | --- |');
   for (const f of divergent.slice(0, 60)) {
-    const ids = (f.kosit === 'reject' ? f.kositRuleIds : f.invoicegateRuleIds) ?? [];
-    lines.push(`| ${f.file} | ${f.syntax} | ${f.kosit} | ${f.invoicegate} | ${ids.slice(0, 8).join(', ')}${ids.length > 8 ? ', …' : ''} |`);
+    const ids = (f.kosit === 'reject' ? f.kositRuleIds : f.stampbenchRuleIds) ?? [];
+    lines.push(`| ${f.file} | ${f.syntax} | ${f.kosit} | ${f.stampbench} | ${ids.slice(0, 8).join(', ')}${ids.length > 8 ? ', …' : ''} |`);
   }
   if (divergent.length > 60) lines.push(`| … ${divergent.length - 60} more — see parity-report.json | | | | |`);
   lines.push('');
@@ -360,6 +360,6 @@ log(`report written: ${relative(repoRoot, join(reportDir, 'parity-report.json'))
 log(`summary written: ${relative(repoRoot, join(reportDir, 'summary.md')).replaceAll('\\', '/')}`);
 log(
   skipKosit
-    ? 'done (InvoiceGate half only — run with Java for real parity numbers)'
+    ? 'done (Stampbench half only — run with Java for real parity numbers)'
     : `done: ${summary.agree}/${summary.comparable} agree (${summary.agreementRate === null ? 'n/a' : pct(summary.agreementRate)}), false-greens=${summary.koSitRejectWeAccept}, false-alarms=${summary.koSitAcceptWeReject}`
 );

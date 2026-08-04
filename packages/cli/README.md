@@ -1,16 +1,16 @@
-# invoicegate
+# stampbench
 
 Validate and generate **XRechnung / EN 16931** e-invoices from the command line.
 
 ```sh
-npm install -g invoicegate
+npm install -g stampbench
 # or run it without installing:
-npx invoicegate validate invoice.xml
+npx stampbench validate invoice.xml
 ```
 
 ## Commands
 
-### `invoicegate validate <file.xml|dir...>`
+### `stampbench validate <file.xml|dir...>`
 
 Checks UBL or CII (ZUGFeRD / Factur-X) invoices against the EN 16931 business
 rules — plus the German BR-DE rules when the profile is `xrechnung` (the default).
@@ -18,12 +18,12 @@ The syntax (UBL vs CII) is auto-detected. Directories are searched recursively
 for `.xml` files.
 
 ```sh
-invoicegate validate invoice.xml
-invoicegate validate ./invoices                      # a whole folder
-invoicegate validate invoice.xml --profile en16931   # core rules only
-invoicegate validate invoice.xml --json              # machine-readable result
-invoicegate validate invoice.xml --quiet             # summary line only
-invoicegate validate ./invoices --fail-on warning    # warnings fail the build too
+stampbench validate invoice.xml
+stampbench validate ./invoices                      # a whole folder
+stampbench validate invoice.xml --profile en16931   # core rules only
+stampbench validate invoice.xml --json              # machine-readable result
+stampbench validate invoice.xml --quiet             # summary line only
+stampbench validate ./invoices --fail-on warning    # warnings fail the build too
 ```
 
 Example output:
@@ -52,23 +52,23 @@ wrong line without saying so is worse than one that admits it.
 | `sarif`  | SARIF 2.1.0 for GitHub code scanning and other CI systems            |
 
 ```sh
-invoicegate validate ./invoices --format github
-invoicegate validate ./invoices --format sarif > invoicegate.sarif
+stampbench validate ./invoices --format github
+stampbench validate ./invoices --format sarif > stampbench.sarif
 ```
 
 See [CI annotations](../../docs/ci-annotations.md) for the GitHub Action, an
 example workflow, and how precise the line numbers actually are.
 
-### `invoicegate fix <file.xml|dir...>`
+### `stampbench fix <file.xml|dir...>`
 
 Repairs the problems that have exactly one correct answer — totals and VAT
 amounts that disagree with the figures they are derived from — by editing those
 values in your file and nothing else.
 
 ```sh
-invoicegate fix invoice.xml            # show what would change; writes nothing
-invoicegate fix ./invoices --write     # apply the fixes
-invoicegate fix ./invoices --json      # machine-readable plan
+stampbench fix invoice.xml            # show what would change; writes nothing
+stampbench fix ./invoices --write     # apply the fixes
+stampbench fix ./invoices --json      # machine-readable plan
 ```
 
 ```
@@ -86,7 +86,7 @@ data. Anything needing a human decision is reported, never guessed. See
 Without `--write` it changes nothing and exits `1` while fixes are outstanding,
 so it works as a CI gate like `prettier --check`.
 
-### `invoicegate generate <invoice.json>`
+### `stampbench generate <invoice.json>`
 
 Builds XRechnung 3.0 UBL XML from a JSON semantic model (either the bare
 invoice object or `{ "invoice": { ... } }`). Defaults (spec id, type code,
@@ -94,9 +94,9 @@ currency) and totals are computed for you, and the result is validated
 before it is written.
 
 ```sh
-invoicegate generate invoice.json -o invoice.xml
-invoicegate generate invoice.json > invoice.xml      # stdout works too
-invoicegate generate invoice.json --no-validate      # skip the validation step
+stampbench generate invoice.json -o invoice.xml
+stampbench generate invoice.json > invoice.xml      # stdout works too
+stampbench generate invoice.json --no-validate      # skip the validation step
 ```
 
 ## Exit codes
@@ -107,7 +107,7 @@ invoicegate generate invoice.json --no-validate      # skip the validation step
 | 1    | validation errors found              |
 | 2    | usage or IO error (bad JSON, missing file, unknown flag) |
 
-This makes the CLI directly usable as a CI gate — `invoicegate validate invoice.xml`
+This makes the CLI directly usable as a CI gate — `stampbench validate invoice.xml`
 in a pipeline fails the job when the invoice is non-compliant, while warnings
 alone keep it green. Use `--fail-on warning` to fail on warnings as well.
 
@@ -116,7 +116,7 @@ are broken" apart from "the tool is broken".
 
 ## Library
 
-The CLI is a thin wrapper around [`@invoicegate/core`](https://www.npmjs.com/package/@invoicegate/core),
+The CLI is a thin wrapper around [`@stampbench/core`](https://www.npmjs.com/package/@stampbench/core),
 a dependency-light TypeScript library with the full rule set (BR, BR-CO, BR-DE),
 UBL/CII parsing, and XRechnung UBL generation — use it directly if you need
-validation inside your own application. Hosted API and docs: <https://invoicegate.dev>.
+validation inside your own application. Hosted API and docs: <https://stampbench.com>.

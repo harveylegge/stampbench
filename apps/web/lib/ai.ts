@@ -1,6 +1,6 @@
 import 'server-only';
 import Anthropic from '@anthropic-ai/sdk';
-import type { Violation } from '@invoicegate/core';
+import type { Violation } from '@stampbench/core';
 import { env, features } from './env';
 import { log } from './log';
 
@@ -10,7 +10,7 @@ import { log } from './log';
  * template still produces genuinely useful output so the feature never 404s.
  */
 
-const SYSTEM_PROMPT = `You are InvoiceGate's e-invoicing compliance assistant. You explain EN 16931 / XRechnung validation errors to developers.
+const SYSTEM_PROMPT = `You are Stampbench's e-invoicing compliance assistant. You explain EN 16931 / XRechnung validation errors to developers.
 
 Rules:
 - Explain what each violated rule means in practice and exactly how to fix it, referencing the field names the developer will see (both the business term like BT-10 and the human name like "buyer reference").

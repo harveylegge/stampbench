@@ -1,5 +1,5 @@
 > **Superseded (2026-08-03):** pricing of record is now Free £0 / Developer £29 / Agency £99 / Platform £299 usage-based — see `docs/roadmap.md` and `apps/web/lib/plans.ts`. The analysis below informed but no longer defines the tiers.
-# InvoiceGate — Pricing Rationale
+# Stampbench — Pricing Rationale
 
 ## The tiers
 

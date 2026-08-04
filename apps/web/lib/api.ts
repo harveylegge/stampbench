@@ -67,7 +67,7 @@ export async function gateRequest(
     const rl = await rateLimit(`anon:${caller.ip}`, 10, 60 * 60 * 1000);
     if (!rl.allowed) {
       return apiError(429, 'rate_limited',
-        'Anonymous trial limit reached (10 requests/hour). Create a free account for 100 calls/month: https://invoicegate.dev/register',
+        'Anonymous trial limit reached (10 requests/hour). Create a free account for 100 calls/month: https://stampbench.com/register',
         { retryAfterMs: rl.resetAt - Date.now() });
     }
     return { ok: true, caller, headers: { 'X-RateLimit-Remaining': String(rl.remaining) } };
@@ -86,7 +86,7 @@ export async function gateRequest(
   if (!quota.allowed) {
     log.info('api.quota_exceeded', { userId: caller.userId, plan: caller.plan });
     return apiError(402, 'quota_exceeded',
-      `Monthly quota reached (${quota.used}/${quota.quota} on the ${quota.plan.name} plan). Upgrade at https://invoicegate.dev/pricing`,
+      `Monthly quota reached (${quota.used}/${quota.quota} on the ${quota.plan.name} plan). Upgrade at https://stampbench.com/pricing`,
       { used: quota.used, quota: quota.quota });
   }
 

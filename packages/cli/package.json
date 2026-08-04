@@ -1,11 +1,11 @@
 {
-  "name": "invoicegate",
+  "name": "stampbench",
   "version": "0.1.0",
   "description": "Validate and generate XRechnung / EN 16931 e-invoices from the command line",
   "license": "MIT",
   "type": "module",
   "bin": {
-    "invoicegate": "./dist/cli.js"
+    "stampbench": "./dist/cli.js"
   },
   "files": [
     "dist",
@@ -26,7 +26,7 @@
     "validator"
   ],
   "dependencies": {
-    "@invoicegate/core": "^0.1.0"
+    "@stampbench/core": "^0.1.0"
   },
   "devDependencies": {
     "@types/node": "^22",

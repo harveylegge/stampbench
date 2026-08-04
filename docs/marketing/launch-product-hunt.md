@@ -1,8 +1,8 @@
-# InvoiceGate — Product Hunt Launch
+# Stampbench — Product Hunt Launch
 
 ## Name and tagline
 
-- **Name:** InvoiceGate
+- **Name:** Stampbench
 - **Tagline (≤60 chars):** `German e-invoice compliance, as an API and a TS library`
 
 Alternates:
@@ -18,9 +18,9 @@ Developer Tools, APIs, SaaS, Fintech, Open Source
 
 Germany requires all B2B invoices to be structured e-invoices (EN 16931 / XRechnung) — receiving since 2025, issuing by 2027. France follows. Every product that creates an invoice has to comply, and the existing tooling is Java-only, self-hosted, and cryptic.
 
-InvoiceGate is the TypeScript-first fix:
+Stampbench is the TypeScript-first fix:
 
-- **Open-source library** — `npm install @invoicegate/core`. Validate and generate XRechnung (UBL) locally. MIT, unlimited, free forever.
+- **Open-source library** — `npm install @stampbench/core`. Validate and generate XRechnung (UBL) locally. MIT, unlimited, free forever.
 - **REST API** — validate and generate from any language; 100 calls/month free.
 - **Plain-language errors** — the spec says "BR-DE-15". We say "the buyer reference (BT-10) is missing — here's the element to add", in English or German.
 - **Correct by construction** — generated invoices compute their own totals, so the EN 16931 arithmetic rules always pass.
@@ -30,7 +30,7 @@ Built by a solo developer for every team that just found this requirement in the
 
 ## First comment (from the maker)
 
-Hi Product Hunt — I'm the developer behind InvoiceGate.
+Hi Product Hunt — I'm the developer behind Stampbench.
 
 Last year I was building invoicing for a client with German customers and hit a wall: Germany now mandates structured e-invoices (XRechnung, based on EN 16931) for all B2B trade. Receiving has been mandatory since January 2025; issuing becomes mandatory in January 2027 (2028 for the smallest companies). France and other EU countries are on the same path.
 
@@ -50,7 +50,7 @@ Everything is self-serve — no demo calls, no "contact sales". Ask me anything,
 
 1. **Hero:** "Validate and generate German e-invoices from TypeScript. One library, one API." *(dark hero, gate mark, code snippet showing `validate(xml)`)*
 2. **Playground:** "Paste an invoice. Every failing rule, explained in plain language — not spec-speak." *(playground with BR-DE-15 expanded into a human sentence + fix)*
-3. **Code:** "`npm install @invoicegate/core` — MIT-licensed, validates locally, no Java, no self-hosting." *(terminal + minimal generate example)*
+3. **Code:** "`npm install @stampbench/core` — MIT-licensed, validates locally, no Java, no self-hosting." *(terminal + minimal generate example)*
 4. **By construction:** "Totals are computed for you. The BR-CO arithmetic rules can't fail." *(diagram: line items → computed totals → green ticks)*
 5. **API:** "One POST to validate, one POST to generate. Errors link to a documented page per rule." *(API request/response with rule URL in payload)*
 6. **Pricing:** "Free: 100 API calls/month. Local validation with the open-source library: unlimited, forever." *(pricing tiers)*

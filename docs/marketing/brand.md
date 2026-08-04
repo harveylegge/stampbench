@@ -1,8 +1,8 @@
-# InvoiceGate — Brand Guide
+# Stampbench — Brand Guide
 
 ## 1. Brand voice
 
-InvoiceGate speaks like a senior engineer explaining a regulation to a colleague: precise, calm, and useful. We sell certainty in a domain full of anxiety (compliance deadlines, cryptic validators, legal risk) — so the voice never adds to the anxiety. It removes it.
+Stampbench speaks like a senior engineer explaining a regulation to a colleague: precise, calm, and useful. We sell certainty in a domain full of anxiety (compliance deadlines, cryptic validators, legal risk) — so the voice never adds to the anxiety. It removes it.
 
 ### Principles
 
@@ -29,7 +29,7 @@ InvoiceGate speaks like a senior engineer explaining a regulation to a colleague
 
 ## 2. Positioning statement
 
-> For developers who must make their product issue or accept German e-invoices, **InvoiceGate** is the TypeScript-first validation and generation toolkit that turns EN 16931 / XRechnung compliance into an `npm install` — unlike the Java-centric official tooling, which requires self-hosting the KoSIT validator and decoding rule IDs like BR-DE-15 by hand.
+> For developers who must make their product issue or accept German e-invoices, **Stampbench** is the TypeScript-first validation and generation toolkit that turns EN 16931 / XRechnung compliance into an `npm install` — unlike the Java-centric official tooling, which requires self-hosting the KoSIT validator and decoding rule IDs like BR-DE-15 by hand.
 
 ## 3. One-liner
 
@@ -45,17 +45,17 @@ Alternates (for character-limited contexts):
 
 ### Short (~30 words)
 
-InvoiceGate validates and generates EN 16931 / XRechnung e-invoices. Open-source TypeScript library for local validation, hosted API for scale, and plain-language explanations for every cryptic validation error.
+Stampbench validates and generates EN 16931 / XRechnung e-invoices. Open-source TypeScript library for local validation, hosted API for scale, and plain-language explanations for every cryptic validation error.
 
 ### Medium (~70 words)
 
-InvoiceGate is the TypeScript-first toolkit for Germany's e-invoicing mandate. The open-source `@invoicegate/core` library validates and generates XRechnung (UBL) invoices locally — free forever, MIT-licensed. The hosted API at invoicegate.dev adds validation and generation endpoints, a web playground, and AI-generated plain-language explanations for errors like BR-DE-15. Totals are computed automatically, so the EN 16931 arithmetic rules pass by construction.
+Stampbench is the TypeScript-first toolkit for Germany's e-invoicing mandate. The open-source `@stampbench/core` library validates and generates XRechnung (UBL) invoices locally — free forever, MIT-licensed. The hosted API at stampbench.com adds validation and generation endpoints, a web playground, and AI-generated plain-language explanations for errors like BR-DE-15. Totals are computed automatically, so the EN 16931 arithmetic rules pass by construction.
 
 ### Long (~140 words)
 
 Since January 2025, every German company must be able to receive structured e-invoices; by January 2027 (2028 for the smallest), they must issue them. France and other EU states follow. That obligation lands on every piece of software that produces an invoice — and the existing tooling is almost entirely Java: the official KoSIT validator, the Mustang project, self-hosted Schematron pipelines.
 
-InvoiceGate brings e-invoicing compliance to the TypeScript ecosystem. The MIT-licensed `@invoicegate/core` library validates and generates EN 16931 / XRechnung (UBL) invoices locally, with unlimited use, free forever. The hosted platform at invoicegate.dev adds a REST API, a web playground, usage dashboards, and AI-generated plain-language explanations that turn errors like "BR-DE-15" into a sentence and a fix. Generated invoices compute their own totals, so the BR-CO arithmetic rules pass by construction. Built by an independent developer in the UK.
+Stampbench brings e-invoicing compliance to the TypeScript ecosystem. The MIT-licensed `@stampbench/core` library validates and generates EN 16931 / XRechnung (UBL) invoices locally, with unlimited use, free forever. The hosted platform at stampbench.com adds a REST API, a web playground, usage dashboards, and AI-generated plain-language explanations that turn errors like "BR-DE-15" into a sentence and a fix. Generated invoices compute their own totals, so the BR-CO arithmetic rules pass by construction. Built by an independent developer in the UK.
 
 ## 5. Colour palette
 
@@ -108,6 +108,6 @@ Rule of thumb: if it could appear in a terminal or an XML file, it's JetBrains M
 **The Gate mark.** Two vertical strokes joined by a raised crossbar — a stylised gate that reads equally as a pair of brackets and as the Π-like frame of a checkpoint. Inside the gate sits a single checkmark tick, slightly overlapping the right stroke, as if an invoice has just passed through validation. Geometry drawn on a square grid with the same stroke weight throughout; corners softly rounded (radius ≈ 1/8 stroke width) to match Inter's character.
 
 - **Colour:** mark in `accent` (#6E5BFF) on dark; the tick in `success` (#2FD180) is permitted in product UI contexts, but the marketing/default lock-up is monochrome accent for restraint.
-- **Wordmark:** "InvoiceGate" set in Inter SemiBold, single colour `text-primary`, no camel-case colour split. Mark sits left of the wordmark at cap height.
+- **Wordmark:** "Stampbench" set in Inter SemiBold, single colour `text-primary`, no camel-case colour split. Mark sits left of the wordmark at cap height.
 - **Favicon / avatar:** the gate mark alone on `bg-base`.
 - **Feel:** the mark should feel like a linting checkmark and a border checkpoint at once — validation as passage, not obstruction.

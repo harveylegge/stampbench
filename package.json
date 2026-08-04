@@ -1,16 +1,16 @@
 {
-  "name": "invoicegate-monorepo",
+  "name": "stampbench-monorepo",
   "private": true,
   "version": "0.1.0",
-  "description": "InvoiceGate — e-invoicing compliance toolkit: validate and generate XRechnung/EN 16931 e-invoices in TypeScript",
+  "description": "Stampbench — e-invoicing compliance toolkit: validate and generate XRechnung/EN 16931 e-invoices in TypeScript",
   "workspaces": [
     "packages/*",
     "apps/*"
   ],
   "scripts": {
-    "build": "npm run build -w @invoicegate/core && npm run build -w web",
+    "build": "npm run build -w @stampbench/core && npm run build -w web",
     "dev": "npm run dev -w web",
-    "test": "npm run test -w @invoicegate/core && npm run test -w invoicegate && npm run test -w web",
+    "test": "npm run test -w @stampbench/core && npm run test -w stampbench && npm run test -w web",
     "lint": "npm run lint -w web",
     "db:push": "npm run db:push -w web"
   },

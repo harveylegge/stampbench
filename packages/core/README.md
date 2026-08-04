@@ -1,17 +1,17 @@
-# @invoicegate/core
+# @stampbench/core
 
 Validate, repair and generate **EN 16931 / XRechnung / ZUGFeRD** e-invoices in
 pure TypeScript. No Java, no hosted API — your invoice bytes never leave the
 process.
 
 ```sh
-npm install @invoicegate/core
+npm install @stampbench/core
 ```
 
 ## Validate
 
 ```ts
-import { validateXml } from '@invoicegate/core';
+import { validateXml } from '@stampbench/core';
 
 const result = validateXml(xml); // UBL or CII, auto-detected
 result.valid;        // false
@@ -27,7 +27,7 @@ divergences are published, and all 3 are this library being stricter.
 ## Locate — line numbers for every violation
 
 ```ts
-import { validateXml, locateViolations } from '@invoicegate/core';
+import { validateXml, locateViolations } from '@stampbench/core';
 
 const r = validateXml(xml);
 for (const v of locateViolations(xml, r.violations, r.syntax ?? 'ubl')) {
@@ -42,7 +42,7 @@ instead. Approximate locations say so — in every output format.
 ## Fix — repair what has one correct answer
 
 ```ts
-import { fixXml } from '@invoicegate/core';
+import { fixXml } from '@stampbench/core';
 
 const fixed = fixXml(xml);
 fixed.applied;    // edits: line, column, previous, replacement, ruleId
@@ -59,7 +59,7 @@ withheld until you pass `confirmAmountDue: true`.
 ## Generate
 
 ```ts
-import { generateXRechnungUbl, withComputedTotals, withXRechnungDefaults } from '@invoicegate/core';
+import { generateXRechnungUbl, withComputedTotals, withXRechnungDefaults } from '@stampbench/core';
 
 const invoice = withComputedTotals(withXRechnungDefaults({ lines, seller, buyer }));
 const xml = generateXRechnungUbl(invoice); // XRechnung 3.0 UBL
@@ -71,7 +71,7 @@ a subset; regeneration drops what it doesn't represent).
 ## Regression testing
 
 ```ts
-import { compareRulesets } from '@invoicegate/core';
+import { compareRulesets } from '@stampbench/core';
 
 const report = compareRulesets(documents, 'en16931@2017', 'xrechnung@3.0');
 report.summary.regressions; // documents that would START failing
@@ -82,7 +82,7 @@ date.
 
 ## CLI
 
-The [`invoicegate`](https://www.npmjs.com/package/invoicegate) package wraps
+The [`stampbench`](https://www.npmjs.com/package/stampbench) package wraps
 all of this for the command line and CI, including GitHub pull-request
 annotations and SARIF output.
 

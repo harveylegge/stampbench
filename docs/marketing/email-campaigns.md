@@ -1,6 +1,6 @@
-# InvoiceGate — Onboarding Drip (5 emails)
+# Stampbench — Onboarding Drip (5 emails)
 
-Plain text, from "{founder first name} at InvoiceGate", sent via the app (transactional-style, minimal footer). Triggers are behavioural, not calendar-blind: an email is skipped if its goal is already met. All copy British English; a German variant set should mirror these once volume justifies it.
+Plain text, from "{founder first name} at Stampbench", sent via the app (transactional-style, minimal footer). Triggers are behavioural, not calendar-blind: an email is skipped if its goal is already met. All copy British English; a German variant set should mirror these once volume justifies it.
 
 **Sequence logic**
 
@@ -16,7 +16,7 @@ Plain text, from "{founder first name} at InvoiceGate", sent via the app (transa
 
 ## Email 1 — Welcome
 
-**Subject:** Your InvoiceGate API key (and the 60-second first call)
+**Subject:** Your Stampbench API key (and the 60-second first call)
 
 Hi {first_name},
 
@@ -24,7 +24,7 @@ Thanks for signing up. Your API key is in the dashboard: {dashboard_link}
 
 The fastest first win — validate an invoice in one request:
 
-    curl -X POST https://api.invoicegate.dev/v1/validate \
+    curl -X POST https://api.stampbench.com/v1/validate \
       -H "Authorization: Bearer YOUR_KEY" \
       -H "Content-Type: application/xml" \
       --data-binary @invoice.xml
@@ -33,7 +33,7 @@ You'll get back every failing rule with a plain-language explanation and a link 
 
 Two things worth knowing up front:
 
-- The open-source library (`npm install @invoicegate/core`) validates locally, unlimited, free forever. The API exists for when you want hosted validation, generation, and the AI explanations.
+- The open-source library (`npm install @stampbench/core`) validates locally, unlimited, free forever. The API exists for when you want hosted validation, generation, and the AI explanations.
 - Your free tier is 100 API calls/month. It resets on the 1st.
 
 If you're integrating ahead of the 2027 mandate and something's unclear, reply to this email — it reaches me directly, and I answer.
@@ -52,7 +52,7 @@ You created an API key a couple of days ago but no request has landed yet — us
 
 1. **No test invoice.** Grab a minimal valid XRechnung (and a deliberately broken one) here: {examples_link}
 2. **Auth trouble.** The key goes in the `Authorization: Bearer` header; the two most common 401 causes are a trailing space and using the test key against the live URL.
-3. **You actually wanted the library.** If your invoices are generated in Node, `npm install @invoicegate/core` and `validate(xml)` locally — no API call needed, no quota used.
+3. **You actually wanted the library.** If your invoices are generated in Node, `npm install @stampbench/core` and `validate(xml)` locally — no API call needed, no quota used.
 
 The quickstart covers all three in about four minutes: {quickstart_link}
 
@@ -72,7 +72,7 @@ Quick heads-up: you're at {usage}/100 API calls for {month}. When you hit 100, r
 
 Three options, in honest order of cheapness:
 
-1. **Move local validation to the library.** If most of your calls are validate-only, `@invoicegate/core` does it locally and free, and you keep API calls for generation and AI explanations.
+1. **Move local validation to the library.** If most of your calls are validate-only, `@stampbench/core` does it locally and free, and you keep API calls for generation and AI explanations.
 2. **Wait for the reset** on the 1st — fine if this was a testing spike.
 3. **Upgrade to Starter** (£19/month, 2,500 calls) if this is production traffic: {upgrade_link}
 
@@ -84,7 +84,7 @@ You can see exactly which endpoints are consuming quota in the dashboard: {usage
 
 ## Email 4 — Upgrade case (sustained high usage)
 
-**Subject:** The maths on Starter, for how you're using InvoiceGate
+**Subject:** The maths on Starter, for how you're using Stampbench
 
 Hi {first_name},
 
@@ -104,7 +104,7 @@ Upgrade takes about a minute: {upgrade_link} — and if your usage pattern doesn
 
 ## Email 5 — Win-back (30 days inactive)
 
-**Subject:** Should I close the loop on your InvoiceGate integration?
+**Subject:** Should I close the loop on your Stampbench integration?
 
 Hi {first_name},
 

@@ -4,11 +4,11 @@ Every e-invoice validator tells you a document is invalid. The question people
 actually have next is *what do I change*, and for a large class of failures
 there is exactly one correct answer, computable from the rest of the document.
 
-`invoicegate fix` computes it and edits that value — and nothing else.
+`stampbench fix` computes it and edits that value — and nothing else.
 
 ```sh
-npx invoicegate fix ./invoices          # show what would change
-npx invoicegate fix ./invoices --write  # apply it
+npx stampbench fix ./invoices          # show what would change
+npx stampbench fix ./invoices --write  # apply it
 ```
 
 ```
@@ -132,7 +132,7 @@ Reproduce with `packages/core/tests/fix.corpus.test.ts` after
 ## In code
 
 ```ts
-import { fixXml, planFixes, applyEdits } from '@invoicegate/core';
+import { fixXml, planFixes, applyEdits } from '@stampbench/core';
 
 const result = fixXml(xml, { profile: 'xrechnung' });
 result.applied;      // TextEdit[] — line, column, previous, replacement, ruleId

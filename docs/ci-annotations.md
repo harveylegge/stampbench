@@ -1,6 +1,6 @@
 # CI annotations — failing invoices, on the failing line
 
-`invoicegate validate` can report results as GitHub Actions annotations or as
+`stampbench validate` can report results as GitHub Actions annotations or as
 SARIF, so a non-compliant invoice shows up **on the line of the offending
 element** in the pull request rather than as a wall of text in a log.
 
@@ -22,7 +22,7 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
-      - uses: invoicegate/invoicegate@v1
+      - uses: stampbench/stampbench@v1
         with:
           paths: ./invoices
 ```
@@ -36,7 +36,7 @@ The Action is a thin wrapper — the CLI does the work, so any CI system can use
 it:
 
 ```sh
-npx invoicegate validate ./invoices --format github
+npx stampbench validate ./invoices --format github
 ```
 
 Anything printed in the `::error file=…,line=…::message` shape is picked up by
@@ -51,7 +51,7 @@ GitHub Actions. For other CI systems use `--format sarif` or `--format json`.
 | `format`            | `github`            | `github` for inline annotations, `sarif` to upload to code scanning. |
 | `fail-on`           | `error`             | `warning` also fails the step on warnings. |
 | `max-annotations`   | *(none)*            | Cap on annotations emitted. See the limits below. |
-| `sarif-file`        | `invoicegate.sarif` | Where to write the SARIF report. |
+| `sarif-file`        | `stampbench.sarif` | Where to write the SARIF report. |
 | `version`           | `latest`            | npm version of the CLI. **Pin this** for reproducible builds. |
 | `working-directory` | `.`                 | Directory to run in; paths resolve relative to it. |
 | `node-version`      | `20`                | Set to `''` to use the runner's existing Node. |
@@ -73,7 +73,7 @@ jobs:
       actions: read          # both of these are needed for private repos
     steps:
       - uses: actions/checkout@v4
-      - uses: invoicegate/invoicegate@v1
+      - uses: stampbench/stampbench@v1
         id: invoices
         with:
           paths: ./invoices
@@ -157,7 +157,7 @@ ours, and it is not documented on docs.github.com (it is stated in
 So `--format github` always writes the true totals to stderr:
 
 ```
-invoicegate: 37 errors, 4 warnings in 12 files.
+stampbench: 37 errors, 4 warnings in 12 files.
 ```
 
 The Action also puts that line in the job summary. The raw `::error` lines stay
@@ -186,7 +186,7 @@ Code 2 is deliberately distinct so CI can tell "your invoices are broken" from
 Locations are part of the library API, not just the CLI:
 
 ```ts
-import { validateXml, locateViolations } from '@invoicegate/core';
+import { validateXml, locateViolations } from '@stampbench/core';
 
 const result = validateXml(xml);
 for (const v of locateViolations(xml, result.violations, result.syntax ?? 'ubl')) {

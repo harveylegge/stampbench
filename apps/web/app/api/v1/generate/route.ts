@@ -6,7 +6,7 @@ import {
   withComputedTotals,
   withXRechnungDefaults,
   type Invoice,
-} from '@invoicegate/core';
+} from '@stampbench/core';
 import { apiError, gateRequest, readBoundedText } from '@/lib/api';
 import { recordUsage } from '@/lib/usage';
 import { log } from '@/lib/log';

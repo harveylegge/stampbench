@@ -10,8 +10,8 @@ const jbMono = JetBrains_Mono({ subsets: ['latin'], variable: '--font-jbmono' })
 export const metadata: Metadata = {
   metadataBase: new URL(process.env.NEXT_PUBLIC_APP_URL ?? 'http://localhost:3000'),
   title: {
-    default: 'InvoiceGate — XRechnung & EN 16931 e-invoicing API for developers',
-    template: '%s · InvoiceGate',
+    default: 'Stampbench — XRechnung & EN 16931 e-invoicing API for developers',
+    template: '%s · Stampbench',
   },
   description:
     'Validate and generate legally compliant e-invoices (XRechnung, EN 16931) with a TypeScript-first API. Plain-language error explanations powered by AI. Built for the German B2B e-invoicing mandate.',
@@ -20,9 +20,9 @@ export const metadata: Metadata = {
     'xrechnung nodejs', 'ubl invoice', 'peppol', 'e-rechnung pflicht 2027',
   ],
   openGraph: {
-    title: 'InvoiceGate — e-invoicing compliance API',
+    title: 'Stampbench — e-invoicing compliance API',
     description: 'Validate and generate XRechnung / EN 16931 e-invoices in TypeScript.',
-    siteName: 'InvoiceGate',
+    siteName: 'Stampbench',
     type: 'website',
   },
 };
@@ -37,7 +37,7 @@ async function Nav() {
             <span className="flex h-6 w-6 items-center justify-center rounded-md bg-accent font-mono text-xs text-white">
               IG
             </span>
-            InvoiceGate
+            Stampbench
           </Link>
           <nav className="hidden items-center gap-6 text-sm text-muted sm:flex">
             <Link href="/playground" className="transition hover:text-text">Playground</Link>
@@ -77,7 +77,7 @@ function Footer() {
     <footer className="border-t border-border py-10 text-sm text-faint">
       <div className="mx-auto flex max-w-6xl flex-col gap-6 px-4 sm:flex-row sm:items-start sm:justify-between">
         <div>
-          <div className="mb-2 font-semibold text-muted">InvoiceGate</div>
+          <div className="mb-2 font-semibold text-muted">Stampbench</div>
           <p className="max-w-xs leading-relaxed">
             E-invoicing compliance tooling for developers. Not legal advice — for
             certification-grade checks also run the official KoSIT validator.
@@ -92,7 +92,7 @@ function Footer() {
           </div>
           <div className="flex flex-col gap-2">
             <span className="font-medium text-muted">Open source</span>
-            <a href="/docs#library" className="hover:text-muted">@invoicegate/core</a>
+            <a href="/docs#library" className="hover:text-muted">@stampbench/core</a>
             <a href="/docs#rules" className="hover:text-muted">Rules coverage</a>
           </div>
           <div className="flex flex-col gap-2">
@@ -109,7 +109,7 @@ function Footer() {
         </div>
       </div>
       <div className="mx-auto mt-8 max-w-6xl px-4">
-        © {new Date().getFullYear()} InvoiceGate. All rights reserved.
+        © {new Date().getFullYear()} Stampbench. All rights reserved.
       </div>
     </footer>
   );

@@ -1,6 +1,6 @@
-name: "InvoiceGate e-invoice validation"
+name: "Stampbench e-invoice validation"
 description: "Validate XRechnung / EN 16931 / ZUGFeRD e-invoices and annotate the exact failing line in the pull request."
-author: "InvoiceGate"
+author: "Stampbench"
 
 branding:
   icon: check-square
@@ -30,9 +30,9 @@ inputs:
   sarif-file:
     description: "Where to write the SARIF report when format is sarif."
     required: false
-    default: "invoicegate.sarif"
+    default: "stampbench.sarif"
   version:
-    description: "Version of the invoicegate npm package to run. Pin this for reproducible builds."
+    description: "Version of the stampbench npm package to run. Pin this for reproducible builds."
     required: false
     default: "latest"
   working-directory:
@@ -78,7 +78,7 @@ runs:
 
         case "$IG_FORMAT" in
           github|sarif) ;;
-          *) echo "::error::invoicegate: format must be 'github' or 'sarif', got '$IG_FORMAT'."; exit 2 ;;
+          *) echo "::error::stampbench: format must be 'github' or 'sarif', got '$IG_FORMAT'."; exit 2 ;;
         esac
 
         args=(validate)
@@ -97,14 +97,14 @@ runs:
         # so capture it and decide at the end — otherwise `set -e` would abort
         # before the SARIF report is written or the summary is produced.
         set +e
-        npx --yes "invoicegate@$IG_VERSION" "${args[@]}" > "$stdout_file" 2> "$stderr_file"
+        npx --yes "stampbench@$IG_VERSION" "${args[@]}" > "$stdout_file" 2> "$stderr_file"
         code=$?
         set -e
 
         # Exit code 2 means a usage or IO problem — the run never happened.
         if [ "$code" -ge 2 ]; then
           cat "$stderr_file" >&2
-          echo "::error::invoicegate could not run (exit $code). See the log above."
+          echo "::error::stampbench could not run (exit $code). See the log above."
           echo "exit-code=$code" >> "$GITHUB_OUTPUT"
           exit "$code"
         fi
@@ -122,7 +122,7 @@ runs:
         cat "$stderr_file" >&2
 
         {
-          echo "### InvoiceGate e-invoice validation"
+          echo "### Stampbench e-invoice validation"
           echo
           if [ "$code" -eq 0 ]; then
             echo "No problems that meet \`fail-on: $IG_FAIL_ON\`."

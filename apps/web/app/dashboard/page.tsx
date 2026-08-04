@@ -15,7 +15,7 @@ export default async function DashboardPage() {
     db.apiKey.count({ where: { userId: user.id, revokedAt: null } }),
   ]);
 
-  const curl = `curl -s https://invoicegate.dev/api/v1/validate \\
+  const curl = `curl -s https://stampbench.com/api/v1/validate \\
   -H "Authorization: Bearer YOUR_API_KEY" \\
   -H "Content-Type: application/xml" \\
   --data-binary @invoice.xml`;

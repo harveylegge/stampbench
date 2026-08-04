@@ -1,9 +1,9 @@
 /**
- * @invoicegate/core — validate and generate EN 16931 / XRechnung e-invoices
+ * @stampbench/core — validate and generate EN 16931 / XRechnung e-invoices
  * in pure TypeScript.
  *
  * ```ts
- * import { validateUblXml, generateXRechnungUbl, withComputedTotals } from '@invoicegate/core';
+ * import { validateUblXml, generateXRechnungUbl, withComputedTotals } from '@stampbench/core';
  *
  * const result = validateUblXml(xmlString);          // → violations with BR/BR-DE rule ids
  * const invoice = withComputedTotals({ lines, seller, buyer, … });
