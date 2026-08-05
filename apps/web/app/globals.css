@@ -43,6 +43,17 @@ body {
   color: var(--color-accent-hi);
 }
 
+/* Code blocks are wider than a phone. A grid child's default min-width:auto
+   refuses to shrink below its <pre>'s content width, which pushes the whole
+   page wider than the viewport — horizontal swiping on every mobile page.
+   Forcing min-width:0 lets each block's own overflow-x scrolling take over. */
+.grid > * {
+  min-width: 0;
+}
+pre {
+  overflow-x: auto;
+}
+
 /* Scroll reveal: sections fade in slightly as they enter the viewport.
    Hidden state applies only once JS has set `reveal-ready` on <html>, so
    content is never invisible without JS. Reduced-motion users skip it. */
