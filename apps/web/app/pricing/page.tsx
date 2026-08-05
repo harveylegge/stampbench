@@ -76,6 +76,11 @@ export default function PricingPage() {
               <div className="mb-4">
                 <span className="text-3xl font-semibold">£{p.priceGbp}</span>
                 <span className="text-sm text-muted">/month</span>
+                {/* Reassurance where the hesitation actually happens — at the
+                    price, not buried in the FAQ at the bottom of the page. */}
+                <div className="mt-1 text-xs text-faint">
+                  {p.priceGbp === 0 ? 'Free forever — no card needed' : 'Cancel anytime'}
+                </div>
               </div>
               <ul className="mb-6 flex flex-col gap-2 text-sm text-muted">
                 {p.features.map((f) => (
