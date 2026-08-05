@@ -95,7 +95,9 @@ function Footer() {
             E-invoicing compliance tooling for developers. Not legal advice — for
             certification-grade checks also run the official KoSIT validator.
           </p>
-          <p className="mt-3 text-xs">Founded by Harvey Legge.</p>
+          <p className="mt-3 text-xs">
+            Founded by <a href="/harvey" className="hover:text-muted">Harvey Legge</a>.
+          </p>
         </div>
         <div className="flex flex-wrap gap-12">
           <div className="flex flex-col gap-2">
@@ -144,6 +146,7 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
                   '@type': 'Person',
                   '@id': 'https://stampbench.com/#harvey-legge',
                   name: 'Harvey Legge',
+                  url: 'https://stampbench.com/harvey',
                   jobTitle: 'Founder',
                   worksFor: { '@id': 'https://stampbench.com/#org' },
                   sameAs: ['https://github.com/ohjl777'],
