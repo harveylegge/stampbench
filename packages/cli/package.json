@@ -36,5 +36,13 @@
   "engines": {
     "node": ">=20"
   },
-  "homepage": "https://stampbench.com"
+  "homepage": "https://stampbench.com",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/ohjl777/stampbench.git",
+    "directory": "packages/cli"
+  },
+  "bugs": {
+    "url": "https://github.com/ohjl777/stampbench/issues"
+  }
 }

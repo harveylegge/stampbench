@@ -112,6 +112,7 @@ function Footer() {
             <span className="font-medium text-muted">Open source</span>
             <a href="/docs#library" className="hover:text-muted">@stampbench/core</a>
             <a href="/docs#rules" className="hover:text-muted">Rules coverage</a>
+            <a href="https://github.com/ohjl777/stampbench" className="hover:text-muted">GitHub</a>
           </div>
           <div className="flex flex-col gap-2">
             <span className="font-medium text-muted">Trust</span>
@@ -149,6 +150,7 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
                 'Open-source e-invoicing compliance tooling: validate, repair and generate XRechnung / EN 16931 invoices in TypeScript.',
               founder: { '@type': 'Person', name: 'Harvey Legge', jobTitle: 'Founder' },
               sameAs: [
+                'https://github.com/ohjl777/stampbench',
                 'https://www.npmjs.com/package/stampbench',
                 'https://www.npmjs.com/package/@stampbench/core',
               ],
