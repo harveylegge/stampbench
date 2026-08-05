@@ -35,7 +35,7 @@ async function Nav() {
         <div className="flex items-center gap-8">
           <Link href="/" className="flex items-center gap-2 font-semibold tracking-tight">
             <span className="flex h-6 w-6 items-center justify-center rounded-md bg-accent font-mono text-xs text-white">
-              IG
+              SB
             </span>
             Stampbench
           </Link>

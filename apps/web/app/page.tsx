@@ -94,7 +94,7 @@ export default function LandingPage() {
               <span className="h-2.5 w-2.5 rounded-full bg-border-hi" />
               <span className="ml-3 font-mono text-xs text-muted">validate.ts</span>
             </div>
-            <pre className="overflow-x-auto p-5 font-mono text-[13px] leading-relaxed text-[#cdcdda]">
+            <pre className="overflow-x-auto p-5 font-mono text-[13px] leading-relaxed text-text">
               {HERO_SNIPPET}
             </pre>
           </div>

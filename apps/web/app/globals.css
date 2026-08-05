@@ -1,27 +1,33 @@
 @import "tailwindcss";
 
+/*
+ * Paper and ink. The palette of the documents this product exists to check —
+ * and of the stamp in the name. Deliberately sober: the buyers are companies
+ * and public-sector suppliers, and the design should read like something a
+ * procurement office could trust, not a crypto landing page.
+ */
 @theme {
-  --color-bg: #0a0a0f;
-  --color-surface: #121219;
-  --color-surface-2: #191924;
-  --color-border: #262636;
-  --color-border-hi: #34344a;
-  --color-text: #f2f2f7;
-  --color-muted: #b8b8c9;
-  --color-faint: #8f8fa3;
-  --color-accent: #7c6af7;
-  --color-accent-hi: #9d8dff;
-  --color-accent-dim: #2c2650;
-  --color-success: #3ecf8e;
-  --color-danger: #f47c7c;
-  --color-warning: #f6c34a;
+  --color-bg: #f7f8fa;
+  --color-surface: #ffffff;
+  --color-surface-2: #eef1f5;
+  --color-border: #d8dee6;
+  --color-border-hi: #b9c2cd;
+  --color-text: #171b21;
+  --color-muted: #4a5460;
+  --color-faint: #6e7885;
+  --color-accent: #1f4e8c;
+  --color-accent-hi: #163e75;
+  --color-accent-dim: #dce7f5;
+  --color-success: #1b7a4e;
+  --color-danger: #a33b34;
+  --color-warning: #92600e;
 
   --font-sans: var(--font-inter), ui-sans-serif, system-ui, sans-serif;
   --font-mono: var(--font-jbmono), ui-monospace, "SFMono-Regular", monospace;
 }
 
 html {
-  color-scheme: dark;
+  color-scheme: light;
   scroll-behavior: smooth;
 }
 
@@ -49,8 +55,8 @@ body {
   inset: 0;
   pointer-events: none;
   background-image:
-    linear-gradient(to right, rgb(124 106 247 / 0.07) 1px, transparent 1px),
-    linear-gradient(to bottom, rgb(124 106 247 / 0.07) 1px, transparent 1px);
+    linear-gradient(to right, rgb(31 78 140 / 0.06) 1px, transparent 1px),
+    linear-gradient(to bottom, rgb(31 78 140 / 0.06) 1px, transparent 1px);
   background-size: 44px 44px;
   mask-image: radial-gradient(ellipse 70% 60% at 50% 0%, black 30%, transparent 100%);
 }
