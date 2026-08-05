@@ -149,7 +149,10 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
                   url: 'https://stampbench.com/harvey',
                   jobTitle: 'Founder',
                   worksFor: { '@id': 'https://stampbench.com/#org' },
-                  sameAs: ['https://github.com/ohjl777'],
+                  sameAs: [
+                    'https://github.com/ohjl777',
+                    'https://www.linkedin.com/in/harvey-legge-ba687b3ba',
+                  ],
                 },
                 {
                   '@type': 'Organization',

@@ -8,6 +8,7 @@ export const metadata: Metadata = {
 };
 
 const LINKS = [
+  { label: 'LinkedIn', href: 'https://www.linkedin.com/in/harvey-legge-ba687b3ba', sub: 'Founder at Stampbench' },
   { label: 'GitHub', href: 'https://github.com/ohjl777', sub: 'ohjl777' },
   { label: 'Stampbench', href: 'https://stampbench.com', sub: 'stampbench.com' },
   { label: 'npm', href: 'https://www.npmjs.com/package/stampbench', sub: 'stampbench · @stampbench/core' },
@@ -41,7 +42,10 @@ export default function HarveyPage() {
                 'TypeScript',
                 'Software development',
               ],
-              sameAs: ['https://github.com/ohjl777'],
+              sameAs: [
+                'https://github.com/ohjl777',
+                'https://www.linkedin.com/in/harvey-legge-ba687b3ba',
+              ],
             },
           }),
         }}
@@ -80,7 +84,7 @@ export default function HarveyPage() {
         </p>
       </div>
 
-      <div className="mt-10 grid gap-4 sm:grid-cols-3">
+      <div className="mt-10 grid gap-4 sm:grid-cols-2">
         {LINKS.map((l) => (
           <a
             key={l.label}
