@@ -2,6 +2,8 @@ import type { Metadata } from 'next';
 import { Inter, JetBrains_Mono } from 'next/font/google';
 import Link from 'next/link';
 import { ScrollReveal } from '@/components/scroll-reveal';
+import { LanguageSwitcher } from '@/components/language-switcher';
+import { BrandLink, NavLinks } from '@/components/nav-links';
 import './globals.css';
 
 /**
@@ -43,19 +45,11 @@ async function Nav() {
     <header className="sticky top-0 z-40 border-b border-border bg-bg/80 backdrop-blur">
       <div className="mx-auto flex h-14 max-w-6xl items-center justify-between px-4">
         <div className="flex items-center gap-8">
-          <Link href="/" className="flex items-center gap-2 font-semibold tracking-tight">
-            <span className="flex h-6 w-6 items-center justify-center rounded-md bg-accent font-mono text-xs text-white">
-              SB
-            </span>
-            Stampbench
-          </Link>
-          <nav className="hidden items-center gap-6 text-sm text-muted sm:flex">
-            <Link href="/playground" className="transition hover:text-text">Playground</Link>
-            <Link href="/docs" className="transition hover:text-text">Docs</Link>
-            <Link href="/pricing" className="transition hover:text-text">Pricing</Link>
-          </nav>
+          <BrandLink />
+          <NavLinks />
         </div>
         <div className="flex items-center gap-3 text-sm">
+          <LanguageSwitcher />
           {IS_STATIC ? (
             <a
               href="https://www.npmjs.com/package/stampbench"
