@@ -1,6 +1,6 @@
 {
   "name": "@stampbench/core",
-  "version": "0.1.0",
+  "version": "0.1.1",
   "description": "Validate and generate EN 16931 / XRechnung e-invoices in pure TypeScript. UBL parsing, business-rule validation (BR, BR-CO, BR-DE), and compliant XML generation.",
   "license": "MIT",
   "type": "module",
