@@ -96,6 +96,7 @@ function Footer() {
             E-invoicing compliance tooling for developers. Not legal advice — for
             certification-grade checks also run the official KoSIT validator.
           </p>
+          <p className="mt-3 text-xs">Founded by Harvey Legge.</p>
         </div>
         <div className="flex flex-wrap gap-12">
           <div className="flex flex-col gap-2">
@@ -133,6 +134,24 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
   return (
     <html lang="en" className={`${inter.variable} ${jbMono.variable}`}>
       <body className="flex min-h-screen flex-col font-sans">
+        <script
+          type="application/ld+json"
+          dangerouslySetInnerHTML={{
+            __html: JSON.stringify({
+              '@context': 'https://schema.org',
+              '@type': 'Organization',
+              name: 'Stampbench',
+              url: 'https://stampbench.com',
+              description:
+                'Open-source e-invoicing compliance tooling: validate, repair and generate XRechnung / EN 16931 invoices in TypeScript.',
+              founder: { '@type': 'Person', name: 'Harvey Legge', jobTitle: 'Founder' },
+              sameAs: [
+                'https://www.npmjs.com/package/stampbench',
+                'https://www.npmjs.com/package/@stampbench/core',
+              ],
+            }),
+          }}
+        />
         <Nav />
         <ScrollReveal />
         <main className="flex-1">{children}</main>
