@@ -43,6 +43,21 @@ body {
   color: var(--color-accent-hi);
 }
 
+/* Scroll reveal: sections fade in slightly as they enter the viewport.
+   Hidden state applies only once JS has set `reveal-ready` on <html>, so
+   content is never invisible without JS. Reduced-motion users skip it. */
+@media (prefers-reduced-motion: no-preference) {
+  html.reveal-ready main section {
+    opacity: 0;
+    transform: translateY(10px);
+    transition: opacity 0.4s ease-out, transform 0.4s ease-out;
+  }
+  html.reveal-ready main section.revealed {
+    opacity: 1;
+    transform: none;
+  }
+}
+
 /* Subtle grid backdrop for hero sections. The grid + fade mask live on a
    ::before layer so the mask never applies to the section's actual content
    (a mask on the section itself would fade the text and buttons out too). */

@@ -2,6 +2,7 @@ import type { Metadata } from 'next';
 import { Inter, JetBrains_Mono } from 'next/font/google';
 import Link from 'next/link';
 import { getCurrentUser } from '@/lib/auth';
+import { ScrollReveal } from '@/components/scroll-reveal';
 import './globals.css';
 
 const inter = Inter({ subsets: ['latin'], variable: '--font-inter' });
@@ -120,6 +121,7 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
     <html lang="en" className={`${inter.variable} ${jbMono.variable}`}>
       <body className="flex min-h-screen flex-col font-sans">
         <Nav />
+        <ScrollReveal />
         <main className="flex-1">{children}</main>
         <Footer />
       </body>
