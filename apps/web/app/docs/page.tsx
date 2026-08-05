@@ -1,5 +1,7 @@
 import type { Metadata } from 'next';
 import Link from 'next/link';
+const IS_STATIC = process.env.NEXT_PUBLIC_STATIC_EXPORT === '1';
+
 
 export const metadata: Metadata = {
   title: 'Documentation',
@@ -66,8 +68,11 @@ export default function DocsPage() {
   -H "Content-Type: application/xml" \\
   --data-binary @invoice.xml`}</Code>
         <p className="text-sm leading-relaxed text-muted">
-          For real usage, <Link href="/register" className="text-accent-hi hover:underline">create a free account</Link>,
-          generate an API key in the dashboard, and send it as a Bearer token.
+          {IS_STATIC ? (
+            <>The hosted API is in early access — email <a href="mailto:hello@stampbench.com" className="text-accent-hi hover:underline">hello@stampbench.com</a> for a key. The library and CLI need no account at all.</>
+          ) : (
+            <>For real usage, <Link href="/register" className="text-accent-hi hover:underline">create a free account</Link>, generate an API key in the dashboard, and send it as a Bearer token.</>
+          )}
         </p>
 
         <H2 id="regression">Regression testing against a future rule set</H2>

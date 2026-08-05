@@ -10,3 +10,6 @@ dist/
 .vercel/
 coverage/
 .DS_Store
+.next-static/
+.static-excluded/
+apps/web/out/

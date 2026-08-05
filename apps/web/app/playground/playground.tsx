@@ -1,7 +1,23 @@
 'use client';
 
 import { useState } from 'react';
+import {
+  generateXRechnungUbl,
+  validateInvoice,
+  validateXml,
+  withComputedTotals,
+  withXRechnungDefaults,
+  type Invoice,
+} from '@stampbench/core';
 import { SAMPLE_GENERATE_JSON, SAMPLE_XML } from './samples';
+
+/**
+ * Validation and generation run entirely in the browser — the engine is pure
+ * TypeScript, so the playground IS the product claim: your invoice never
+ * leaves your machine. Only the optional AI explanation needs a server, so it
+ * is absent from the static build.
+ */
+const HAS_SERVER = process.env.NEXT_PUBLIC_STATIC_EXPORT !== '1';
 
 interface Violation {
   ruleId: string;
@@ -93,13 +109,13 @@ export function Playground() {
     return data;
   }
 
-  async function runValidate() {
+  function runValidate() {
     setBusy('validate');
     setError(null);
     setExplanation(null);
     setResult(null);
     try {
-      setResult(await post('/api/v1/validate', { xml, profile: 'xrechnung' }));
+      setResult(validateXml(xml, { profile: 'xrechnung' }));
     } catch (e) {
       setError((e as Error).message);
     } finally {
@@ -107,13 +123,23 @@ export function Playground() {
     }
   }
 
-  async function runGenerate() {
+  /** Accept either the bare invoice object or a { "invoice": { … } } wrapper. */
+  function unwrapInvoice(parsed: unknown): Invoice {
+    if (typeof parsed !== 'object' || parsed === null || Array.isArray(parsed)) {
+      throw new Error('Input must be a JSON object — the invoice itself, or { "invoice": { … } }.');
+    }
+    const inner = (parsed as Record<string, unknown>)['invoice'];
+    return (typeof inner === 'object' && inner !== null && !Array.isArray(inner) ? inner : parsed) as Invoice;
+  }
+
+  function runGenerate() {
     setBusy('generate');
     setError(null);
     setGenResult(null);
     try {
-      const parsed = JSON.parse(genJson);
-      setGenResult(await post('/api/v1/generate', parsed));
+      const invoice = withComputedTotals(withXRechnungDefaults(unwrapInvoice(JSON.parse(genJson))));
+      const generatedXml = generateXRechnungUbl(invoice);
+      setGenResult({ xml: generatedXml, validation: validateInvoice(invoice) });
     } catch (e) {
       setError(e instanceof SyntaxError ? 'Input is not valid JSON.' : (e as Error).message);
     } finally {
@@ -201,13 +227,16 @@ export function Playground() {
                   families) plus the German XRechnung (BR-DE) profile. Both syntaxes are
                   auto-detected: UBL and CII (ZUGFeRD/Factur-X XML). Load the broken sample to see
                   it catch a missing buyer reference and a VAT arithmetic error.
+                  <span className="mt-2 block">
+                    Everything runs in your browser — the XML never leaves your machine.
+                  </span>
                 </p>
               )}
               {error && <p className="text-sm text-danger">{error}</p>}
               {result && (
                 <>
                   <ViolationList result={result} />
-                  {result.violations.length > 0 && (
+                  {HAS_SERVER && result.violations.length > 0 && (
                     <button
                       onClick={runExplain}
                       disabled={busy !== null}

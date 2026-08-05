@@ -22,12 +22,24 @@ const securityHeaders = [
   },
 ];
 
+/**
+ * STATIC_EXPORT=1 produces the credential-free marketing site for Cloudflare
+ * Pages: no auth, no API routes, playground fully client-side. headers() is
+ * ignored by `next export`; the build script emits a `_headers` file for
+ * Cloudflare instead.
+ */
+const isStaticExport = process.env.STATIC_EXPORT === '1';
+
 const nextConfig: NextConfig = {
   transpilePackages: ['@stampbench/core'],
   poweredByHeader: false,
-  async headers() {
-    return [{ source: '/(.*)', headers: securityHeaders }];
-  },
+  ...(isStaticExport
+    ? { output: 'export' as const, trailingSlash: true, distDir: '.next-static' }
+    : {
+        async headers() {
+          return [{ source: '/(.*)', headers: securityHeaders }];
+        },
+      }),
 };
 
 export default nextConfig;

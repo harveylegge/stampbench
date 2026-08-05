@@ -1,5 +1,7 @@
 import type { Metadata } from 'next';
 import Link from 'next/link';
+const IS_STATIC = process.env.NEXT_PUBLIC_STATIC_EXPORT === '1';
+
 import { PLANS } from '@/lib/plans';
 
 export const metadata: Metadata = {
@@ -84,7 +86,7 @@ export default function PricingPage() {
                 ))}
               </ul>
               <Link
-                href={id === 'free' ? '/register' : '/register?plan=' + id}
+                href={IS_STATIC ? `mailto:hello@stampbench.com?subject=${encodeURIComponent('Stampbench early access — ' + p.name)}` : id === 'free' ? '/register' : '/register?plan=' + id}
                 className={`mt-auto rounded-lg py-2 text-center text-sm font-medium transition ${
                   highlight
                     ? 'bg-accent text-white hover:bg-accent-hi'

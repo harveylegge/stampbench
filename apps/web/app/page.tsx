@@ -1,4 +1,6 @@
 import Link from 'next/link';
+const IS_STATIC = process.env.NEXT_PUBLIC_STATIC_EXPORT === '1';
+
 
 const HERO_SNIPPET = `import { validateUblXml } from '@stampbench/core';
 
@@ -234,10 +236,10 @@ export default function LandingPage() {
             library, forever.
           </p>
           <Link
-            href="/register"
+            href={IS_STATIC ? 'https://www.npmjs.com/package/stampbench' : '/register'}
             className="inline-block rounded-lg bg-accent px-6 py-3 font-medium text-white transition hover:bg-accent-hi"
           >
-            Start free
+            {IS_STATIC ? 'Get it on npm' : 'Start free'}
           </Link>
         </div>
       </section>

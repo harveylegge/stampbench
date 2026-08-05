@@ -1,9 +1,15 @@
 import type { Metadata } from 'next';
 import { Inter, JetBrains_Mono } from 'next/font/google';
 import Link from 'next/link';
-import { getCurrentUser } from '@/lib/auth';
 import { ScrollReveal } from '@/components/scroll-reveal';
 import './globals.css';
+
+/**
+ * The static export (Cloudflare Pages) has no server: no auth, no dashboard,
+ * no API routes. Auth is loaded with a dynamic import so Prisma and the
+ * session machinery stay entirely out of the static build graph.
+ */
+const IS_STATIC = process.env.NEXT_PUBLIC_STATIC_EXPORT === '1';
 
 const inter = Inter({ subsets: ['latin'], variable: '--font-inter' });
 const jbMono = JetBrains_Mono({ subsets: ['latin'], variable: '--font-jbmono' });
@@ -29,7 +35,7 @@ export const metadata: Metadata = {
 };
 
 async function Nav() {
-  const user = await getCurrentUser();
+  const user = IS_STATIC ? null : await (await import('@/lib/auth')).getCurrentUser();
   return (
     <header className="sticky top-0 z-40 border-b border-border bg-bg/80 backdrop-blur">
       <div className="mx-auto flex h-14 max-w-6xl items-center justify-between px-4">
@@ -47,7 +53,14 @@ async function Nav() {
           </nav>
         </div>
         <div className="flex items-center gap-3 text-sm">
-          {user ? (
+          {IS_STATIC ? (
+            <a
+              href="https://www.npmjs.com/package/stampbench"
+              className="rounded-lg bg-accent px-3.5 py-1.5 font-medium text-white transition hover:bg-accent-hi"
+            >
+              Get it on npm
+            </a>
+          ) : user ? (
             <Link
               href="/dashboard"
               className="rounded-lg bg-accent px-3.5 py-1.5 font-medium text-white transition hover:bg-accent-hi"
