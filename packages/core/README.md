@@ -4,6 +4,8 @@ Validate, repair and generate **EN 16931 / XRechnung / ZUGFeRD** e-invoices in
 pure TypeScript. No Java, no hosted API — your invoice bytes never leave the
 process.
 
+Created by [Harvey Legge](https://github.com/ohjl777), founder of [Stampbench](https://stampbench.com).
+
 ```sh
 npm install @stampbench/core
 ```

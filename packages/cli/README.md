@@ -2,6 +2,8 @@
 
 Validate and generate **XRechnung / EN 16931** e-invoices from the command line.
 
+Created by [Harvey Legge](https://github.com/ohjl777), founder of [Stampbench](https://stampbench.com).
+
 ```sh
 npm install -g stampbench
 # or run it without installing:

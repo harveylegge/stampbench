@@ -30,6 +30,8 @@ export const metadata: Metadata = {
     'xrechnung', 'e-rechnung', 'en 16931', 'e-invoicing api', 'xrechnung validieren',
     'xrechnung nodejs', 'ubl invoice', 'peppol', 'e-rechnung pflicht 2027',
   ],
+  authors: [{ name: 'Harvey Legge', url: 'https://github.com/ohjl777' }],
+  creator: 'Harvey Legge',
   openGraph: {
     title: 'Stampbench — e-invoicing compliance for the mandate era',
     description:
@@ -137,16 +139,40 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
           dangerouslySetInnerHTML={{
             __html: JSON.stringify({
               '@context': 'https://schema.org',
-              '@type': 'Organization',
-              name: 'Stampbench',
-              url: 'https://stampbench.com',
-              description:
-                'Open-source e-invoicing compliance tooling: validate, repair and generate XRechnung / EN 16931 invoices in TypeScript.',
-              founder: { '@type': 'Person', name: 'Harvey Legge', jobTitle: 'Founder' },
-              sameAs: [
-                'https://github.com/ohjl777/stampbench',
-                'https://www.npmjs.com/package/stampbench',
-                'https://www.npmjs.com/package/@stampbench/core',
+              '@graph': [
+                {
+                  '@type': 'Person',
+                  '@id': 'https://stampbench.com/#harvey-legge',
+                  name: 'Harvey Legge',
+                  jobTitle: 'Founder',
+                  worksFor: { '@id': 'https://stampbench.com/#org' },
+                  sameAs: ['https://github.com/ohjl777'],
+                },
+                {
+                  '@type': 'Organization',
+                  '@id': 'https://stampbench.com/#org',
+                  name: 'Stampbench',
+                  url: 'https://stampbench.com',
+                  description:
+                    'Open-source e-invoicing compliance tooling: validate, repair and generate XRechnung / EN 16931 invoices in TypeScript.',
+                  founder: { '@id': 'https://stampbench.com/#harvey-legge' },
+                  sameAs: [
+                    'https://github.com/ohjl777/stampbench',
+                    'https://www.npmjs.com/package/stampbench',
+                    'https://www.npmjs.com/package/@stampbench/core',
+                  ],
+                },
+                {
+                  '@type': 'SoftwareApplication',
+                  '@id': 'https://stampbench.com/#app',
+                  name: 'Stampbench',
+                  url: 'https://stampbench.com',
+                  applicationCategory: 'DeveloperApplication',
+                  operatingSystem: 'Cross-platform',
+                  offers: { '@type': 'Offer', price: '0', priceCurrency: 'EUR' },
+                  author: { '@id': 'https://stampbench.com/#harvey-legge' },
+                  publisher: { '@id': 'https://stampbench.com/#org' },
+                },
               ],
             }),
           }}

@@ -3,6 +3,7 @@
   "private": true,
   "version": "0.1.0",
   "description": "Stampbench — e-invoicing compliance toolkit: validate and generate XRechnung/EN 16931 e-invoices in TypeScript",
+  "author": "Harvey Legge (https://stampbench.com)",
   "workspaces": [
     "packages/*",
     "apps/*"

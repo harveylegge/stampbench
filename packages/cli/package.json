@@ -1,7 +1,8 @@
 {
   "name": "stampbench",
-  "version": "0.1.0",
+  "version": "0.1.1",
   "description": "Validate and generate XRechnung / EN 16931 e-invoices from the command line",
+  "author": "Harvey Legge (https://stampbench.com)",
   "license": "MIT",
   "type": "module",
   "bin": {
