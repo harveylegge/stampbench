@@ -17,18 +17,21 @@ const jbMono = JetBrains_Mono({ subsets: ['latin'], variable: '--font-jbmono' })
 export const metadata: Metadata = {
   metadataBase: new URL(process.env.NEXT_PUBLIC_APP_URL ?? 'http://localhost:3000'),
   title: {
-    default: 'Stampbench — XRechnung & EN 16931 e-invoicing API for developers',
+    // The result page already shows the domain above the title, so the brand
+    // goes at the end instead of repeating up front.
+    default: 'Validate & fix XRechnung / EN 16931 e-invoices · Stampbench',
     template: '%s · Stampbench',
   },
   description:
-    'Validate and generate legally compliant e-invoices (XRechnung, EN 16931) with a TypeScript-first API. Plain-language error explanations powered by AI. Built for the German B2B e-invoicing mandate.',
+    'E-invoicing is becoming law: Germany already requires XRechnung for public-sector invoices, and every business must issue e-invoices from 2027. Stampbench validates, repairs and generates compliant invoices in TypeScript — open source, on your own machine.',
   keywords: [
     'xrechnung', 'e-rechnung', 'en 16931', 'e-invoicing api', 'xrechnung validieren',
     'xrechnung nodejs', 'ubl invoice', 'peppol', 'e-rechnung pflicht 2027',
   ],
   openGraph: {
-    title: 'Stampbench — e-invoicing compliance API',
-    description: 'Validate and generate XRechnung / EN 16931 e-invoices in TypeScript.',
+    title: 'Stampbench — e-invoicing compliance for the mandate era',
+    description:
+      'Germany requires XRechnung today for public-sector invoices and for all businesses from 2027. Validate, repair and generate compliant e-invoices — open source, in TypeScript.',
     siteName: 'Stampbench',
     type: 'website',
   },
