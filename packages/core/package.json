@@ -45,5 +45,6 @@
   },
   "engines": {
     "node": ">=20"
-  }
+  },
+  "homepage": "https://stampbench.com"
 }
