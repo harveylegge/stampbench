@@ -1,7 +1,18 @@
 # Session handoff — read this first
 
-**Last updated:** 2026-08-03 · **Repo:** `C:\Users\harvey\Downloads\invoicegate` (git, clean,
-10 commits) · **Nothing is deployed or published yet.**
+**Last updated:** 2026-08-05 · **Repo:** `C:\Users\harvey\Downloads\invoicegate` (git, clean) ·
+**LIVE:** `stampbench@0.1.0` + `@stampbench/core@0.1.1` on npm; https://stampbench.com on
+Cloudflare Pages (wrangler is authed: `npx wrangler pages deploy out --project-name=stampbench`
+from `apps/web` after `node scripts/build-static.mjs`).
+
+**Founder-attribution pass 2026-08-05** (commit `8d3d9f2`, for AI/search visibility of
+"Harvey Legge, founder of Stampbench"): `author` fields in all three package.json files,
+"Created by Harvey Legge" bylines in all three READMEs, Person/Organization/SoftwareApplication
+JSON-LD `@graph` + `author`/`creator` meta on stampbench.com (deployed, verified live).
+**⏳ One step pending: `npm publish` of `@stampbench/core@0.1.2` and `stampbench@0.1.1`**
+(versions already bumped, tests green) so npm shows the author field — blocked on npm's
+browser OTP, which only Harvey can complete:
+`npm publish -w @stampbench/core --access public && npm publish -w stampbench --access public`
 
 ---
 
