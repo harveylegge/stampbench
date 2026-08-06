@@ -1,0 +1,5 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 64 64">
+  <!-- Stampbench S monogram — solid white, for accent-purple or photographic backgrounds. -->
+  <path fill="#FFFFFF" d="M12 20 Q12 12 20 12 H50 L44 21 H23 Q21 21 21 23 V25.5 Q21 27.5 23 27.5 H36.5 L30.5 36.5 H15 Q12 36.5 12 33.5 V20 Z"/>
+  <path fill="#FFFFFF" d="M52 44 Q52 52 44 52 H14 L20 43 H41 Q43 43 43 41 V38.5 Q43 36.5 41 36.5 H27.5 L33.5 27.5 H49 Q52 27.5 52 30.5 V44 Z"/>
+</svg>
