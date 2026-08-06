@@ -1,0 +1,8 @@
+name = "stampbench-mailer"
+main = "src/index.ts"
+compatibility_date = "2026-08-01"
+workers_dev = false
+
+send_email = [
+  { name = "EMAIL", destination_address = "harveypro3@gmail.com" },
+]

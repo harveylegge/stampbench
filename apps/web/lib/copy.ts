@@ -24,7 +24,18 @@ export const TRANSLATED_PATHS = ['', 'playground'] as const;
 
 export interface Copy {
   locale: Locale;
-  nav: { playground: string; docs: string; pricing: string; cta: string };
+  nav: {
+    playground: string;
+    docs: string;
+    pricing: string;
+    trust: string;
+    github: string;
+    signIn: string;
+    account: string;
+    /** Accessible name for the mobile hamburger button. */
+    menu: string;
+    cta: string;
+  };
   hero: {
     badge: string;
     titleTop: string;
@@ -71,7 +82,17 @@ export interface Copy {
 
 export const en: Copy = {
   locale: 'en',
-  nav: { playground: 'Playground', docs: 'Docs', pricing: 'Pricing', cta: 'Get it on npm' },
+  nav: {
+    playground: 'Playground',
+    docs: 'Docs',
+    pricing: 'Pricing',
+    trust: 'Trust',
+    github: 'GitHub',
+    signIn: 'Sign in',
+    account: 'Account',
+    menu: 'Menu',
+    cta: 'Get it on npm',
+  },
   hero: {
     badge: "Germany's B2B e-invoicing mandate: issuing required from Jan 2027",
     titleTop: 'Pass the e-invoice mandate.',
@@ -169,7 +190,17 @@ export const en: Copy = {
 
 export const de: Copy = {
   locale: 'de',
-  nav: { playground: 'Playground', docs: 'Dokumentation', pricing: 'Preise', cta: 'Auf npm holen' },
+  nav: {
+    playground: 'Playground',
+    docs: 'Dokumentation',
+    pricing: 'Preise',
+    trust: 'Nachweise',
+    github: 'GitHub',
+    signIn: 'Anmelden',
+    account: 'Konto',
+    menu: 'Menü',
+    cta: 'Auf npm holen',
+  },
   hero: {
     badge: 'E-Rechnungspflicht in Deutschland: Ausstellen ab Januar 2027 verpflichtend',
     titleTop: 'E-Rechnungspflicht bestehen.',

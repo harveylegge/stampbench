@@ -1,6 +1,5 @@
 import type { Metadata } from 'next';
 import Link from 'next/link';
-const IS_STATIC = process.env.NEXT_PUBLIC_STATIC_EXPORT === '1';
 
 import { PLANS } from '@/lib/plans';
 
@@ -14,6 +13,10 @@ const faqs = [
   {
     q: 'What counts as a document?',
     a: 'Each request to /api/v1/validate or /api/v1/generate counts as one document. Local validation with the open-source @stampbench/core library is unlimited and free forever — the quota only applies to the hosted API.',
+  },
+  {
+    q: 'How do accounts and quotas work?',
+    a: 'A free account comes with 100 hosted API calls, 10 shared reports and 5 future-ruleset checks per month. The open-source library, and validate, generate and fix in the playground, never need an account and are unlimited — quotas apply only to the hosted features.',
   },
   {
     q: 'What does the Platform tier actually include?',
@@ -33,7 +36,7 @@ const faqs = [
   },
   {
     q: 'Can I cancel anytime?',
-    a: 'Yes — plans are monthly, cancel in one click from the billing portal, and your plan simply drops to Free at the end of the period.',
+    a: 'Yes — plans are monthly. There is no billing portal yet: email us and your plan drops to Free at the end of the period. Nothing renews behind your back.',
   },
   {
     q: 'What about annual billing or EUR pricing?',
@@ -91,7 +94,7 @@ export default function PricingPage() {
                 ))}
               </ul>
               <Link
-                href={IS_STATIC ? `mailto:hello@stampbench.com?subject=${encodeURIComponent('Stampbench early access — ' + p.name)}` : id === 'free' ? '/register' : '/register?plan=' + id}
+                href={id === 'free' ? '/signup' : `/signup?plan=${id}`}
                 className={`mt-auto rounded-lg py-2 text-center text-sm font-medium transition ${
                   highlight
                     ? 'bg-accent text-white hover:bg-accent-hi'
@@ -100,6 +103,12 @@ export default function PricingPage() {
               >
                 {id === 'free' ? 'Start free' : `Choose ${p.name}`}
               </Link>
+              {/* No checkout exists yet — say so before signup, not after. */}
+              {id !== 'free' && (
+                <p className="mt-2 text-center text-xs text-faint">
+                  No card on the site — we email you to arrange payment and activation.
+                </p>
+              )}
             </div>
           );
         })}

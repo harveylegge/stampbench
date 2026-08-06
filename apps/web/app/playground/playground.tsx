@@ -1,14 +1,21 @@
 'use client';
 
-import { useState } from 'react';
+import Link from 'next/link';
+import { useEffect, useState } from 'react';
 import {
+  compareRulesets,
   generateXRechnungUbl,
+  listRulesets,
   validateInvoice,
   validateXml,
   withComputedTotals,
   withXRechnungDefaults,
   type Invoice,
+  type RegressionReport,
 } from '@stampbench/core';
+import { ApiError, regressCredit, shareReport } from '@/lib/account-client';
+import { FEATURE_LIMITS } from '@/lib/plans';
+import { FixPanel } from './fix-panel';
 import { SAMPLE_GENERATE_JSON, SAMPLE_XML } from './samples';
 
 /**
@@ -88,9 +95,301 @@ function ViolationList({ result }: { result: ValidationResult }) {
   );
 }
 
+const SECONDARY_BUTTON =
+  'rounded-lg border border-border bg-surface px-4 py-2 text-sm font-medium text-muted transition hover:border-border-hi hover:text-text disabled:opacity-40';
+
+/**
+ * 'Share report' — the one playground feature that stores something
+ * server-side: the verdict and violation list (never the XML), keyed for
+ * /report?id=…. Metered per FEATURE_LIMITS.share, which is why the two
+ * expected failures get bespoke prompts rather than a generic error.
+ */
+function SharePanel({ result, fileName }: { result: ValidationResult; fileName: string | null }) {
+  const [shared, setShared] = useState<{ url: string } | null>(null);
+  const [gate, setGate] = useState<'signup' | 'quota' | null>(null);
+  const [shareError, setShareError] = useState<string | null>(null);
+  const [busy, setBusy] = useState(false);
+  const [copied, setCopied] = useState(false);
+
+  // A link describes one specific run — a new result invalidates all of it.
+  useEffect(() => {
+    setShared(null);
+    setGate(null);
+    setShareError(null);
+    setCopied(false);
+  }, [result]);
+
+  async function onShare() {
+    setBusy(true);
+    setGate(null);
+    setShareError(null);
+    try {
+      const res = await shareReport({
+        verdict: result.valid,
+        errorCount: result.errorCount,
+        warningCount: result.warningCount,
+        syntax: result.syntax,
+        violations: result.violations,
+        fileName: fileName ?? undefined,
+        sharedAt: Date.now(),
+        source: 'playground',
+      });
+      setShared(res);
+    } catch (e) {
+      if (e instanceof ApiError && e.code === 'unauthenticated') setGate('signup');
+      else if (e instanceof ApiError && e.code === 'quota') setGate('quota');
+      else setShareError(e instanceof Error ? e.message : 'Sharing failed.');
+    } finally {
+      setBusy(false);
+    }
+  }
+
+  // Only computed after a successful share, so window is always available.
+  const absoluteUrl = shared
+    ? shared.url.startsWith('http')
+      ? shared.url
+      : `${window.location.origin}${shared.url}`
+    : null;
+
+  function copy() {
+    if (!absoluteUrl) return;
+    navigator.clipboard.writeText(absoluteUrl).then(() => {
+      setCopied(true);
+      setTimeout(() => setCopied(false), 1500);
+    });
+  }
+
+  return (
+    <div className="mt-4 border-t border-border pt-4 text-sm">
+      {!shared && (
+        <>
+          <button onClick={onShare} disabled={busy} className={SECONDARY_BUTTON}>
+            {busy ? 'Sharing…' : 'Share report'}
+          </button>
+          <p className="mt-2 text-xs text-faint">
+            Stores the verdict and violation list — never the XML itself.
+          </p>
+        </>
+      )}
+      {gate === 'signup' && (
+        <p className="mt-2 text-muted">
+          <Link href="/signup" className="text-accent-hi hover:underline">
+            Create a free account
+          </Link>{' '}
+          to share validation reports ({FEATURE_LIMITS.free.share}/month free).
+        </p>
+      )}
+      {gate === 'quota' && (
+        <p className="mt-2 text-muted">
+          Sharing quota reached this month.{' '}
+          <Link href="/account" className="text-accent-hi hover:underline">
+            See plans on your account page
+          </Link>
+          .
+        </p>
+      )}
+      {shareError && <p className="mt-2 text-danger">{shareError}</p>}
+      {shared && absoluteUrl && (
+        <div>
+          <p className="mb-1.5 text-muted">Anyone with this link can view the report:</p>
+          <div className="flex items-center gap-3 rounded-lg border border-border bg-surface px-3 py-2">
+            <span className="truncate font-mono text-xs">{absoluteUrl}</span>
+            <button
+              onClick={copy}
+              className="ml-auto shrink-0 text-sm text-accent-hi hover:underline"
+            >
+              {copied ? 'Copied' : 'Copy'}
+            </button>
+          </div>
+        </div>
+      )}
+    </div>
+  );
+}
+
+/** One line the reader can act on, per ruleset transition. */
+function transitionVerdict(report: RegressionReport): { tone: string; text: string } {
+  const entry = report.entries[0];
+  if (!entry) return { tone: 'text-muted', text: 'No document was compared.' };
+  const n = entry.newRuleIds.length;
+  const failures = `${n} new failure${n === 1 ? '' : 's'}`;
+  switch (entry.transition) {
+    case 'unchanged-pass':
+      return { tone: 'text-success', text: `✓ This invoice would still pass ${report.to.label}.` };
+    case 'regression':
+      return {
+        tone: 'text-danger',
+        text: `✗ This invoice breaks under ${report.to.label} (${failures}).`,
+      };
+    case 'improvement':
+      return {
+        tone: 'text-success',
+        text: `✓ This invoice fails under ${report.from.label} but would pass ${report.to.label}.`,
+      };
+    case 'unchanged-fail':
+      return {
+        tone: 'text-danger',
+        text: `✗ This invoice already fails under ${report.from.label} and still fails under ${report.to.label}${n > 0 ? ` (${failures})` : ''}.`,
+      };
+  }
+}
+
+interface RegressData {
+  remaining: number;
+  hasCandidate: boolean;
+  reports: RegressionReport[];
+}
+
+/**
+ * 'Check against upcoming rules' — validates the current input under every
+ * registered ruleset version and reports what changes at each step. The maths
+ * is client-side (the library is open source); regressCredit() is purely the
+ * account/quota gate, and it is asked only *after* the XML parses — a parse
+ * failure should not cost a credit.
+ */
+function RegressPanel({ xml, fileName }: { xml: string; fileName: string | null }) {
+  const [data, setData] = useState<RegressData | null>(null);
+  const [gate, setGate] = useState<'signup' | 'quota' | null>(null);
+  const [checkError, setCheckError] = useState<string | null>(null);
+  const [busy, setBusy] = useState(false);
+
+  // The check describes one specific document — new input, fresh panel.
+  useEffect(() => {
+    setData(null);
+    setGate(null);
+    setCheckError(null);
+  }, [xml]);
+
+  async function onCheck() {
+    setGate(null);
+    setCheckError(null);
+    const invoice = validateXml(xml, { profile: 'xrechnung' }).invoice;
+    if (!invoice) {
+      setCheckError('The XML could not be parsed, so there is nothing to check.');
+      return;
+    }
+    setBusy(true);
+    try {
+      const credit = await regressCredit();
+      // Rulesets ordered current-first by effective date, candidates last;
+      // comparing consecutive pairs reports what changes at each step towards
+      // the newest published set. Superseded sets are for audit, not futures.
+      const rank: Record<string, number> = { current: 0, candidate: 1 };
+      const chain = listRulesets()
+        .filter((r) => r.status !== 'superseded')
+        .sort(
+          (a, b) =>
+            (rank[a.status] ?? 0) - (rank[b.status] ?? 0) ||
+            (a.effectiveFrom ?? '').localeCompare(b.effectiveFrom ?? '') ||
+            a.rules.length - b.rules.length ||
+            a.id.localeCompare(b.id),
+        );
+      const documents = [{ id: fileName ?? 'playground-input', invoice }];
+      setData({
+        remaining: credit.remaining,
+        hasCandidate: chain.some((r) => r.status === 'candidate'),
+        reports: chain.slice(1).map((to, i) => compareRulesets(documents, chain[i].id, to.id)),
+      });
+    } catch (e) {
+      if (e instanceof ApiError && e.code === 'unauthenticated') setGate('signup');
+      else if (e instanceof ApiError && e.code === 'quota') setGate('quota');
+      else setCheckError(e instanceof Error ? e.message : 'The check failed.');
+    } finally {
+      setBusy(false);
+    }
+  }
+
+  return (
+    <div className="mt-4 border-t border-border pt-4 text-sm">
+      {!data && (
+        <>
+          <button onClick={onCheck} disabled={busy} className={SECONDARY_BUTTON}>
+            {busy ? 'Checking…' : 'Check against upcoming rules'}
+          </button>
+          <p className="mt-2 text-xs text-faint">
+            Runs this invoice under every registered ruleset version, in your browser.
+          </p>
+        </>
+      )}
+      {gate === 'signup' && (
+        <p className="mt-2 text-muted">
+          <Link href="/signup" className="text-accent-hi hover:underline">
+            Create a free account
+          </Link>{' '}
+          to run future-ruleset checks — free accounts get {FEATURE_LIMITS.free.regress} a month.
+        </p>
+      )}
+      {gate === 'quota' && (
+        <p className="mt-2 text-muted">
+          You have used all future-ruleset checks for this month.{' '}
+          <Link href="/account" className="text-accent-hi hover:underline">
+            Paid plans have no cap
+          </Link>
+          .
+        </p>
+      )}
+      {checkError && <p className="mt-2 text-danger">{checkError}</p>}
+      {data && (
+        <div className="flex flex-col gap-3">
+          {data.reports.map((r) => {
+            const entry = r.entries[0];
+            const verdict = transitionVerdict(r);
+            return (
+              <div
+                key={`${r.from.id}->${r.to.id}`}
+                className="rounded-lg border border-border bg-surface p-3"
+              >
+                <div className="mb-1.5 font-mono text-xs text-faint">
+                  {r.from.id} → {r.to.id}
+                </div>
+                <p className={`font-medium ${verdict.tone}`}>{verdict.text}</p>
+                {r.byNewRule.length > 0 && (
+                  <div className="mt-2">
+                    <p className="text-xs text-muted">Newly failing:</p>
+                    <ul className="mt-1 flex flex-col gap-1">
+                      {r.byNewRule.map((rule) => (
+                        <li key={rule.ruleId}>
+                          <span className="font-mono text-xs text-accent-hi">{rule.ruleId}</span>{' '}
+                          <span className="text-muted">{rule.message}</span>
+                        </li>
+                      ))}
+                    </ul>
+                  </div>
+                )}
+                {entry && entry.resolvedRuleIds.length > 0 && (
+                  <p className="mt-2 text-xs text-muted">
+                    No longer failing:{' '}
+                    <span className="font-mono text-success">
+                      {entry.resolvedRuleIds.join(', ')}
+                    </span>
+                  </p>
+                )}
+              </div>
+            );
+          })}
+          {!data.hasCandidate && (
+            <p className="text-xs text-faint">
+              No future ruleset is published yet — new specification releases are registered the
+              day they appear. Until then this covers the step from the European core to the German
+              CIUS.
+            </p>
+          )}
+          {data.remaining >= 0 && (
+            <p className="text-xs text-faint">
+              {data.remaining} check{data.remaining === 1 ? '' : 's'} left this month.
+            </p>
+          )}
+        </div>
+      )}
+    </div>
+  );
+}
+
 export function Playground() {
   const [tab, setTab] = useState<'validate' | 'generate'>('validate');
   const [xml, setXml] = useState('');
+  /** Name of a dropped file, kept only to name the fixed-XML download. */
+  const [fileName, setFileName] = useState<string | null>(null);
   const [genJson, setGenJson] = useState(SAMPLE_GENERATE_JSON);
   const [result, setResult] = useState<ValidationResult | null>(null);
   const [genResult, setGenResult] = useState<{ xml: string; validation?: ValidationResult } | null>(null);
@@ -147,6 +446,14 @@ export function Playground() {
     }
   }
 
+  /** 'Use fixed XML': swap the input for the repaired text and re-validate at once. */
+  function applyFixed(fixed: string) {
+    setXml(fixed);
+    setExplanation(null);
+    setError(null);
+    setResult(validateXml(fixed, { profile: 'xrechnung' }));
+  }
+
   async function runExplain() {
     if (!result?.violations.length) return;
     setBusy('explain');
@@ -183,13 +490,20 @@ export function Playground() {
             <div className="mb-2 flex items-center justify-between">
               <span className="text-sm text-muted">UBL Invoice XML</span>
               <div className="flex gap-3 text-sm">
-                <button onClick={() => setXml(SAMPLE_XML)} className="text-accent-hi hover:underline">
+                <button
+                  onClick={() => {
+                    setXml(SAMPLE_XML);
+                    setFileName(null);
+                  }}
+                  className="text-accent-hi hover:underline"
+                >
                   Load valid sample
                 </button>
                 <button
-                  onClick={() =>
-                    setXml(SAMPLE_XML.replace(/ *<cbc:BuyerReference>.*<\/cbc:BuyerReference>\n/, '').replace('<cbc:Percent>19</cbc:Percent>', '<cbc:Percent>16</cbc:Percent>'))
-                  }
+                  onClick={() => {
+                    setXml(SAMPLE_XML.replace(/ *<cbc:BuyerReference>.*<\/cbc:BuyerReference>\n/, '').replace('<cbc:Percent>19</cbc:Percent>', '<cbc:Percent>16</cbc:Percent>'));
+                    setFileName(null);
+                  }}
                   className="text-accent-hi hover:underline"
                 >
                   Load broken sample
@@ -204,7 +518,13 @@ export function Playground() {
                 e.preventDefault();
                 const file = e.dataTransfer.files?.[0];
                 if (!file) return;
-                file.text().then(setXml).catch(() => setError('Could not read the dropped file.'));
+                file
+                  .text()
+                  .then((text) => {
+                    setXml(text);
+                    setFileName(file.name);
+                  })
+                  .catch(() => setError('Could not read the dropped file.'));
               }}
               spellCheck={false}
               placeholder="Paste — or drop a file: XRechnung, UBL, or CII/ZUGFeRD XML…"
@@ -251,6 +571,11 @@ export function Playground() {
                       dangerouslySetInnerHTML={{ __html: renderMarkdownish(explanation) }}
                     />
                   )}
+                  {result.violations.length > 0 && (
+                    <FixPanel xml={xml} fileName={fileName} onUseFixed={applyFixed} />
+                  )}
+                  <SharePanel result={result} fileName={fileName} />
+                  <RegressPanel xml={xml} fileName={fileName} />
                 </>
               )}
             </div>

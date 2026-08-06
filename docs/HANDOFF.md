@@ -16,6 +16,43 @@ browser OTP, which only Harvey can complete:
 
 ---
 
+## ACCOUNTS ARE LIVE (2026-08-07) — architecture changed, read this
+
+The static site now has working accounts WITHOUT the dormant Next.js server. A
+Cloudflare Pages "Advanced mode" worker (`out/_worker.js`, source `workers/api/`,
+bundled by `node workers/api/build.mjs` AFTER the static build) serves `/api/*` on
+stampbench.com; `_routes.json` keeps static assets off the worker. Storage is D1
+(`stampbench`, id 4f806127-8134-4b60-9722-afa13a0a46c7, schema `workers/api/schema.sql`).
+Secrets (JWT_SECRET, ADMIN_SECRET) are bound to the Pages project; Harvey's copy is in
+`.env.local` (gitignored). A second worker `stampbench-mailer` (send_email binding, no
+route) emails harveypro3@gmail.com on upgrade requests via service binding MAILER.
+
+**Deploy sequence now:** `node apps/web/scripts/build-static.mjs` →
+`node workers/api/build.mjs` → `npx wrangler pages deploy out --project-name=stampbench`
+(from apps/web). Forgetting the worker step deploys a site with no API.
+
+What exists: /signup /signin /account (keys, usage bars, upgrade requests), mobile
+hamburger nav, playground Fix-automatically (free, client-side), Share-report
+(metered: free 10/mo) with public viewer at /report?id=…, future-ruleset check
+(metered: free 5/mo), hosted REST API /api/v1/validate|generate|fix (Bearer
+sb_live_… keys, free 100/mo per pricing page). Quotas in `apps/web/lib/plans.ts`
+FEATURE_LIMITS — the worker imports that file, single source of truth.
+
+**No Stripe.** Paid plans: user clicks Request → D1 row + email to Harvey → Harvey
+arranges payment manually → activates with the admin command in `.env.local`.
+The legacy Next.js (auth)/dashboard/api tree is now SUPERSEDED by this worker (it
+still builds for `npm run dev` but nothing links to it; retire it when convenient).
+
+Known gaps, deliberate: no email verification, no self-serve password reset (mailto
+support), no per-minute rate limiting on the hosted API (monthly quota only), German
+/de playground shows the three new panels in English, upgrade-email deliverability to
+harveypro3 not yet eyeball-confirmed (mailer reports mailed:true; Gmail MCP here is
+connected to HarveyJLegge@gmail.com so the destination inbox is not visible).
+**⚠️ GDPR: accounts store emails+password hashes while /privacy and /impressum still
+contain `<Fill>` placeholders — Harvey should fill these before promoting signups.**
+
+---
+
 ## 1. What this is, in one paragraph
 
 A developer-first **e-invoicing compliance** business. An MIT-licensed TypeScript library

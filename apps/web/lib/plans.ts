@@ -81,6 +81,35 @@ export function planFor(id: string | null | undefined): Plan {
   return PLANS[(id as PlanId) ?? 'free'] ?? PLANS.free;
 }
 
+/**
+ * Metered account features. 'api' is the hosted REST API (the number the
+ * pricing page promises). 'share' stores a validation report server-side and
+ * returns a link. 'regress' is the future-ruleset check in the playground.
+ *
+ * The local library and the playground's validate/generate/fix stay unlimited
+ * and unmetered — that promise ("unlimited local validation, free forever")
+ * is load-bearing marketing and must never gain a quota here.
+ *
+ * -1 = unlimited. Quotas are per calendar month (UTC).
+ */
+export type FeatureId = 'api' | 'share' | 'regress';
+
+export const FEATURE_LIMITS: Record<PlanId, Record<FeatureId, number>> = {
+  free: { api: 100, share: 10, regress: 5 },
+  starter: { api: 5_000, share: 100, regress: -1 },
+  pro: { api: 25_000, share: 500, regress: -1 },
+  scale: { api: 100_000, share: 2_000, regress: -1 },
+};
+
+export function featureLimit(plan: string | null | undefined, feature: FeatureId): number {
+  return FEATURE_LIMITS[planFor(plan).id][feature];
+}
+
+/** The usage-table period key for now, e.g. "2026-08". */
+export function currentPeriodKey(now = new Date()): string {
+  return `${now.getUTCFullYear()}-${String(now.getUTCMonth() + 1).padStart(2, '0')}`;
+}
+
 /** Start of the current calendar month (UTC) — the quota window. */
 export function currentPeriodStart(now = new Date()): Date {
   return new Date(Date.UTC(now.getUTCFullYear(), now.getUTCMonth(), 1));
