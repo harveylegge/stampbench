@@ -48,8 +48,12 @@ support), no per-minute rate limiting on the hosted API (monthly quota only), Ge
 /de playground shows the three new panels in English, upgrade-email deliverability to
 harveypro3 not yet eyeball-confirmed (mailer reports mailed:true; Gmail MCP here is
 connected to HarveyJLegge@gmail.com so the destination inbox is not visible).
-**⚠️ GDPR: accounts store emails+password hashes while /privacy and /impressum still
-contain `<Fill>` placeholders — Harvey should fill these before promoting signups.**
+**Legal pages filled 2026-08-07** with Harvey's answers (sole trader Harvey Legge t/a
+Stampbench, England & Wales, £100 cap, no VAT, hello@ everywhere) and corrected to the
+real architecture (no Stripe/Vercel/Neon claims; shared-report storage disclosed).
+**Still outstanding, Harvey-only: (1) postal address + phone — he is arranging a
+virtual office; the only `<Fill>`s left are those two, in all three pages; (2) a
+solicitor review before actively promoting signups/paid plans in Germany.**
 
 ---
 
