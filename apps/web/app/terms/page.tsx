@@ -8,23 +8,25 @@ export const metadata: Metadata = {
 };
 
 /**
- * DRAFT — NOT LEGAL ADVICE. Written to be a solid starting point for a UK
- * sole trader selling a developer API into the EU. It has NOT been reviewed by
- * a qualified lawyer. Replace every <Fill> value and have it reviewed before
- * accepting a paying customer. Consumer-facing sales in the EU/UK carry
- * additional statutory rights not covered here (this is drafted B2B).
+ * NOT LEGAL ADVICE. Written for a UK sole trader selling a developer API into
+ * the EU; drafted B2B. 2026-08-07: Harvey's details filled in (England & Wales,
+ * £100 cap, no VAT, hello@ contact) and billing language corrected to the real
+ * flow (manual upgrade by email — no Stripe on the site). Remaining <Fill>s are
+ * ONLY the postal address (virtual office pending). It has NOT been reviewed by
+ * a qualified lawyer — do that before actively promoting paid plans.
  */
 
 export default function TermsPage() {
   return (
     <LegalPage
       title="Terms of Service"
-      updated="3 August 2026"
+      updated="7 August 2026"
       intro={
         <p>
           These terms govern your use of the Stampbench website, hosted API and dashboard (the
-          &ldquo;Service&rdquo;), operated by <Fill>[LEGAL ENTITY NAME]</Fill> of{' '}
-          <Fill>[REGISTERED ADDRESS]</Fill> (&ldquo;we&rdquo;, &ldquo;us&rdquo;). By creating an
+          &ldquo;Service&rdquo;), operated by Harvey Legge, trading as Stampbench, of{' '}
+          <Fill>[postal address to follow]</Fill>, United Kingdom (&ldquo;we&rdquo;,
+          &ldquo;us&rdquo;). By creating an
           account or calling the API you agree to them. The open-source library is licensed
           separately under the MIT licence and is not governed by these terms.
         </p>
@@ -91,20 +93,25 @@ export default function TermsPage() {
 
       <Clause n="5." title="Plans, fees and cancellation">
         <p>
-          Paid plans are billed monthly in advance through our payment processor, Stripe. Prices are
-          shown on the{' '}
+          Paid plans are currently arranged manually: you request a plan from your account page, we
+          contact you by email to agree payment, and we activate the plan once payment is arranged.
+          No payment details are collected on this website. Prices are shown on the{' '}
           <Link href="/pricing" className="text-accent-hi hover:underline">
             pricing page
           </Link>{' '}
-          and are exclusive of VAT, which is added where applicable. Each plan includes a monthly
-          document allowance; exceeding it may pause API access until the next period or until you
+          and are exclusive of VAT, which is added where applicable. Each plan includes monthly
+          feature allowances; exceeding one pauses that feature until the next period or until you
           upgrade.
         </p>
         <p>
-          You may cancel at any time and will retain access until the end of the paid period. We do
-          not provide pro-rata refunds for partial months except where required by law or where we
-          have materially failed to provide the Service. We may change prices with at least 30
-          days&apos; notice, effective from your next billing period.
+          You may cancel at any time by emailing{' '}
+          <a href="mailto:hello@stampbench.com" className="text-accent-hi hover:underline">
+            hello@stampbench.com
+          </a>{' '}
+          and will retain access until the end of the paid period, after which your account drops to
+          the Free plan. We do not provide pro-rata refunds for partial months except where required
+          by law or where we have materially failed to provide the Service. We may change prices
+          with at least 30 days&apos; notice, effective from your next billing period.
         </p>
       </Clause>
 
@@ -155,7 +162,7 @@ export default function TermsPage() {
           revenue, goodwill or data, or for fines or penalties imposed by any authority. Our total
           aggregate liability arising out of or in connection with these terms is limited to the
           greater of the fees you paid us in the 12 months before the event giving rise to the claim,
-          or <Fill>[£100 — confirm figure]</Fill>.
+          or £100.
         </p>
       </Clause>
 
@@ -169,7 +176,11 @@ export default function TermsPage() {
 
       <Clause n="10." title="Termination">
         <p>
-          You may close your account at any time from the dashboard. We may terminate or suspend
+          You may close your account at any time by emailing{' '}
+          <a href="mailto:hello@stampbench.com" className="text-accent-hi hover:underline">
+            hello@stampbench.com
+          </a>{' '}
+          from your account address. We may terminate or suspend
           access for material breach of these terms, for non-payment, or if we cease operating the
           Service — in the last case we will give as much notice as we reasonably can so you can
           migrate. On termination your right to use the hosted Service ends; the open-source library
@@ -187,8 +198,8 @@ export default function TermsPage() {
 
       <Clause n="12." title="Governing law">
         <p>
-          These terms are governed by the laws of <Fill>[England and Wales — confirm]</Fill>, and
-          the courts of <Fill>[England and Wales — confirm]</Fill> have exclusive jurisdiction. If
+          These terms are governed by the laws of England and Wales, and the courts of England and
+          Wales have exclusive jurisdiction. If
           you contract with us as a consumer rather than a business, mandatory protections of your
           country of residence still apply.
         </p>
@@ -196,11 +207,15 @@ export default function TermsPage() {
 
       <Clause n="13." title="Contact">
         <p>
-          <Fill>[LEGAL ENTITY NAME]</Fill>, <Fill>[REGISTERED ADDRESS]</Fill>
+          Harvey Legge, trading as Stampbench, <Fill>[postal address to follow]</Fill>, United
+          Kingdom
           <br />
-          Email: <Fill>[legal@stampbench.com]</Fill>
+          Email:{' '}
+          <a href="mailto:hello@stampbench.com" className="text-accent-hi hover:underline">
+            hello@stampbench.com
+          </a>
           <br />
-          <Fill>[VAT number, if registered]</Fill>
+          Not VAT registered.
         </p>
       </Clause>
     </LegalPage>

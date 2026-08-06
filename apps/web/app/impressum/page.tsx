@@ -14,8 +14,10 @@ export const metadata: Metadata = {
  * cause of Abmahnungen (formal warning letters with costs), which is why this
  * page exists before launch rather than after.
  *
- * DRAFT — every <Fill> must be replaced with real details, and the required
- * fields differ by legal form (sole trader vs GmbH vs UG). Have it checked.
+ * 2026-08-07: filled in for Harvey Legge, sole trader, trading as Stampbench.
+ * Remaining <Fill>s are ONLY the postal address and phone number (virtual
+ * office pending — Harvey supplies both). Then have the page checked by a
+ * solicitor; the required fields differ by legal form.
  */
 
 export default function ImpressumPage() {
@@ -27,32 +29,34 @@ export default function ImpressumPage() {
       </p>
 
       <div className="mb-8 rounded-xl border border-warning/30 bg-warning/5 p-4 text-sm leading-relaxed text-warning">
-        This page must be completed with real details before the site is published to German
-        users. An incomplete or missing Impressum is a common cause of formal warning letters
-        (Abmahnungen).
+        The postal address and telephone number below are being finalised and will be added
+        shortly. Until they are, this Impressum is incomplete under § 5 DDG.
       </div>
 
       <section className="mb-8">
         <h2 className="mb-3 text-lg font-semibold tracking-tight">Diensteanbieter / Provider</h2>
         <p className="text-sm leading-relaxed text-muted">
-          <Fill>[LEGAL NAME — for a sole trader: first and last name]</Fill>
+          Harvey Legge
           <br />
-          <Fill>[Trading name, if used]</Fill>
+          handelnd unter der Bezeichnung &bdquo;Stampbench&ldquo; / trading as Stampbench
           <br />
-          <Fill>[Street and number]</Fill>
+          <Fill>[Straße und Hausnummer — folgt in Kürze]</Fill>
           <br />
-          <Fill>[Post code and city]</Fill>
+          <Fill>[Postleitzahl und Ort — folgt in Kürze]</Fill>
           <br />
-          <Fill>[Country]</Fill>
+          Vereinigtes Königreich / United Kingdom
         </p>
       </section>
 
       <section className="mb-8">
         <h2 className="mb-3 text-lg font-semibold tracking-tight">Kontakt / Contact</h2>
         <p className="text-sm leading-relaxed text-muted">
-          E-Mail: <Fill>[hello@stampbench.com]</Fill>
+          E-Mail:{' '}
+          <a href="mailto:hello@stampbench.com" className="text-accent-hi hover:underline">
+            hello@stampbench.com
+          </a>
           <br />
-          Telefon: <Fill>[phone number — required for direct electronic contact]</Fill>
+          Telefon: <Fill>[Telefonnummer — folgt in Kürze]</Fill>
         </p>
         <p className="mt-2 text-xs leading-relaxed text-faint">
           German law requires a means of rapid electronic contact and direct communication. An email
@@ -66,10 +70,10 @@ export default function ImpressumPage() {
           Registereintrag &amp; Umsatzsteuer / Registration &amp; VAT
         </h2>
         <p className="text-sm leading-relaxed text-muted">
-          <Fill>[Company register and number — omit if a sole trader with no registration]</Fill>
+          Einzelunternehmer nach britischem Recht; kein Registereintrag. / Sole trader under UK
+          law; no company registration.
           <br />
-          Umsatzsteuer-Identifikationsnummer gemäß § 27a UStG:{' '}
-          <Fill>[VAT ID, or state that none is held]</Fill>
+          Umsatzsteuer-Identifikationsnummer gemäß § 27a UStG: keine vorhanden / none held.
         </p>
       </section>
 
@@ -78,7 +82,7 @@ export default function ImpressumPage() {
           Verantwortlich für den Inhalt / Responsible for content
         </h2>
         <p className="text-sm leading-relaxed text-muted">
-          <Fill>[Name and address of the person responsible]</Fill>
+          Harvey Legge, <Fill>[Anschrift wie oben — folgt in Kürze]</Fill>
         </p>
       </section>
 
