@@ -80,7 +80,7 @@ If e-invoicing isn't on your 2026 roadmap, a one-word "no" saves us both time.
 
 **Subject:** (same thread)
 
-Hi {first_name} — last note from me. If the mandate becomes relevant later, the two links that matter: the playground (stampbench.com, validates any XRechnung free) and the library (github.com/stampbench/core, MIT).
+Hi {first_name} — last note from me. If the mandate becomes relevant later, the two links that matter: the playground (stampbench.com, validates any XRechnung free) and the library (github.com/ohjl777/stampbench, MIT).
 
 I won't follow up again. Good luck with {personalisation: current product / the 2027 timeline}.
 
