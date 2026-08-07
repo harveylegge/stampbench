@@ -1,7 +1,9 @@
 import Link from 'next/link';
 import { localePath, type Copy } from '@/lib/copy';
+import { HeroDemo } from '@/components/hero-demo';
+import { StatsBoard } from '@/components/stats-board';
 
-const IS_STATIC = process.env.NEXT_PUBLIC_STATIC_EXPORT === '1';
+const GITHUB_URL = 'https://github.com/ohjl777/stampbench';
 
 const VALIDATE_SNIPPET = `$ npx stampbench validate rechnung.xml
 
@@ -24,6 +26,11 @@ rechnung.xml
  * German share one layout. Code samples stay untranslated on purpose: rule
  * ids, CLI flags and field names are the same in every language, and a
  * developer comparing the page to their terminal should see the same strings.
+ *
+ * Structure (2026-08 redesign): pain first, mandate as supporting context;
+ * an interactive validate→fix panel as the hero visual; evidence charts with
+ * every number linking to /trust; the free/paid split stated plainly; the
+ * playground as the single conversion action.
  */
 export function Landing({ copy }: { copy: Copy }) {
   const path = (p: string) => localePath(copy.locale, p);
@@ -32,7 +39,7 @@ export function Landing({ copy }: { copy: Copy }) {
     <div lang={copy.locale}>
       {/* Hero */}
       <section className="hero-grid relative">
-        <div className="relative mx-auto grid max-w-6xl items-center gap-12 px-4 pb-20 pt-24 lg:grid-cols-2">
+        <div className="relative mx-auto grid max-w-6xl items-center gap-12 px-4 pb-16 pt-24 lg:grid-cols-2">
           <div>
             <div className="mb-5 inline-flex items-center gap-2 rounded-full border border-border bg-surface px-3 py-1 text-xs text-muted">
               <span className="h-1.5 w-1.5 rounded-full bg-success" />
@@ -51,39 +58,59 @@ export function Landing({ copy }: { copy: Copy }) {
               >
                 {copy.hero.ctaPrimary}
               </Link>
-              <Link
-                href="/docs"
+              <a
+                href={GITHUB_URL}
                 className="rounded-lg border border-border bg-surface px-5 py-2.5 font-medium transition hover:border-border-hi"
               >
                 {copy.hero.ctaSecondary}
-              </Link>
+              </a>
             </div>
             <div className="mt-8 font-mono text-sm text-faint">
               {copy.hero.install} <span className="text-accent">@stampbench/core</span>
             </div>
           </div>
-          <div className="rounded-xl border border-border-hi bg-surface shadow-xl shadow-accent/5">
-            <div className="flex items-center gap-1.5 border-b border-border px-4 py-3">
-              <span className="h-2.5 w-2.5 rounded-full bg-border-hi" />
-              <span className="h-2.5 w-2.5 rounded-full bg-border-hi" />
-              <span className="h-2.5 w-2.5 rounded-full bg-border-hi" />
-              <span className="ml-3 font-mono text-xs text-muted">terminal</span>
-            </div>
-            <pre className="overflow-x-auto p-5 font-mono text-[13px] leading-relaxed text-text">
-              {VALIDATE_SNIPPET}
-            </pre>
+          <HeroDemo copy={copy} />
+        </div>
+
+        {/* Trust bar — formats and licence, not certifications */}
+        <div className="border-t border-border bg-surface/60">
+          <div className="mx-auto flex max-w-6xl flex-wrap items-center justify-center gap-x-8 gap-y-2 px-4 py-4 text-xs font-medium tracking-wide text-faint">
+            {copy.trustbar.map((t) => (
+              <span key={t}>{t}</span>
+            ))}
           </div>
         </div>
       </section>
 
-      {/* The problem */}
+      {/* The problem: official error vs ours */}
       <section className="border-t border-border bg-surface/40 py-20">
         <div className="mx-auto max-w-6xl px-4">
           <h2 className="mb-3 text-2xl font-semibold tracking-tight">
             {copy.problem.headingPre} <span className="font-mono text-danger">[BR-DE-15]</span>
             {copy.problem.headingPost}
           </h2>
-          <p className="mb-12 max-w-2xl leading-relaxed text-muted">{copy.problem.body}</p>
+          <p className="mb-10 max-w-2xl leading-relaxed text-muted">{copy.problem.body}</p>
+
+          <div className="mb-14 grid gap-6 lg:grid-cols-2">
+            <div className="rounded-xl border border-border bg-surface">
+              <div className="border-b border-border px-5 py-3 text-xs font-medium text-faint">
+                {copy.compare.officialTitle}
+              </div>
+              <pre className="overflow-x-auto whitespace-pre-wrap p-5 font-mono text-xs leading-relaxed text-muted">
+                {copy.compare.officialBody}
+              </pre>
+            </div>
+            <div className="rounded-xl border border-accent/40 bg-surface">
+              <div className="border-b border-border px-5 py-3 text-xs font-medium text-accent-hi">
+                {copy.compare.oursTitle}
+              </div>
+              <div className="space-y-3 p-5 text-sm leading-relaxed">
+                <p className="text-text">{copy.compare.oursExplain}</p>
+                <p className="text-xs text-muted">{copy.compare.oursFix}</p>
+              </div>
+            </div>
+          </div>
+
           <div className="grid gap-6 sm:grid-cols-2 lg:grid-cols-3">
             {copy.features.map((f) => (
               <div key={f.title} className="rounded-xl border border-border bg-surface p-6">
@@ -121,21 +148,37 @@ export function Landing({ copy }: { copy: Copy }) {
         </div>
       </section>
 
+      {/* Local-first */}
+      <section className="border-t border-border bg-surface/40 py-16">
+        <div className="mx-auto max-w-6xl px-4 text-center">
+          <h2 className="mb-3 text-2xl font-semibold tracking-tight">{copy.local.heading}</h2>
+          <p className="mx-auto mb-8 max-w-2xl leading-relaxed text-muted">{copy.local.body}</p>
+          <div className="mx-auto flex max-w-3xl flex-col items-center justify-center gap-3 sm:flex-row">
+            {copy.local.steps.map((step, i) => (
+              <div key={step} className="flex items-center gap-3">
+                <span
+                  className={`rounded-lg border px-4 py-2 text-sm font-medium ${
+                    i === 1
+                      ? 'border-accent/40 bg-accent-dim/40 font-mono text-accent-hi'
+                      : 'border-border bg-surface text-muted'
+                  }`}
+                >
+                  {step}
+                </span>
+                {i < 2 && <span className="hidden text-faint sm:block">→</span>}
+              </div>
+            ))}
+          </div>
+        </div>
+      </section>
+
       {/* Proof */}
       <section className="border-t border-border py-20">
         <div className="mx-auto max-w-6xl px-4">
           <h2 className="mb-3 text-2xl font-semibold tracking-tight">{copy.proof.heading}</h2>
           <p className="mb-10 max-w-2xl leading-relaxed text-muted">{copy.proof.body}</p>
-          <div className="mb-8 grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
-            {copy.proof.stats.map((s) => (
-              <div key={s.label} className="rounded-xl border border-border bg-surface p-5">
-                <div className="text-2xl font-semibold tracking-tight text-accent">{s.figure}</div>
-                <div className="mt-1 text-sm">{s.label}</div>
-                <div className="mt-1 text-xs text-faint">{s.sub}</div>
-              </div>
-            ))}
-          </div>
-          <div className="flex flex-wrap items-center gap-4">
+          <StatsBoard copy={copy} />
+          <div className="mt-8 flex flex-wrap items-center gap-4">
             <Link
               href="/trust"
               className="rounded-lg border border-border bg-surface px-5 py-2.5 text-sm font-medium transition hover:border-border-hi"
@@ -153,17 +196,40 @@ export function Landing({ copy }: { copy: Copy }) {
         </div>
       </section>
 
-      {/* CTA */}
+      {/* Free / paid */}
       <section className="border-t border-border bg-surface/40 py-20">
+        <div className="mx-auto max-w-6xl px-4">
+          <h2 className="mb-10 text-2xl font-semibold tracking-tight">{copy.model.heading}</h2>
+          <div className="grid gap-6 lg:grid-cols-2">
+            <div className="rounded-xl border border-border bg-surface p-6">
+              <div className="mb-2 font-medium text-success">{copy.model.freeTitle}</div>
+              <p className="text-sm leading-relaxed text-muted">{copy.model.freeBody}</p>
+            </div>
+            <div className="rounded-xl border border-border bg-surface p-6">
+              <div className="mb-2 font-medium text-accent-hi">{copy.model.paidTitle}</div>
+              <p className="mb-3 text-sm leading-relaxed text-muted">{copy.model.paidBody}</p>
+              <Link href="/pricing" className="text-sm font-medium text-accent-hi hover:underline">
+                {copy.model.pricing}
+              </Link>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      {/* CTA */}
+      <section className="border-t border-border py-20">
         <div className="mx-auto max-w-6xl px-4 text-center">
           <h2 className="mb-3 text-3xl font-semibold tracking-tight">{copy.cta.heading}</h2>
           <p className="mx-auto mb-8 max-w-md text-muted">{copy.cta.body}</p>
           <Link
-            href={IS_STATIC ? 'https://www.npmjs.com/package/stampbench' : '/register'}
+            href={path('playground')}
             className="inline-block rounded-lg bg-accent px-6 py-3 font-medium text-white transition hover:bg-accent-hi"
           >
             {copy.cta.button}
           </Link>
+          <div className="mt-5 font-mono text-sm text-faint">
+            {copy.cta.install} <span className="text-accent">@stampbench/core</span>
+          </div>
         </div>
       </section>
     </div>

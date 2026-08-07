@@ -4,7 +4,7 @@ import Link from 'next/link';
 export const metadata: Metadata = {
   title: 'Trust & test evidence',
   description:
-    'How Stampbench proves correctness: 57 automated tests, 86 official XRechnung test-suite instances, an adversarial security review, and a published KoSIT parity harness — including what we have not yet proven.',
+    'How Stampbench proves correctness: 166 automated tests, 86 official XRechnung test-suite instances, an adversarial security review, and a published KoSIT parity harness — including what we have not yet proven.',
 };
 
 /**
@@ -15,8 +15,8 @@ export const metadata: Metadata = {
  */
 
 const TEST_SUITES = [
-  { name: '@stampbench/core', count: 39, covers: 'Rule engine, UBL + CII parsing, generation, totals arithmetic, round-trips' },
-  { name: 'stampbench (CLI)', count: 12, covers: 'Validate/generate commands, CI exit codes, JSON output, error paths' },
+  { name: '@stampbench/core', count: 110, covers: 'Rule engine, UBL + CII parsing, generation, totals arithmetic, repair, rulesets, round-trips' },
+  { name: 'stampbench (CLI)', count: 50, covers: 'Validate/fix/generate/regress commands, CI exit codes, JSON/SARIF output, error paths' },
   { name: 'Web application', count: 6, covers: 'Plan/quota logic, API-key hashing, rate limiting' },
 ];
 
@@ -48,7 +48,7 @@ export default function TrustPage() {
       </p>
 
       <div className="mb-12 grid gap-4 sm:grid-cols-3">
-        <Stat figure="57" label="Automated tests passing" sub="Across the library, CLI and web app" />
+        <Stat figure="166" label="Automated tests passing" sub="Across the library, CLI and web app" />
         <Stat figure="86" label="Official test-suite documents" sub="45 UBL + 41 CII, run through the engine" />
         <Stat figure="56" label="Validation rules active" sub="XRechnung profile; 40 in the EN 16931 core profile" />
       </div>

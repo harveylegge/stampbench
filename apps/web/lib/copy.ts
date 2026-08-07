@@ -45,18 +45,53 @@ export interface Copy {
     ctaSecondary: string;
     install: string;
   };
+  /** The interactive validate→fix panel beside the hero. */
+  heroDemo: {
+    passed: string;
+    errors: string;
+    expected: string;
+    found: string;
+    fixButton: string;
+    fixedBadge: string;
+    keptNote: string;
+    tryYours: string;
+  };
+  /** Format/standard chips under the hero — facts only, no certifications. */
+  trustbar: string[];
   problem: { headingPre: string; headingPost: string; body: string };
+  /** Official-validator output vs Stampbench, side by side. */
+  compare: {
+    officialTitle: string;
+    officialBody: string;
+    oursTitle: string;
+    oursExplain: string;
+    oursFix: string;
+  };
   features: { title: string; body: string }[];
   api: { heading: string; body: string };
+  local: { heading: string; body: string; steps: [string, string, string] };
   proof: {
     heading: string;
     body: string;
-    stats: { figure: string; label: string; sub: string }[];
     evidence: string;
     security: string;
     note: string;
   };
-  cta: { heading: string; body: string; button: string };
+  statsBoard: {
+    tests: { label: string; sub: string; failing: string };
+    docs: { label: string; sub: string };
+    rules: { label: string; families: [string, string, string] };
+    located: { label: string; sub: string };
+  };
+  model: {
+    heading: string;
+    freeTitle: string;
+    freeBody: string;
+    paidTitle: string;
+    paidBody: string;
+    pricing: string;
+  };
+  cta: { heading: string; body: string; button: string; install: string };
   footer: {
     blurb: string;
     founded: string;
@@ -94,20 +129,39 @@ export const en: Copy = {
     cta: 'Get it on npm',
   },
   hero: {
-    badge: "Germany's B2B e-invoicing mandate: issuing required from Jan 2027",
-    titleTop: 'Pass the e-invoice mandate.',
-    titleAccent: 'In TypeScript.',
+    badge: 'Germany mandates B2B e-invoices from 2027 — receiving is already law',
+    titleTop: 'Validate and fix XRechnung.',
+    titleAccent: 'In TypeScript, without Java.',
     lede:
-      'Open-source validation, repair and generation for XRechnung / EN 16931. Built to match the official KoSIT validator, with cryptic rule violations turned into plain-language fixes — and nothing ever leaving your machine.',
+      'The developer-first toolkit for XRechnung and EN 16931: catch every rule violation, understand exactly what failed, and safely repair what can be derived — entirely on your machine.',
     ctaPrimary: 'Try the playground',
-    ctaSecondary: 'Read the docs',
+    ctaSecondary: 'View on GitHub',
     install: 'npm install',
   },
+  heroDemo: {
+    passed: 'rules passed',
+    errors: 'errors found',
+    expected: 'Expected',
+    found: 'Found',
+    fixButton: 'Fix automatically',
+    fixedBadge: '1 fix applied — revalidated',
+    keptNote: 'needs a human decision. Stampbench never guesses business data.',
+    tryYours: 'Try it on your invoice →',
+  },
+  trustbar: ['XRechnung 3.0', 'EN 16931', 'UBL 2.1', 'CII · ZUGFeRD / Factur-X', 'MIT licensed', 'Local-first'],
   problem: {
-    headingPre: 'The official validator says',
+    headingPre: 'Your invoice failed with',
     headingPost: '. Now what?',
     body:
-      'Millions of European businesses are being forced onto structured e-invoices, and the tooling assumes you enjoy reading Schematron. The reference stack is Java, the error messages cite clauses instead of fields, and one wrong VAT rounding rejects the whole document. Stampbench is the layer that makes it just work.',
+      'The reference stack is Java, the error messages cite spec clauses instead of your fields, and one wrong VAT rounding rejects the whole document. Stampbench tells you exactly why it failed — and fixes what can safely be fixed.',
+  },
+  compare: {
+    officialTitle: 'What the official validator says',
+    officialBody: '[BR-DE-15] Das Element "Buyer reference" (BT-10) muss übermittelt werden. (XR-DE 21)',
+    oursTitle: 'What Stampbench says',
+    oursExplain:
+      'Missing buyer reference (BT-10). For German public-sector buyers this is the Leitweg-ID; B2B buyers usually supply their own reference.',
+    oursFix: 'Not auto-fixable: there is no derivable correct value. Ask your buyer — never invent one.',
   },
   features: [
     {
@@ -139,24 +193,41 @@ export const en: Copy = {
     heading: 'Two commands, full compliance',
     body: 'No SDK lock-in, no XML expertise required. Runs locally — your invoices never leave your machine.',
   },
-  proof: {
-    heading: "Don't take our word for it",
+  local: {
+    heading: 'No Java. No uploads. No black box.',
     body:
-      'A compliance tool is only worth using if it is right. Here is what we actually test — with the numbers, and the divergences we currently flag, published openly.',
-    stats: [
-      { figure: '165', label: 'Automated tests passing', sub: 'Library, CLI and web' },
-      { figure: '86', label: 'Official test documents run', sub: '45 UBL + 41 CII, 0 crashes' },
-      { figure: '56', label: 'Validation rules active', sub: 'EN 16931 + VAT families + BR-DE' },
-      { figure: '100%', label: 'Violations located', sub: 'Anchored to a real element' },
-    ],
+      'The engine is a pure-TypeScript npm package. Validation, repair and generation run in your process — or in your browser on this site — and the rules are MIT-licensed source you can read.',
+    steps: ['Your invoice', '@stampbench/core — locally', 'Validated, repaired, explained'],
+  },
+  proof: {
+    heading: 'Built for compliance, not demos.',
+    body:
+      'A compliance tool is only worth using if it is right. Every number below comes from an artefact in the open repository — including the three official documents where we currently disagree with the reference validator, published rather than hidden.',
     evidence: 'See the full test evidence →',
     security: 'Security practices →',
     note: 'MIT-licensed engine — run it locally, verify every number yourself.',
   },
+  statsBoard: {
+    tests: { label: 'Automated tests passing', sub: '110 library · 50 CLI · 6 web', failing: '0 failing · 0 skipped' },
+    docs: { label: 'Official test documents run', sub: '0 crashes · 3 divergences, published' },
+    rules: { label: 'Validation rules active', families: ['EN 16931 core', 'VAT categories', 'BR-DE profile'] },
+    located: { label: 'Violations located', sub: '27.1% to the exact element — measured over 9,983 mutations' },
+  },
+  model: {
+    heading: 'Open source at the core. Paid when you need the platform.',
+    freeTitle: 'Free forever',
+    freeBody:
+      'The library, the CLI and this site’s playground: unlimited local validation, repair and generation. MIT-licensed, no account, no telemetry.',
+    paidTitle: 'Paid plans',
+    paidBody:
+      'The hosted REST API, shareable validation reports and future-ruleset checks — for teams that want the engine as infrastructure, with quotas that scale.',
+    pricing: 'See pricing →',
+  },
   cta: {
-    heading: 'Be compliant before your competitors are.',
-    body: 'Unlimited local validation with the open-source library, forever. No account, no limits.',
-    button: 'Get it on npm',
+    heading: 'Run your first invoice through Stampbench.',
+    body: 'No account. No credit card. No upload — validation runs in your browser.',
+    button: 'Open the playground',
+    install: 'or npm install',
   },
   footer: {
     blurb:
@@ -202,20 +273,39 @@ export const de: Copy = {
     cta: 'Auf npm holen',
   },
   hero: {
-    badge: 'E-Rechnungspflicht in Deutschland: Ausstellen ab Januar 2027 verpflichtend',
-    titleTop: 'E-Rechnungspflicht bestehen.',
-    titleAccent: 'In TypeScript.',
+    badge: 'E-Rechnungspflicht: Empfangen ist bereits Gesetz, Ausstellen ab 2027',
+    titleTop: 'XRechnung prüfen und korrigieren.',
+    titleAccent: 'In TypeScript, ohne Java.',
     lede:
-      'Open-Source-Prüfung, -Korrektur und -Erzeugung für XRechnung / EN 16931. Entwickelt für Übereinstimmung mit dem offiziellen KoSIT-Validator — kryptische Regelverstöße werden zu verständlichen Hinweisen, und nichts verlässt Ihren Rechner.',
+      'Das Entwickler-Toolkit für XRechnung und EN 16931: jeden Regelverstoß erkennen, genau verstehen, was fehlschlug, und sicher korrigieren, was sich herleiten lässt — vollständig auf Ihrem Rechner.',
     ctaPrimary: 'Playground öffnen',
-    ctaSecondary: 'Zur Dokumentation',
+    ctaSecondary: 'Auf GitHub ansehen',
     install: 'npm install',
   },
+  heroDemo: {
+    passed: 'Regeln bestanden',
+    errors: 'Fehler gefunden',
+    expected: 'Erwartet',
+    found: 'Gefunden',
+    fixButton: 'Automatisch korrigieren',
+    fixedBadge: '1 Korrektur angewendet — neu geprüft',
+    keptNote: 'braucht eine menschliche Entscheidung. Stampbench erfindet niemals Geschäftsdaten.',
+    tryYours: 'Mit Ihrer Rechnung ausprobieren →',
+  },
+  trustbar: ['XRechnung 3.0', 'EN 16931', 'UBL 2.1', 'CII · ZUGFeRD / Factur-X', 'MIT-lizenziert', 'Local-first'],
   problem: {
-    headingPre: 'Der offizielle Validator meldet',
+    headingPre: 'Ihre Rechnung scheitert mit',
     headingPost: '. Und jetzt?',
     body:
-      'Millionen europäischer Unternehmen müssen auf strukturierte E-Rechnungen umstellen — und die vorhandenen Werkzeuge setzen voraus, dass man Schematron gern liest. Der Referenz-Stack ist Java, die Fehlermeldungen nennen Paragrafen statt Felder, und eine falsch gerundete Umsatzsteuer lässt das ganze Dokument scheitern. Stampbench ist die Schicht, die das erledigt.',
+      'Der Referenz-Stack ist Java, die Fehlermeldungen zitieren Spezifikationsklauseln statt Ihrer Felder, und eine falsch gerundete Umsatzsteuer lässt das ganze Dokument scheitern. Stampbench sagt Ihnen genau, warum — und korrigiert, was sich sicher korrigieren lässt.',
+  },
+  compare: {
+    officialTitle: 'Was der offizielle Validator meldet',
+    officialBody: '[BR-DE-15] Das Element "Buyer reference" (BT-10) muss übermittelt werden. (XR-DE 21)',
+    oursTitle: 'Was Stampbench meldet',
+    oursExplain:
+      'Die Käuferreferenz (BT-10) fehlt. Bei öffentlichen Auftraggebern ist das die Leitweg-ID; B2B-Käufer vergeben in der Regel eine eigene Referenz.',
+    oursFix: 'Nicht automatisch korrigierbar: Es gibt keinen herleitbaren Wert. Fragen Sie Ihren Käufer — niemals erfinden.',
   },
   features: [
     {
@@ -247,24 +337,41 @@ export const de: Copy = {
     heading: 'Zwei Befehle, volle Konformität',
     body: 'Keine SDK-Bindung, kein XML-Spezialwissen nötig. Läuft lokal — Ihre Rechnungen verlassen Ihren Rechner nicht.',
   },
-  proof: {
-    heading: 'Verlassen Sie sich nicht auf unser Wort',
+  local: {
+    heading: 'Kein Java. Kein Upload. Keine Blackbox.',
     body:
-      'Ein Compliance-Werkzeug ist nur brauchbar, wenn es richtig ist. Das prüfen wir tatsächlich — mit Zahlen und den Abweichungen, die wir derzeit melden, offen veröffentlicht.',
-    stats: [
-      { figure: '165', label: 'Automatisierte Tests bestehen', sub: 'Bibliothek, CLI und Web' },
-      { figure: '86', label: 'Offizielle Testdokumente geprüft', sub: '45 UBL + 41 CII, 0 Abbrüche' },
-      { figure: '56', label: 'Aktive Prüfregeln', sub: 'EN 16931 + USt-Kategorien + BR-DE' },
-      { figure: '100 %', label: 'Verstöße lokalisiert', sub: 'Auf ein echtes Element bezogen' },
-    ],
+      'Die Engine ist ein reines TypeScript-npm-Paket. Prüfung, Korrektur und Erzeugung laufen in Ihrem Prozess — oder auf dieser Seite direkt im Browser — und die Regeln sind MIT-lizenzierter, lesbarer Quellcode.',
+    steps: ['Ihre Rechnung', '@stampbench/core — lokal', 'Geprüft, korrigiert, erklärt'],
+  },
+  proof: {
+    heading: 'Gebaut für Compliance, nicht für Demos.',
+    body:
+      'Ein Compliance-Werkzeug ist nur brauchbar, wenn es richtig ist. Jede Zahl unten stammt aus einem Artefakt im offenen Repository — einschließlich der drei offiziellen Dokumente, bei denen wir derzeit vom Referenzvalidator abweichen. Veröffentlicht statt versteckt.',
     evidence: 'Vollständige Testnachweise ansehen →',
     security: 'Sicherheit →',
     note: 'MIT-lizenzierte Engine — lokal ausführen und jede Zahl selbst überprüfen.',
   },
+  statsBoard: {
+    tests: { label: 'Automatisierte Tests bestehen', sub: '110 Bibliothek · 50 CLI · 6 Web', failing: '0 fehlgeschlagen · 0 übersprungen' },
+    docs: { label: 'Offizielle Testdokumente geprüft', sub: '0 Abbrüche · 3 Abweichungen, veröffentlicht' },
+    rules: { label: 'Aktive Prüfregeln', families: ['EN 16931 Kern', 'USt-Kategorien', 'BR-DE-Profil'] },
+    located: { label: 'Verstöße lokalisiert', sub: '27,1 % exakt am Element — gemessen über 9.983 Mutationen' },
+  },
+  model: {
+    heading: 'Open Source im Kern. Bezahlt nur für die Plattform.',
+    freeTitle: 'Für immer kostenlos',
+    freeBody:
+      'Bibliothek, CLI und der Playground dieser Seite: unbegrenzte lokale Prüfung, Korrektur und Erzeugung. MIT-lizenziert, ohne Konto, ohne Telemetrie.',
+    paidTitle: 'Bezahlpläne',
+    paidBody:
+      'Die gehostete REST-API, teilbare Prüfberichte und Zukunfts-Regelsatz-Checks — für Teams, die die Engine als Infrastruktur nutzen wollen, mit skalierenden Kontingenten.',
+    pricing: 'Zu den Preisen →',
+  },
   cta: {
-    heading: 'Konform sein, bevor die Konkurrenz es ist.',
-    body: 'Unbegrenzte lokale Prüfung mit der Open-Source-Bibliothek, dauerhaft. Kein Konto, keine Limits.',
-    button: 'Auf npm holen',
+    heading: 'Schicken Sie Ihre erste Rechnung durch Stampbench.',
+    body: 'Kein Konto. Keine Kreditkarte. Kein Upload — die Prüfung läuft in Ihrem Browser.',
+    button: 'Playground öffnen',
+    install: 'oder npm install',
   },
   footer: {
     blurb:
