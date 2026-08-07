@@ -30,6 +30,9 @@ route) emails harveypro3@gmail.com on upgrade requests via service binding MAILE
 **Deploy sequence now:** `node apps/web/scripts/build-static.mjs` →
 `node workers/api/build.mjs` → `npx wrangler pages deploy out --project-name=stampbench`
 (from apps/web). Forgetting the worker step deploys a site with no API.
+Same sequence also runs in CI: `.github/workflows/deploy.yml` deploys on every
+push to main (or manually via the Actions tab) once the `CLOUDFLARE_API_TOKEN`
+and `CLOUDFLARE_ACCOUNT_ID` repository secrets are set.
 
 What exists: /signup /signin /account (keys, usage bars, upgrade requests), mobile
 hamburger nav, playground Fix-automatically (free, client-side), Share-report
