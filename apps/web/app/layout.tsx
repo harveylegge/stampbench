@@ -114,6 +114,7 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
                   '@id': 'https://stampbench.com/#org',
                   name: 'Stampbench',
                   url: 'https://stampbench.com',
+                  logo: 'https://stampbench.com/brand/stampbench-logo.png',
                   description:
                     'Open-source e-invoicing compliance tooling: validate, repair and generate XRechnung / EN 16931 invoices in TypeScript.',
                   founder: { '@id': 'https://stampbench.com/#harvey-legge' },

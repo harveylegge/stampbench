@@ -1,6 +1,13 @@
 <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 64 64">
-  <rect width="64" height="64" rx="14" fill="#1F4E8C"/>
-  <text x="32" y="42" text-anchor="middle"
-        font-family="ui-monospace, 'Cascadia Mono', 'SF Mono', Menlo, Consolas, monospace"
-        font-size="28" font-weight="700" fill="#FFFFFF" letter-spacing="-1">SB</text>
+  <defs>
+    <linearGradient id="p" x1="12" y1="13" x2="52" y2="37" gradientUnits="userSpaceOnUse">
+      <stop stop-color="#7B57F6"/>
+      <stop offset="1" stop-color="#5B2BD6"/>
+    </linearGradient>
+  </defs>
+  <rect width="64" height="64" rx="14" fill="#101014"/>
+  <path d="M52 25 V19 Q52 13 46 13 H18 Q12 13 12 19 V31 Q12 37 18 37 H40"
+        fill="none" stroke="url(#p)" stroke-width="5.5" stroke-linecap="round" stroke-linejoin="round"/>
+  <path d="M12 39 V45 Q12 51 18 51 H46 Q52 51 52 45 V33 Q52 27 46 27 H24"
+        fill="none" stroke="#FFFFFF" stroke-width="5.5" stroke-linecap="round" stroke-linejoin="round"/>
 </svg>

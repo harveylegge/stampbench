@@ -15,9 +15,11 @@
   --color-text: #171b21;
   --color-muted: #4a5460;
   --color-faint: #6e7885;
-  --color-accent: #1f4e8c;
-  --color-accent-hi: #163e75;
-  --color-accent-dim: #dce7f5;
+  /* Brand purple from the 2026-08 brand board (see components/logo.tsx).
+     Checked: white on accent ≥ 4.5:1, accent-hi on bg ≥ 4.5:1. */
+  --color-accent: #5b2bd6;
+  --color-accent-hi: #4a21b4;
+  --color-accent-dim: #e9e2fb;
   --color-success: #1b7a4e;
   --color-danger: #a33b34;
   --color-warning: #92600e;

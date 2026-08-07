@@ -3,6 +3,7 @@
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
 import { COPY, localePath, type Locale } from '@/lib/copy';
+import { StampbenchMark } from '@/components/logo';
 
 /**
  * The header links, localised from the current path. Client-side because the
@@ -36,9 +37,7 @@ export function BrandLink() {
   const locale: Locale = pathname === '/de' || pathname.startsWith('/de/') ? 'de' : 'en';
   return (
     <Link href={localePath(locale)} className="flex items-center gap-2 font-semibold tracking-tight">
-      <span className="flex h-6 w-6 items-center justify-center rounded-md bg-accent font-mono text-xs text-white">
-        SB
-      </span>
+      <StampbenchMark size={24} />
       Stampbench
     </Link>
   );
