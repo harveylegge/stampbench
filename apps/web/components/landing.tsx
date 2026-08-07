@@ -5,6 +5,17 @@ import { StatsBoard } from '@/components/stats-board';
 
 const GITHUB_URL = 'https://github.com/ohjl777/stampbench';
 
+/** One 20px stroke icon per feature card, in copy.features order:
+    validate, fix, locate, totals, future rules, formats. */
+const FEATURE_ICONS = [
+  <path key="i" d="M9 12l2 2 4-4M12 21a9 9 0 100-18 9 9 0 000 18z" />,
+  <path key="i" d="M14.7 6.3a4 4 0 00-5.1 5.1L4 17v3h3l5.6-5.6a4 4 0 005.1-5.1l-2.6 2.6-2.1-2.1 2.6-2.6z" />,
+  <path key="i" d="M12 8v0m0 8v0m-4-4h0m8 0h0m6 0a10 10 0 11-20 0 10 10 0 0120 0zm-6 0a4 4 0 11-8 0 4 4 0 018 0z" />,
+  <path key="i" d="M9 7h6M9 11h6M9 15h3M6 3h12a1 1 0 011 1v16a1 1 0 01-1 1H6a1 1 0 01-1-1V4a1 1 0 011-1z" />,
+  <path key="i" d="M12 8v4l2.5 2.5M21 12a9 9 0 11-9-9m4 0h5v5" />,
+  <path key="i" d="M8 3v4M16 3v4M4 9h16M6 5h12a2 2 0 012 2v12a2 2 0 01-2 2H6a2 2 0 01-2-2V7a2 2 0 012-2z" />,
+];
+
 const VALIDATE_SNIPPET = `$ npx stampbench validate rechnung.xml
 
 rechnung.xml  syntax: UBL | profile: xrechnung
@@ -135,9 +146,30 @@ export function Landing({ copy }: { copy: Copy }) {
             </div>
           </div>
 
+          {/* The product principle, elevated from a footnote to a statement */}
+          <figure className="mb-14 rounded-xl border border-accent/30 bg-accent-dim/30 px-6 py-8 text-center">
+            <blockquote className="mx-auto max-w-2xl">
+              <p className="mb-2 text-xl font-semibold tracking-tight text-accent-hi">
+                {copy.principle.title}
+              </p>
+              <p className="text-sm leading-relaxed text-muted">{copy.principle.body}</p>
+            </blockquote>
+          </figure>
+
           <div className="grid gap-6 sm:grid-cols-2 lg:grid-cols-3">
-            {copy.features.map((f) => (
+            {copy.features.map((f, i) => (
               <div key={f.title} className="rounded-xl border border-border bg-surface p-6">
+                <svg
+                  viewBox="0 0 24 24"
+                  className="mb-3 h-5 w-5 stroke-accent"
+                  fill="none"
+                  strokeWidth="1.8"
+                  strokeLinecap="round"
+                  strokeLinejoin="round"
+                  aria-hidden
+                >
+                  {FEATURE_ICONS[i]}
+                </svg>
                 <h3 className="mb-2 font-medium">{f.title}</h3>
                 <p className="text-sm leading-relaxed text-muted">{f.body}</p>
               </div>
@@ -202,12 +234,28 @@ export function Landing({ copy }: { copy: Copy }) {
           <h2 className="mb-10 text-2xl font-semibold tracking-tight">{copy.model.heading}</h2>
           <div className="grid gap-6 lg:grid-cols-2">
             <div className="rounded-xl border border-border bg-surface p-6">
-              <div className="mb-2 font-medium text-success">{copy.model.freeTitle}</div>
-              <p className="text-sm leading-relaxed text-muted">{copy.model.freeBody}</p>
+              <div className="mb-1 font-medium text-success">{copy.model.freeTitle}</div>
+              <p className="mb-4 text-sm text-muted">{copy.model.freeBody}</p>
+              <ul className="space-y-2 text-sm text-muted">
+                {copy.model.freeItems.map((item) => (
+                  <li key={item} className="flex gap-2">
+                    <span className="text-success" aria-hidden>✓</span>
+                    {item}
+                  </li>
+                ))}
+              </ul>
             </div>
-            <div className="rounded-xl border border-border bg-surface p-6">
-              <div className="mb-2 font-medium text-accent-hi">{copy.model.paidTitle}</div>
-              <p className="mb-3 text-sm leading-relaxed text-muted">{copy.model.paidBody}</p>
+            <div className="rounded-xl border border-accent/40 bg-surface p-6">
+              <div className="mb-1 font-medium text-accent-hi">{copy.model.paidTitle}</div>
+              <p className="mb-4 text-sm text-muted">{copy.model.paidBody}</p>
+              <ul className="mb-4 space-y-2 text-sm text-muted">
+                {copy.model.paidItems.map((item) => (
+                  <li key={item} className="flex gap-2">
+                    <span className="text-accent" aria-hidden>✓</span>
+                    {item}
+                  </li>
+                ))}
+              </ul>
               <Link href="/pricing" className="text-sm font-medium text-accent-hi hover:underline">
                 {copy.model.pricing}
               </Link>

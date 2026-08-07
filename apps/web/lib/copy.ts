@@ -67,6 +67,8 @@ export interface Copy {
     oursExplain: string;
     oursFix: string;
   };
+  /** The product principle, displayed as a standalone statement. */
+  principle: { title: string; body: string };
   features: { title: string; body: string }[];
   api: { heading: string; body: string };
   local: { heading: string; body: string; steps: [string, string, string] };
@@ -88,8 +90,10 @@ export interface Copy {
     heading: string;
     freeTitle: string;
     freeBody: string;
+    freeItems: string[];
     paidTitle: string;
     paidBody: string;
+    paidItems: string[];
     pricing: string;
   };
   cta: { heading: string; body: string; button: string; install: string };
@@ -131,8 +135,8 @@ export const en: Copy = {
   },
   hero: {
     badge: 'Germany mandates B2B e-invoices from 2027 — receiving is already law',
-    titleTop: 'Validate and fix XRechnung.',
-    titleAccent: 'In TypeScript, without Java.',
+    titleTop: 'Make XRechnung pass.',
+    titleAccent: 'TypeScript-native. No Java.',
     lede:
       'The developer-first toolkit for XRechnung and EN 16931: catch every rule violation, understand exactly what failed, and safely repair what can be derived — entirely on your machine.',
     ctaPrimary: 'Try the playground',
@@ -163,6 +167,11 @@ export const en: Copy = {
     oursExplain:
       'Missing buyer reference (BT-10). For German public-sector buyers this is the Leitweg-ID; B2B buyers usually supply their own reference.',
     oursFix: 'Not auto-fixable: there is no derivable correct value. Ask your buyer — never invent one.',
+  },
+  principle: {
+    title: 'Never invent compliance data.',
+    body:
+      'Stampbench fixes what mathematics can prove — a VAT total has exactly one right answer. Everything else goes to a human, because an invoice that quietly passes with invented data is worse than one that honestly fails.',
   },
   features: [
     {
@@ -212,7 +221,10 @@ export const en: Copy = {
     tests: { label: 'Automated tests passing', sub: '110 library · 50 CLI · 6 web', failing: '0 failing · 0 skipped' },
     docs: { label: 'Official test documents run', sub: '0 crashes · 3 divergences, published' },
     rules: { label: 'Validation rules active', families: ['EN 16931 core', 'VAT categories', 'BR-DE profile'] },
-    located: { label: 'Violations located', sub: '27.1% to the exact element — measured over 9,983 mutations' },
+    located: {
+      label: 'Violations located',
+      sub: 'Every violation anchors to a real element — 27.1% to the exact one, the rest to the nearest enclosing element, labelled approximate rather than guessed. Measured over 9,983 mutated invoices.',
+    },
     growth: {
       label: 'Test suite growth',
       sub: 'Test cases per package, counted from the repository’s commit history — August 2026',
@@ -222,11 +234,23 @@ export const en: Copy = {
   model: {
     heading: 'Open source at the core. Paid when you need the platform.',
     freeTitle: 'Free forever',
-    freeBody:
-      'The library, the CLI and this site’s playground: unlimited local validation, repair and generation. MIT-licensed, no account, no telemetry.',
+    freeBody: 'MIT-licensed, no account, no telemetry.',
+    freeItems: [
+      'Local library & CLI',
+      'Browser playground',
+      'Unlimited validation',
+      'In-place repair',
+      'XRechnung generation',
+    ],
     paidTitle: 'Paid plans',
-    paidBody:
-      'The hosted REST API, shareable validation reports and future-ruleset checks — for teams that want the engine as infrastructure, with quotas that scale.',
+    paidBody: 'The engine as infrastructure, from £29/month.',
+    paidItems: [
+      'Hosted REST API',
+      'Shareable validation reports',
+      'Future-ruleset checks',
+      'Quotas that scale',
+      'Email support',
+    ],
     pricing: 'See pricing →',
   },
   cta: {
@@ -280,8 +304,8 @@ export const de: Copy = {
   },
   hero: {
     badge: 'E-Rechnungspflicht: Empfangen ist bereits Gesetz, Ausstellen ab 2027',
-    titleTop: 'XRechnung prüfen und korrigieren.',
-    titleAccent: 'In TypeScript, ohne Java.',
+    titleTop: 'XRechnung bestehen.',
+    titleAccent: 'TypeScript-nativ. Ohne Java.',
     lede:
       'Das Entwickler-Toolkit für XRechnung und EN 16931: jeden Regelverstoß erkennen, genau verstehen, was fehlschlug, und sicher korrigieren, was sich herleiten lässt — vollständig auf Ihrem Rechner.',
     ctaPrimary: 'Playground öffnen',
@@ -312,6 +336,11 @@ export const de: Copy = {
     oursExplain:
       'Die Käuferreferenz (BT-10) fehlt. Bei öffentlichen Auftraggebern ist das die Leitweg-ID; B2B-Käufer vergeben in der Regel eine eigene Referenz.',
     oursFix: 'Nicht automatisch korrigierbar: Es gibt keinen herleitbaren Wert. Fragen Sie Ihren Käufer — niemals erfinden.',
+  },
+  principle: {
+    title: 'Compliance-Daten werden niemals erfunden.',
+    body:
+      'Stampbench korrigiert, was Mathematik beweisen kann — eine USt-Summe hat genau eine richtige Antwort. Alles andere geht an einen Menschen, denn eine Rechnung, die mit erfundenen Daten still besteht, ist schlimmer als eine, die ehrlich scheitert.',
   },
   features: [
     {
@@ -361,7 +390,10 @@ export const de: Copy = {
     tests: { label: 'Automatisierte Tests bestehen', sub: '110 Bibliothek · 50 CLI · 6 Web', failing: '0 fehlgeschlagen · 0 übersprungen' },
     docs: { label: 'Offizielle Testdokumente geprüft', sub: '0 Abbrüche · 3 Abweichungen, veröffentlicht' },
     rules: { label: 'Aktive Prüfregeln', families: ['EN 16931 Kern', 'USt-Kategorien', 'BR-DE-Profil'] },
-    located: { label: 'Verstöße lokalisiert', sub: '27,1 % exakt am Element — gemessen über 9.983 Mutationen' },
+    located: {
+      label: 'Verstöße lokalisiert',
+      sub: 'Jeder Verstoß wird an einem echten Element verankert — 27,1 % exakt, der Rest am nächstliegenden übergeordneten Element, als ungefähr gekennzeichnet statt geraten. Gemessen über 9.983 mutierte Rechnungen.',
+    },
     growth: {
       label: 'Wachstum der Testsuite',
       sub: 'Testfälle je Paket, gezählt aus der Commit-Historie des Repositories — August 2026',
@@ -371,11 +403,23 @@ export const de: Copy = {
   model: {
     heading: 'Open Source im Kern. Bezahlt nur für die Plattform.',
     freeTitle: 'Für immer kostenlos',
-    freeBody:
-      'Bibliothek, CLI und der Playground dieser Seite: unbegrenzte lokale Prüfung, Korrektur und Erzeugung. MIT-lizenziert, ohne Konto, ohne Telemetrie.',
+    freeBody: 'MIT-lizenziert, ohne Konto, ohne Telemetrie.',
+    freeItems: [
+      'Lokale Bibliothek & CLI',
+      'Playground im Browser',
+      'Unbegrenzte Prüfung',
+      'Korrektur direkt in der Datei',
+      'XRechnung-Erzeugung',
+    ],
     paidTitle: 'Bezahlpläne',
-    paidBody:
-      'Die gehostete REST-API, teilbare Prüfberichte und Zukunfts-Regelsatz-Checks — für Teams, die die Engine als Infrastruktur nutzen wollen, mit skalierenden Kontingenten.',
+    paidBody: 'Die Engine als Infrastruktur, ab 29 £/Monat.',
+    paidItems: [
+      'Gehostete REST-API',
+      'Teilbare Prüfberichte',
+      'Zukunfts-Regelsatz-Checks',
+      'Skalierende Kontingente',
+      'E-Mail-Support',
+    ],
     pricing: 'Zu den Preisen →',
   },
   cta: {
