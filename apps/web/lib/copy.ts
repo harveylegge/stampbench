@@ -82,6 +82,7 @@ export interface Copy {
     docs: { label: string; sub: string };
     rules: { label: string; families: [string, string, string] };
     located: { label: string; sub: string };
+    growth: { label: string; sub: string; series: [string, string] };
   };
   model: {
     heading: string;
@@ -212,6 +213,11 @@ export const en: Copy = {
     docs: { label: 'Official test documents run', sub: '0 crashes · 3 divergences, published' },
     rules: { label: 'Validation rules active', families: ['EN 16931 core', 'VAT categories', 'BR-DE profile'] },
     located: { label: 'Violations located', sub: '27.1% to the exact element — measured over 9,983 mutations' },
+    growth: {
+      label: 'Test suite growth',
+      sub: 'Test cases per package, counted from the repository’s commit history — August 2026',
+      series: ['library', 'CLI'],
+    },
   },
   model: {
     heading: 'Open source at the core. Paid when you need the platform.',
@@ -356,6 +362,11 @@ export const de: Copy = {
     docs: { label: 'Offizielle Testdokumente geprüft', sub: '0 Abbrüche · 3 Abweichungen, veröffentlicht' },
     rules: { label: 'Aktive Prüfregeln', families: ['EN 16931 Kern', 'USt-Kategorien', 'BR-DE-Profil'] },
     located: { label: 'Verstöße lokalisiert', sub: '27,1 % exakt am Element — gemessen über 9.983 Mutationen' },
+    growth: {
+      label: 'Wachstum der Testsuite',
+      sub: 'Testfälle je Paket, gezählt aus der Commit-Historie des Repositories — August 2026',
+      series: ['Bibliothek', 'CLI'],
+    },
   },
   model: {
     heading: 'Open Source im Kern. Bezahlt nur für die Plattform.',

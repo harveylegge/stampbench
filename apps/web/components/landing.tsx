@@ -82,6 +82,30 @@ export function Landing({ copy }: { copy: Copy }) {
         </div>
       </section>
 
+      {/* Proof — high on the page: for a compliance product, evidence IS the pitch */}
+      <section className="py-20">
+        <div className="mx-auto max-w-6xl px-4">
+          <h2 className="mb-3 text-2xl font-semibold tracking-tight">{copy.proof.heading}</h2>
+          <p className="mb-10 max-w-2xl leading-relaxed text-muted">{copy.proof.body}</p>
+          <StatsBoard copy={copy} />
+          <div className="mt-8 flex flex-wrap items-center gap-4">
+            <Link
+              href="/trust"
+              className="rounded-lg border border-border bg-surface px-5 py-2.5 text-sm font-medium transition hover:border-border-hi"
+            >
+              {copy.proof.evidence}
+            </Link>
+            <Link
+              href="/security"
+              className="rounded-lg border border-border bg-surface px-5 py-2.5 text-sm font-medium transition hover:border-border-hi"
+            >
+              {copy.proof.security}
+            </Link>
+            <span className="text-sm text-faint">{copy.proof.note}</span>
+          </div>
+        </div>
+      </section>
+
       {/* The problem: official error vs ours */}
       <section className="border-t border-border bg-surface/40 py-20">
         <div className="mx-auto max-w-6xl px-4">
@@ -168,30 +192,6 @@ export function Landing({ copy }: { copy: Copy }) {
                 {i < 2 && <span className="hidden text-faint sm:block">→</span>}
               </div>
             ))}
-          </div>
-        </div>
-      </section>
-
-      {/* Proof */}
-      <section className="border-t border-border py-20">
-        <div className="mx-auto max-w-6xl px-4">
-          <h2 className="mb-3 text-2xl font-semibold tracking-tight">{copy.proof.heading}</h2>
-          <p className="mb-10 max-w-2xl leading-relaxed text-muted">{copy.proof.body}</p>
-          <StatsBoard copy={copy} />
-          <div className="mt-8 flex flex-wrap items-center gap-4">
-            <Link
-              href="/trust"
-              className="rounded-lg border border-border bg-surface px-5 py-2.5 text-sm font-medium transition hover:border-border-hi"
-            >
-              {copy.proof.evidence}
-            </Link>
-            <Link
-              href="/security"
-              className="rounded-lg border border-border bg-surface px-5 py-2.5 text-sm font-medium transition hover:border-border-hi"
-            >
-              {copy.proof.security}
-            </Link>
-            <span className="text-sm text-faint">{copy.proof.note}</span>
           </div>
         </div>
       </section>

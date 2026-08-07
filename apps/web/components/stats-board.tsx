@@ -28,6 +28,21 @@ const DOCS_TOTAL = DOCS.reduce((s, d) => s + d.n, 0);
 
 const RULE_FAMILIES = [32, 8, 16] as const;
 
+/**
+ * Test cases per package, counted from the repository's commit history —
+ * `git grep -c "^\s*(it|test)\("` at the last commit of each day. Re-derive
+ * with the same command; the final points match today's live run (110 / 50).
+ * Counted 2026-08-07.
+ */
+const GROWTH = {
+  days: ['2', '3', '4', '5', '6', '7'],
+  series: [
+    { color: '#5b2bd6', points: [21, 106, 110, 110, 110, 110] },
+    { color: '#0d9488', points: [0, 42, 50, 50, 50, 50] },
+  ],
+  yMax: 120,
+};
+
 function Card({ children, href }: { children: React.ReactNode; href: string }) {
   return (
     <Link
@@ -83,6 +98,55 @@ function LocatedGauge() {
         100%
       </text>
     </svg>
+  );
+}
+
+/** Two-series line chart of test-suite growth. Thin 2px lines, dot markers,
+    direct end labels — identity is never carried by colour alone. */
+function GrowthChart({ copy }: { copy: Copy }) {
+  const g = copy.statsBoard.growth;
+  const W = 560;
+  const H = 150;
+  const PAD = { l: 34, r: 96, t: 12, b: 24 };
+  const x = (i: number) => PAD.l + (i * (W - PAD.l - PAD.r)) / (GROWTH.days.length - 1);
+  const y = (v: number) => PAD.t + (1 - v / GROWTH.yMax) * (H - PAD.t - PAD.b);
+  const line = (pts: number[]) => pts.map((v, i) => `${i ? 'L' : 'M'}${x(i)} ${y(v)}`).join(' ');
+
+  return (
+    <div className="rounded-xl border border-border bg-surface p-5 sm:col-span-2 lg:col-span-4">
+      <div className="mb-1 text-sm font-medium">{g.label}</div>
+      <div className="mb-4 text-xs text-faint">{g.sub}</div>
+      <svg viewBox={`0 0 ${W} ${H}`} className="w-full" role="img" aria-label={g.label}>
+        {[0, 40, 80, 120].map((v) => (
+          <g key={v}>
+            <line x1={PAD.l} x2={W - PAD.r} y1={y(v)} y2={y(v)} stroke="var(--color-border)" strokeWidth="1" />
+            <text x={PAD.l - 6} y={y(v) + 3} textAnchor="end" className="fill-faint font-sans text-[9px]">
+              {v}
+            </text>
+          </g>
+        ))}
+        {GROWTH.days.map((d, i) => (
+          <text key={d} x={x(i)} y={H - 8} textAnchor="middle" className="fill-faint font-sans text-[9px]">
+            Aug {d}
+          </text>
+        ))}
+        {GROWTH.series.map((sr, si) => (
+          <g key={sr.color}>
+            <path d={line(sr.points)} fill="none" stroke={sr.color} strokeWidth="2" strokeLinejoin="round" />
+            {sr.points.map((v, i) => (
+              <circle key={i} cx={x(i)} cy={y(v)} r="3" fill={sr.color} stroke="var(--color-surface)" strokeWidth="1.5" />
+            ))}
+            <text
+              x={x(GROWTH.days.length - 1) + 10}
+              y={y(sr.points[sr.points.length - 1]) + 3}
+              className="fill-muted font-sans text-[10px]"
+            >
+              {sr.points[sr.points.length - 1]} {g.series[si]}
+            </text>
+          </g>
+        ))}
+      </svg>
+    </div>
   );
 }
 
@@ -161,6 +225,8 @@ export function StatsBoard({ copy }: { copy: Copy }) {
         <div className="mt-1 text-xs leading-relaxed text-faint">{s.located.sub}</div>
         <Evidence />
       </Card>
+
+      <GrowthChart copy={copy} />
     </div>
   );
 }
