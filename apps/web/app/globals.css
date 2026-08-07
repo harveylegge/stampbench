@@ -1,10 +1,10 @@
 @import "tailwindcss";
 
 /*
- * Paper and ink. The palette of the documents this product exists to check —
- * and of the stamp in the name. Deliberately sober: the buyers are companies
- * and public-sector suppliers, and the design should read like something a
- * procurement office could trust, not a crypto landing page.
+ * Paper and ink, with one electric accent. The neutrals stay the palette of
+ * the documents this product exists to check — sober enough for a procurement
+ * office — while the accent is Stampbench purple from the 2026 brand refresh
+ * (the S monogram's gradient sits between accent and accent-hi).
  */
 @theme {
   --color-bg: #f7f8fa;
@@ -15,9 +15,9 @@
   --color-text: #171b21;
   --color-muted: #4a5460;
   --color-faint: #6e7885;
-  --color-accent: #1f4e8c;
-  --color-accent-hi: #163e75;
-  --color-accent-dim: #dce7f5;
+  --color-accent: #6d4af2;
+  --color-accent-hi: #5333cc;
+  --color-accent-dim: #e9e3fc;
   --color-success: #1b7a4e;
   --color-danger: #a33b34;
   --color-warning: #92600e;
@@ -81,8 +81,8 @@ pre {
   inset: 0;
   pointer-events: none;
   background-image:
-    linear-gradient(to right, rgb(31 78 140 / 0.06) 1px, transparent 1px),
-    linear-gradient(to bottom, rgb(31 78 140 / 0.06) 1px, transparent 1px);
+    linear-gradient(to right, rgb(109 74 242 / 0.06) 1px, transparent 1px),
+    linear-gradient(to bottom, rgb(109 74 242 / 0.06) 1px, transparent 1px);
   background-size: 44px 44px;
   mask-image: radial-gradient(ellipse 70% 60% at 50% 0%, black 30%, transparent 100%);
 }

@@ -30,15 +30,33 @@ export function NavLinks() {
   );
 }
 
+/**
+ * The Stampbench S monogram, inlined so the two halves can take their colours
+ * from the theme tokens (accent hook on top, ink hook below) instead of the
+ * fixed fills baked into the standalone SVGs in /public/brand.
+ */
+export function LogoMark({ className = 'h-6 w-6' }: { className?: string }) {
+  return (
+    <svg viewBox="0 0 64 64" className={className} aria-hidden>
+      <path
+        className="fill-accent"
+        d="M12 20 Q12 12 20 12 H50 L44 21 H23 Q21 21 21 23 V25.5 Q21 27.5 23 27.5 H36.5 L30.5 36.5 H15 Q12 36.5 12 33.5 V20 Z"
+      />
+      <path
+        className="fill-text"
+        d="M52 44 Q52 52 44 52 H14 L20 43 H41 Q43 43 43 41 V38.5 Q43 36.5 41 36.5 H27.5 L33.5 27.5 H49 Q52 27.5 52 30.5 V44 Z"
+      />
+    </svg>
+  );
+}
+
 /** The brand mark, linking to the current language's home page. */
 export function BrandLink() {
   const pathname = usePathname() ?? '/';
   const locale: Locale = pathname === '/de' || pathname.startsWith('/de/') ? 'de' : 'en';
   return (
     <Link href={localePath(locale)} className="flex items-center gap-2 font-semibold tracking-tight">
-      <span className="flex h-6 w-6 items-center justify-center rounded-md bg-accent font-mono text-xs text-white">
-        SB
-      </span>
+      <LogoMark />
       Stampbench
     </Link>
   );

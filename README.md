@@ -1,3 +1,5 @@
+<img src="apps/web/public/brand/stampbench-icon.svg" width="72" alt="Stampbench logo">
+
 # Stampbench
 
 **E-invoicing compliance, minus the pain.** Validate and generate XRechnung / EN 16931
