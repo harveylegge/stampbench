@@ -1,0 +1,62 @@
+name: Deploy site
+
+# Builds the static site + API worker and deploys to Cloudflare Pages —
+# the same three-step sequence as a manual deploy (see docs/HANDOFF.md).
+#
+# Requires two repository secrets (Settings → Secrets and variables → Actions):
+#   CLOUDFLARE_API_TOKEN   — custom token with Account → Cloudflare Pages → Edit
+#   CLOUDFLARE_ACCOUNT_ID  — from the Cloudflare dashboard sidebar
+
+on:
+  push:
+    branches: [main]
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+# One deploy at a time; a queued newer push supersedes an unstarted older one.
+concurrency:
+  group: deploy-production
+  cancel-in-progress: false
+
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    steps:
+      - name: Check secrets are configured
+        env:
+          CLOUDFLARE_API_TOKEN: ${{ secrets.CLOUDFLARE_API_TOKEN }}
+          CLOUDFLARE_ACCOUNT_ID: ${{ secrets.CLOUDFLARE_ACCOUNT_ID }}
+        run: |
+          if [ -z "$CLOUDFLARE_API_TOKEN" ] || [ -z "$CLOUDFLARE_ACCOUNT_ID" ]; then
+            echo "::error::CLOUDFLARE_API_TOKEN and CLOUDFLARE_ACCOUNT_ID repository secrets must be set before this workflow can deploy. Create a token at dash.cloudflare.com → My Profile → API Tokens (custom token, Account → Cloudflare Pages → Edit)."
+            exit 1
+          fi
+
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Build @stampbench/core
+        run: npm run build -w @stampbench/core
+
+      - name: Build static site
+        run: node apps/web/scripts/build-static.mjs
+
+      - name: Bundle API worker
+        run: node workers/api/build.mjs
+
+      - name: Deploy to Cloudflare Pages
+        working-directory: apps/web
+        env:
+          CLOUDFLARE_API_TOKEN: ${{ secrets.CLOUDFLARE_API_TOKEN }}
+          CLOUDFLARE_ACCOUNT_ID: ${{ secrets.CLOUDFLARE_ACCOUNT_ID }}
+        run: npx wrangler@4 pages deploy out --project-name=stampbench
