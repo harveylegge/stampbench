@@ -24,7 +24,7 @@ const faqs = [
   },
   {
     q: 'Why pay when the library is free?',
-    a: 'The hosted API gives you always-current rule sets without dependency upgrades, AI-written error explanations, usage across any language (not just Node.js), team-visible history, and someone else maintaining the Schematron treadmill as XRechnung versions change.',
+    a: 'The hosted API gives you always-current rule sets without dependency upgrades, usage from any language (not just Node.js), shareable validation reports, and someone else maintaining the rule treadmill as XRechnung versions change.',
   },
   {
     q: 'Do you support Factur-X / ZUGFeRD, Peppol BIS, or FatturaPA?',

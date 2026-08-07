@@ -30,7 +30,7 @@ export const PLANS: Record<PlanId, Plan> = {
       '100 hosted API calls / month',
       'Unlimited local validation (open-source library)',
       'XRechnung validation + generation',
-      'Playground with AI explanations',
+      'Playground with plain-language explanations',
       'Community support',
     ],
   },
