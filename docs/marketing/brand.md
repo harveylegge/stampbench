@@ -74,16 +74,16 @@ Dark, premium, restrained — Linear-adjacent. One electric accent doing all the
 | `text-secondary` | `#9C9CB0` | Supporting copy, labels |
 | `text-tertiary` | `#63637A` | Placeholders, timestamps |
 
-### Accent — "Volt Indigo"
+### Accent — "Stampbench Purple"
 
 | Token | Hex | Use |
 | --- | --- | --- |
-| `accent` | `#6E5BFF` | Primary buttons, links, active states, logo mark |
-| `accent-hover` | `#8577FF` | Hover/focus on accent elements |
-| `accent-muted` | `#6E5BFF` at 12% alpha | Selected rows, badges, subtle highlights |
-| `accent-deep` | `#4B3DD6` | Pressed states, gradients (pair with `accent`) |
+| `accent` | `#6D4AF2` | Primary buttons, links, active states, logo mark |
+| `accent-hover` | `#5333CC` | Hover/focus/pressed on accent elements |
+| `accent-muted` | `#6D4AF2` at 12% alpha (solid: `#E9E3FC`) | Selected rows, badges, subtle highlights, lavender panels |
+| `accent-deep` | `#5B2EE8` | Gradient end, dark-on-purple pairings |
 
-Signature gradient (hero glows, OG images): `#6E5BFF → #B44BFF`, used sparingly at low opacity on `bg-base`.
+Signature gradient (the logo mark, hero glows, OG images): `#8B63F9 → #5B2EE8`, top-left to bottom-right. On the marketing site the accent family maps to the light-theme tokens `--color-accent` / `--color-accent-hi` / `--color-accent-dim` in `apps/web/app/globals.css`.
 
 ### Semantic
 
@@ -103,11 +103,33 @@ Validation UI convention: passing rules get `success` ticks, failures get `error
 
 Rule of thumb: if it could appear in a terminal or an XML file, it's JetBrains Mono; everything else is Inter. Inline rule IDs in body copy are always mono with an `accent-muted` background chip.
 
-## 7. Logo concept
+## 7. Logo
 
-**The Gate mark.** Two vertical strokes joined by a raised crossbar — a stylised gate that reads equally as a pair of brackets and as the Π-like frame of a checkpoint. Inside the gate sits a single checkmark tick, slightly overlapping the right stroke, as if an invoice has just passed through validation. Geometry drawn on a square grid with the same stroke weight throughout; corners softly rounded (radius ≈ 1/8 stroke width) to match Inter's character.
+**The S monogram.** A geometric "S" built from two interlocking hooks on a square grid: the upper hook in the accent gradient (`#8B63F9 → #5B2EE8`), the lower hook in ink (near-black on light, white on dark). The bar terminals and the seam where the two hooks meet are cut on the same diagonal, so the halves read as two stamped strokes locking together — validation as two parts fitting. Reference sheet: `docs/marketing/brand-sheet.png`.
 
-- **Colour:** mark in `accent` (#6E5BFF) on dark; the tick in `success` (#2FD180) is permitted in product UI contexts, but the marketing/default lock-up is monochrome accent for restraint.
-- **Wordmark:** "Stampbench" set in Inter SemiBold, single colour `text-primary`, no camel-case colour split. Mark sits left of the wordmark at cap height.
-- **Favicon / avatar:** the gate mark alone on `bg-base`.
-- **Feel:** the mark should feel like a linting checkmark and a border checkpoint at once — validation as passage, not obstruction.
+### Lock-ups
+
+- **Primary:** mark left of the wordmark "Stampbench" set in Inter SemiBold, single colour (ink on light, white on dark), no camel-case colour split. Mark sits at cap height.
+- **Tagline lock-up:** wordmark with "E-invoicing Compliance API" beneath, letter-spaced caps, `text-secondary`. Marketing hero and OG images only — never in product UI.
+- **Stacked:** mark centred above the wordmark, for square-ish placements.
+- **App icon / avatar:** the mark at 70% on a `#0B0B10` rounded square (radius ≈ 14/64). This is also the favicon (`apps/web/app/icon.svg`).
+
+### Colour rules
+
+- On light backgrounds: gradient top hook + `#16161D` bottom hook.
+- On dark backgrounds: gradient top hook + white bottom hook.
+- On accent-purple or busy backgrounds: solid white, both hooks.
+- Never recolour the hooks individually beyond these three treatments; never outline the mark.
+
+### Assets
+
+SVG masters live in `apps/web/public/brand/`:
+
+| File | Use |
+| --- | --- |
+| `stampbench-mark.svg` | Mark on light backgrounds |
+| `stampbench-mark-dark.svg` | Mark on dark backgrounds |
+| `stampbench-mark-white.svg` | Solid white mark for purple/photo backgrounds |
+| `stampbench-icon.svg` | App icon / avatar tile |
+
+In the web app the mark is inlined as the `LogoMark` component (`apps/web/components/nav-links.tsx`) so its fills follow the theme tokens.

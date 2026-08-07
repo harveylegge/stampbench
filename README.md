@@ -1,3 +1,5 @@
+<img src="apps/web/public/brand/stampbench-icon.svg" width="72" alt="Stampbench logo">
+
 # Stampbench
 
 **E-invoicing compliance, minus the pain.** Validate and generate XRechnung / EN 16931
@@ -144,12 +146,13 @@ invoices against the rules that were in force when you issued them.
 
 ```bash
 curl -s https://stampbench.com/api/v1/validate \
-  -H "Authorization: Bearer ig_live_…" \
-  -H "Content-Type: application/xml" \
-  --data-binary @invoice.xml
+  -H "Authorization: Bearer sb_live_…" \
+  -H "Content-Type: application/json" \
+  -d '{"xml":"<Invoice …>"}'
 ```
 
-Endpoints: `POST /api/v1/validate`, `POST /api/v1/generate`, `POST /api/ai/explain`.
+Endpoints: `POST /api/v1/validate`, `POST /api/v1/generate`, `POST /api/v1/fix` —
+create a key at [stampbench.com/account](https://stampbench.com/account) (free: 100 calls/month).
 Full reference: [/docs](https://stampbench.com/docs) (or `apps/web/app/docs/page.tsx`).
 
 ## Documentation
