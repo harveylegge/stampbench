@@ -222,7 +222,8 @@ export function StatsBoard({ copy }: { copy: Copy }) {
       <Card href="/trust">
         <LocatedGauge />
         <div className="mt-2 text-sm">{s.located.label}</div>
-        <div className="mt-1 text-xs leading-relaxed text-faint">{s.located.sub}</div>
+        <div className="mt-1 text-xs font-medium leading-relaxed text-muted">{s.located.subLead}</div>
+        <div className="mt-1 text-xs leading-relaxed text-faint">{s.located.subDetail}</div>
         <Evidence />
       </Card>
 

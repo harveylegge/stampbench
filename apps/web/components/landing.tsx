@@ -5,16 +5,6 @@ import { StatsBoard } from '@/components/stats-board';
 
 const GITHUB_URL = 'https://github.com/ohjl777/stampbench';
 
-/** One 20px stroke icon per feature card, in copy.features order:
-    validate, fix, locate, totals, future rules, formats. */
-const FEATURE_ICONS = [
-  <path key="i" d="M9 12l2 2 4-4M12 21a9 9 0 100-18 9 9 0 000 18z" />,
-  <path key="i" d="M14.7 6.3a4 4 0 00-5.1 5.1L4 17v3h3l5.6-5.6a4 4 0 005.1-5.1l-2.6 2.6-2.1-2.1 2.6-2.6z" />,
-  <path key="i" d="M12 8v0m0 8v0m-4-4h0m8 0h0m6 0a10 10 0 11-20 0 10 10 0 0120 0zm-6 0a4 4 0 11-8 0 4 4 0 018 0z" />,
-  <path key="i" d="M9 7h6M9 11h6M9 15h3M6 3h12a1 1 0 011 1v16a1 1 0 01-1 1H6a1 1 0 01-1-1V4a1 1 0 011-1z" />,
-  <path key="i" d="M12 8v4l2.5 2.5M21 12a9 9 0 11-9-9m4 0h5v5" />,
-  <path key="i" d="M8 3v4M16 3v4M4 9h16M6 5h12a2 2 0 012 2v12a2 2 0 01-2 2H6a2 2 0 01-2-2V7a2 2 0 012-2z" />,
-];
 
 const VALIDATE_SNIPPET = `$ npx stampbench validate rechnung.xml
 
@@ -156,22 +146,28 @@ export function Landing({ copy }: { copy: Copy }) {
             </blockquote>
           </figure>
 
-          <div className="grid gap-6 sm:grid-cols-2 lg:grid-cols-3">
-            {copy.features.map((f, i) => (
-              <div key={f.title} className="rounded-xl border border-border bg-surface p-6">
-                <svg
-                  viewBox="0 0 24 24"
-                  className="mb-3 h-5 w-5 stroke-accent"
-                  fill="none"
-                  strokeWidth="1.8"
-                  strokeLinecap="round"
-                  strokeLinejoin="round"
-                  aria-hidden
-                >
-                  {FEATURE_ICONS[i]}
-                </svg>
-                <h3 className="mb-2 font-medium">{f.title}</h3>
-                <p className="text-sm leading-relaxed text-muted">{f.body}</p>
+          {/* Three pillars; the six original detail cards live inside native
+              <details>, so the depth is still there for whoever wants it. */}
+          <div className="grid gap-6 lg:grid-cols-3">
+            {copy.pillars.map((p) => (
+              <div key={p.num} className="rounded-xl border border-border bg-surface p-6">
+                <div className="mb-3 font-mono text-sm text-accent">{p.num}</div>
+                <h3 className="mb-2 text-xl font-semibold tracking-tight">{p.title}</h3>
+                <p className="mb-4 text-sm leading-relaxed text-muted">{p.tagline}</p>
+                <details className="group">
+                  <summary className="cursor-pointer list-none text-sm font-medium text-accent-hi transition hover:underline">
+                    <span className="group-open:hidden">{p.details} +</span>
+                    <span className="hidden group-open:inline">{p.details} −</span>
+                  </summary>
+                  <div className="mt-4 space-y-4 border-t border-border pt-4">
+                    {p.items.map((item) => (
+                      <div key={item.title}>
+                        <h4 className="mb-1 text-sm font-medium">{item.title}</h4>
+                        <p className="text-sm leading-relaxed text-muted">{item.body}</p>
+                      </div>
+                    ))}
+                  </div>
+                </details>
               </div>
             ))}
           </div>

@@ -69,7 +69,14 @@ export interface Copy {
   };
   /** The product principle, displayed as a standalone statement. */
   principle: { title: string; body: string };
-  features: { title: string; body: string }[];
+  /** Three product pillars, each expandable into its two detail cards. */
+  pillars: {
+    num: string;
+    title: string;
+    tagline: string;
+    details: string;
+    items: { title: string; body: string }[];
+  }[];
   api: { heading: string; body: string };
   local: { heading: string; body: string; steps: [string, string, string] };
   proof: {
@@ -83,7 +90,7 @@ export interface Copy {
     tests: { label: string; sub: string; failing: string };
     docs: { label: string; sub: string };
     rules: { label: string; families: [string, string, string] };
-    located: { label: string; sub: string };
+    located: { label: string; subLead: string; subDetail: string };
     growth: { label: string; sub: string; series: [string, string] };
   };
   model: {
@@ -173,30 +180,54 @@ export const en: Copy = {
     body:
       'Stampbench fixes what mathematics can prove — a VAT total has exactly one right answer. Everything else goes to a human, because an invoice that quietly passes with invented data is worse than one that honestly fails.',
   },
-  features: [
+  pillars: [
     {
-      title: 'Validation that explains itself',
-      body: 'EN 16931 core rules, the full VAT category families (BR-S/E/AE/Z/G/O), and the German XRechnung profile (BR-DE). Every violation carries the rule id, the business term, and a message written for developers.',
+      num: '01',
+      title: 'Understand',
+      tagline: 'Human-readable errors, anchored to the exact line.',
+      details: 'How it works',
+      items: [
+        {
+          title: 'Validation that explains itself',
+          body: 'EN 16931 core rules, the full VAT category families, and the German BR-DE profile. Every violation carries the rule id, the business term, and a message written for developers.',
+        },
+        {
+          title: 'The exact failing line',
+          body: 'Every violation carries a line and column, so a broken invoice annotates your pull request where the problem is. Approximate positions say so, rather than guessing confidently.',
+        },
+      ],
     },
     {
-      title: 'It fixes what it can work out',
-      body: 'Totals and VAT amounts that disagree with the figures they are computed from have exactly one right answer, so Stampbench corrects them in your file — and refuses to invent a VAT number it cannot derive.',
+      num: '02',
+      title: 'Fix',
+      tagline: 'Deterministic repairs and totals that cannot be wrong.',
+      details: 'How it works',
+      items: [
+        {
+          title: 'It fixes what it can work out',
+          body: 'Totals and VAT amounts that disagree with the figures they are computed from have exactly one right answer, so Stampbench corrects them in your file — and never invents data it cannot derive.',
+        },
+        {
+          title: 'Totals computed by construction',
+          body: 'Send lines with quantities, prices and VAT categories; Stampbench derives every total and the VAT breakdown, so the BR-CO arithmetic rules pass every time.',
+        },
+      ],
     },
     {
-      title: 'The exact failing line',
-      body: 'Every violation carries a line and column, so a broken invoice annotates your pull request where the problem is instead of dumping a log. Approximate positions say so, rather than guessing confidently.',
-    },
-    {
-      title: 'Totals computed by construction',
-      body: 'Send lines with quantities, prices and VAT categories. Stampbench derives BT-106 through BT-115 and the VAT breakdown so the BR-CO arithmetic rules pass every time — the part hand-rolled generators always get wrong.',
-    },
-    {
-      title: 'Know what breaks before it breaks',
-      body: 'Rule sets change on a published schedule — and the artefacts land before they become binding. Point Stampbench at your invoices, diff them against the next rule set, and get a ranked list of what to fix.',
-    },
-    {
-      title: 'Reads what Germany actually sends',
-      body: 'Both syntaxes, auto-detected: UBL and CII — the ZUGFeRD / Factur-X XML that most German e-invoices arrive as. No Java, no server round-trip, no account.',
+      num: '03',
+      title: 'Stay compliant',
+      tagline: 'Current and upcoming rule sets, both syntaxes.',
+      details: 'How it works',
+      items: [
+        {
+          title: 'Know what breaks before it breaks',
+          body: 'Rule sets change on a published schedule. Diff your invoices against the next rule set before it becomes binding and get a ranked list of what to fix.',
+        },
+        {
+          title: 'Reads what Germany actually sends',
+          body: 'Both syntaxes, auto-detected: UBL and CII — the ZUGFeRD / Factur-X XML most German e-invoices arrive as. No Java, no server round-trip, no account.',
+        },
+      ],
     },
   ],
   api: {
@@ -223,7 +254,8 @@ export const en: Copy = {
     rules: { label: 'Validation rules active', families: ['EN 16931 core', 'VAT categories', 'BR-DE profile'] },
     located: {
       label: 'Violations located',
-      sub: 'Every violation anchors to a real element — 27.1% to the exact one, the rest to the nearest enclosing element, labelled approximate rather than guessed. Measured over 9,983 mutated invoices.',
+      subLead: '9,983 mutated invoices tested — every violation anchored to a real element.',
+      subDetail: '27.1% land on the exact element; the rest point to the nearest enclosing element and are labelled approximate rather than guessed.',
     },
     growth: {
       label: 'Test suite growth',
@@ -342,30 +374,54 @@ export const de: Copy = {
     body:
       'Stampbench korrigiert, was Mathematik beweisen kann — eine USt-Summe hat genau eine richtige Antwort. Alles andere geht an einen Menschen, denn eine Rechnung, die mit erfundenen Daten still besteht, ist schlimmer als eine, die ehrlich scheitert.',
   },
-  features: [
+  pillars: [
     {
-      title: 'Prüfung, die sich selbst erklärt',
-      body: 'EN 16931-Kernregeln, die vollständigen USt-Kategorien (BR-S/E/AE/Z/G/O) und das deutsche XRechnung-Profil (BR-DE). Jeder Verstoß nennt Regel-ID, Business Term und eine Meldung, die Entwickler verstehen.',
+      num: '01',
+      title: 'Verstehen',
+      tagline: 'Verständliche Fehler, verankert an der exakten Zeile.',
+      details: 'So funktioniert es',
+      items: [
+        {
+          title: 'Prüfung, die sich selbst erklärt',
+          body: 'EN 16931-Kernregeln, die vollständigen USt-Kategorien und das deutsche BR-DE-Profil. Jeder Verstoß nennt Regel-ID, Business Term und eine Meldung, die Entwickler verstehen.',
+        },
+        {
+          title: 'Die genaue fehlerhafte Zeile',
+          body: 'Jeder Verstoß enthält Zeile und Spalte — eine fehlerhafte Rechnung wird im Pull Request genau dort markiert, wo das Problem liegt. Ungefähre Positionen werden als solche gekennzeichnet.',
+        },
+      ],
     },
     {
-      title: 'Korrigiert, was berechenbar ist',
-      body: 'Summen und Steuerbeträge, die nicht zu den Werten passen, aus denen sie berechnet werden, haben genau eine richtige Lösung — Stampbench korrigiert sie direkt in Ihrer Datei. Eine USt-IdNr. wird niemals erfunden.',
+      num: '02',
+      title: 'Korrigieren',
+      tagline: 'Deterministische Korrekturen und Summen, die nicht falsch sein können.',
+      details: 'So funktioniert es',
+      items: [
+        {
+          title: 'Korrigiert, was berechenbar ist',
+          body: 'Summen und Steuerbeträge, die nicht zu ihren Ausgangswerten passen, haben genau eine richtige Lösung — Stampbench korrigiert sie direkt in Ihrer Datei und erfindet niemals Daten.',
+        },
+        {
+          title: 'Summen von Grund auf korrekt',
+          body: 'Übergeben Sie Positionen mit Menge, Preis und Steuerkategorie; Stampbench berechnet alle Summen und die USt-Aufschlüsselung, sodass die BR-CO-Rechenregeln zwangsläufig erfüllt sind.',
+        },
+      ],
     },
     {
-      title: 'Die genaue fehlerhafte Zeile',
-      body: 'Jeder Verstoß enthält Zeile und Spalte. Eine fehlerhafte Rechnung wird im Pull Request genau dort markiert, wo das Problem liegt — und ungefähre Positionen werden als solche gekennzeichnet, statt sicher zu wirken.',
-    },
-    {
-      title: 'Summen von Grund auf korrekt',
-      body: 'Übergeben Sie Positionen mit Menge, Preis und Steuerkategorie. Stampbench berechnet BT-106 bis BT-115 und die USt-Aufschlüsselung, sodass die BR-CO-Rechenregeln zwangsläufig erfüllt sind — genau das, was handgeschriebene Generatoren regelmäßig falsch machen.',
-    },
-    {
-      title: 'Wissen, was künftig scheitert',
-      body: 'Regelsätze ändern sich nach veröffentlichtem Zeitplan, und die Artefakte erscheinen, bevor sie verbindlich werden. Prüfen Sie Ihre Rechnungen gegen den nächsten Regelsatz und erhalten Sie eine nach Auswirkung sortierte Liste.',
-    },
-    {
-      title: 'Liest, was in Deutschland tatsächlich ankommt',
-      body: 'Beide Syntaxen, automatisch erkannt: UBL und CII — das ZUGFeRD-/Factur-X-XML, in dem die meisten deutschen E-Rechnungen eintreffen. Kein Java, keine Server-Anfrage, kein Konto.',
+      num: '03',
+      title: 'Konform bleiben',
+      tagline: 'Aktuelle und kommende Regelsätze, beide Syntaxen.',
+      details: 'So funktioniert es',
+      items: [
+        {
+          title: 'Wissen, was künftig scheitert',
+          body: 'Regelsätze ändern sich nach veröffentlichtem Zeitplan. Prüfen Sie Ihre Rechnungen gegen den nächsten Regelsatz, bevor er verbindlich wird, und erhalten Sie eine sortierte Fehlerliste.',
+        },
+        {
+          title: 'Liest, was in Deutschland tatsächlich ankommt',
+          body: 'Beide Syntaxen, automatisch erkannt: UBL und CII — das ZUGFeRD-/Factur-X-XML, in dem die meisten deutschen E-Rechnungen eintreffen. Kein Java, keine Server-Anfrage, kein Konto.',
+        },
+      ],
     },
   ],
   api: {
@@ -392,7 +448,8 @@ export const de: Copy = {
     rules: { label: 'Aktive Prüfregeln', families: ['EN 16931 Kern', 'USt-Kategorien', 'BR-DE-Profil'] },
     located: {
       label: 'Verstöße lokalisiert',
-      sub: 'Jeder Verstoß wird an einem echten Element verankert — 27,1 % exakt, der Rest am nächstliegenden übergeordneten Element, als ungefähr gekennzeichnet statt geraten. Gemessen über 9.983 mutierte Rechnungen.',
+      subLead: '9.983 mutierte Rechnungen getestet — jeder Verstoß an einem echten Element verankert.',
+      subDetail: '27,1 % treffen das exakte Element; der Rest zeigt auf das nächstliegende übergeordnete Element und ist als ungefähr gekennzeichnet statt geraten.',
     },
     growth: {
       label: 'Wachstum der Testsuite',
