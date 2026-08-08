@@ -3,7 +3,7 @@ import { localePath, type Copy } from '@/lib/copy';
 import { HeroDemo } from '@/components/hero-demo';
 import { StatsBoard } from '@/components/stats-board';
 
-const GITHUB_URL = 'https://github.com/ohjl777/stampbench';
+const GITHUB_URL = 'https://github.com/harveylegge/stampbench';
 
 
 const VALIDATE_SNIPPET = `$ npx stampbench validate rechnung.xml

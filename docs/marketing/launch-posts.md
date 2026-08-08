@@ -16,7 +16,7 @@ community's norms. All links go to the playground or GitHub, not the pricing pag
 >   API, a GitHub Action and an MCP server. Acknowledge it before someone else does.
 > - **Do not promise the hosted API.** It is built but dormant; there is no working
 >   signup on the live site. Advertise the library and the playground only.
-> - **Correct links:** github.com/ohjl777/stampbench · npmjs.com/package/stampbench ·
+> - **Correct links:** github.com/harveylegge/stampbench · npmjs.com/package/stampbench ·
 >   stampbench.com/playground
 
 ## 1. Show HN
@@ -68,7 +68,7 @@ What I want to be upfront about, because a compliance tool that oversells is wor
 - The hosted API and paid plans on the site aren't open yet. The library and the
   playground are free and need no signup.
 
-GitHub: github.com/ohjl777/stampbench · Playground: stampbench.com/playground
+GitHub: github.com/harveylegge/stampbench · Playground: stampbench.com/playground
 
 Happy to go into the rule-implementation approach, the locator index, or the compliance
 landscape generally.
@@ -220,7 +220,7 @@ stampbench.com/trust publishes the three official test documents where we curren
 disagree with the reference validator.
 
 Playground (no signup): stampbench.com/playground
-GitHub: github.com/ohjl777/stampbench
+GitHub: github.com/harveylegge/stampbench
 
 ## 6. LinkedIn post
 

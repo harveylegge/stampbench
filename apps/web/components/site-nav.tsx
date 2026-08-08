@@ -9,7 +9,7 @@ import { LanguageSwitcher } from '@/components/language-switcher';
 import { BrandLink, NavLinks } from '@/components/nav-links';
 
 const NPM_URL = 'https://www.npmjs.com/package/stampbench';
-const GITHUB_URL = 'https://github.com/ohjl777/stampbench';
+const GITHUB_URL = 'https://github.com/harveylegge/stampbench';
 
 /**
  * The entire header row: brand, links, language toggle, session-aware CTA and

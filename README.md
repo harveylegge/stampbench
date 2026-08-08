@@ -6,7 +6,7 @@
 e-invoices with a TypeScript-first library and hosted API — with AI-written, plain-language
 explanations for cryptic rule violations.
 
-Created by [Harvey Legge](https://github.com/ohjl777), founder of [Stampbench](https://stampbench.com).
+Created by [Harvey Legge](https://github.com/harveylegge), founder of [Stampbench](https://stampbench.com).
 
 Germany requires every company to be able to *receive* e-invoices since January 2025 and to
 *issue* them from January 2027 (2028 for the smallest businesses). France and other EU states

@@ -40,10 +40,10 @@
   "homepage": "https://stampbench.com",
   "repository": {
     "type": "git",
-    "url": "git+https://github.com/ohjl777/stampbench.git",
+    "url": "git+https://github.com/harveylegge/stampbench.git",
     "directory": "packages/cli"
   },
   "bugs": {
-    "url": "https://github.com/ohjl777/stampbench/issues"
+    "url": "https://github.com/harveylegge/stampbench/issues"
   }
 }

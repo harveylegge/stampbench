@@ -9,7 +9,7 @@ export const metadata: Metadata = {
 
 const LINKS = [
   { label: 'LinkedIn', href: 'https://www.linkedin.com/in/harvey-legge-ba687b3ba', sub: 'Founder at Stampbench' },
-  { label: 'GitHub', href: 'https://github.com/ohjl777', sub: 'ohjl777' },
+  { label: 'GitHub', href: 'https://github.com/harveylegge', sub: 'harveylegge' },
   { label: 'Stampbench', href: 'https://stampbench.com', sub: 'stampbench.com' },
   { label: 'npm', href: 'https://www.npmjs.com/package/stampbench', sub: 'stampbench · @stampbench/core' },
 ];
@@ -43,7 +43,7 @@ export default function HarveyPage() {
                 'Software development',
               ],
               sameAs: [
-                'https://github.com/ohjl777',
+                'https://github.com/harveylegge',
                 'https://www.linkedin.com/in/harvey-legge-ba687b3ba',
               ],
             },
