@@ -34,9 +34,11 @@ import {
 } from '../../../apps/web/lib/plans';
 import {
   clearSessionCookie,
+  clearSessionMarkerCookie,
   hashPassword,
   readCookie,
   sessionCookie,
+  sessionMarkerCookie,
   sha256Hex,
   signSession,
   verifyPassword,
@@ -144,23 +146,21 @@ async function usageSummary(env: Env, user: UserRow): Promise<Record<FeatureId, 
   return out;
 }
 
-async function meResponse(env: Env, user: UserRow, setCookie?: string): Promise<Response> {
+async function meResponse(env: Env, user: UserRow, setCookies?: string[]): Promise<Response> {
   const pending = await env.DB.prepare(
     "SELECT plan FROM upgrade_requests WHERE user_id = ? AND status = 'new' ORDER BY created_at DESC LIMIT 1",
   )
     .bind(user.id)
     .first<{ plan: string }>();
-  return json(
-    {
-      email: user.email,
-      plan: planFor(user.plan).id,
-      createdAt: user.created_at,
-      usage: await usageSummary(env, user),
-      pendingUpgrade: (pending?.plan as PlanId | undefined) ?? null,
-    },
-    200,
-    setCookie ? { 'Set-Cookie': setCookie } : {},
-  );
+  const res = json({
+    email: user.email,
+    plan: planFor(user.plan).id,
+    createdAt: user.created_at,
+    usage: await usageSummary(env, user),
+    pendingUpgrade: (pending?.plan as PlanId | undefined) ?? null,
+  });
+  for (const cookie of setCookies ?? []) res.headers.append('Set-Cookie', cookie);
+  return res;
 }
 
 // ---------------------------------------------------------------- auth
@@ -184,7 +184,10 @@ async function handleRegister(request: Request, env: Env): Promise<Response> {
     .bind(id, email, hash, salt, 'free', now)
     .run();
   const user: UserRow = { id, email, pw_hash: hash, pw_salt: salt, plan: 'free', created_at: now };
-  return meResponse(env, user, sessionCookie(await signSession(id, email, env.JWT_SECRET)));
+  return meResponse(env, user, [
+    sessionCookie(await signSession(id, email, env.JWT_SECRET)),
+    sessionMarkerCookie(),
+  ]);
 }
 
 async function handleLogin(request: Request, env: Env): Promise<Response> {
@@ -196,7 +199,10 @@ async function handleLogin(request: Request, env: Env): Promise<Response> {
   if (!(await verifyPassword(password, user.pw_hash, user.pw_salt))) {
     return fail(401, 'bad_credentials', NEUTRAL_AUTH_ERROR);
   }
-  return meResponse(env, user, sessionCookie(await signSession(user.id, user.email, env.JWT_SECRET)));
+  return meResponse(env, user, [
+    sessionCookie(await signSession(user.id, user.email, env.JWT_SECRET)),
+    sessionMarkerCookie(),
+  ]);
 }
 
 // ---------------------------------------------------------------- API keys
@@ -385,7 +391,10 @@ async function handleApi(request: Request, env: Env): Promise<Response> {
   if (path === '/api/auth/register' && method === 'POST') return handleRegister(request, env);
   if (path === '/api/auth/login' && method === 'POST') return handleLogin(request, env);
   if (path === '/api/auth/logout' && method === 'POST') {
-    return json({ ok: true }, 200, { 'Set-Cookie': clearSessionCookie() });
+    const res = json({ ok: true });
+    res.headers.append('Set-Cookie', clearSessionCookie());
+    res.headers.append('Set-Cookie', clearSessionMarkerCookie());
+    return res;
   }
 
   const user = await sessionUser(request, env);

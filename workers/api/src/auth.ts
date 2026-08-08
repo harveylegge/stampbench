@@ -121,8 +121,22 @@ export function sessionCookie(token: string, maxAgeSeconds = SESSION_DAYS * 86_4
   return `${SESSION_COOKIE}=${token}; HttpOnly; Secure; SameSite=Lax; Path=/; Max-Age=${maxAgeSeconds}`;
 }
 
+/**
+ * Readable-by-JS marker set alongside the real (HttpOnly) session cookie.
+ * Carries no secrets — it exists so the nav on every static page can skip the
+ * /api/auth/me round-trip for the 99% of visitors who have no session, which
+ * matters when a traffic spike lands on the free-tier worker.
+ */
+export function sessionMarkerCookie(maxAgeSeconds = SESSION_DAYS * 86_400): string {
+  return `sb_signed_in=1; Secure; SameSite=Lax; Path=/; Max-Age=${maxAgeSeconds}`;
+}
+
 export function clearSessionCookie(): string {
   return `${SESSION_COOKIE}=; HttpOnly; Secure; SameSite=Lax; Path=/; Max-Age=0`;
+}
+
+export function clearSessionMarkerCookie(): string {
+  return `sb_signed_in=; Secure; SameSite=Lax; Path=/; Max-Age=0`;
 }
 
 export function readCookie(request: Request, name: string): string | null {

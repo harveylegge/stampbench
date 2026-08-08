@@ -71,6 +71,16 @@ export async function me(): Promise<Me | null> {
   }
 }
 
+/**
+ * True when the JS-readable session marker is present. The real session
+ * cookie is HttpOnly; this marker exists so per-pageview chrome (the nav)
+ * can skip the /api/auth/me round-trip for anonymous visitors entirely —
+ * a traffic spike must not turn into a worker invocation per page view.
+ */
+export function probablySignedIn(): boolean {
+  return typeof document !== 'undefined' && document.cookie.includes('sb_signed_in=1');
+}
+
 export function register(email: string, password: string): Promise<Me> {
   return call('/api/auth/register', { method: 'POST', body: JSON.stringify({ email, password }) });
 }

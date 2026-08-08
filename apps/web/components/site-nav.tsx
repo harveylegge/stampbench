@@ -3,7 +3,7 @@
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
 import { useEffect, useRef, useState } from 'react';
-import { me, type Me } from '@/lib/account-client';
+import { me, probablySignedIn, type Me } from '@/lib/account-client';
 import { COPY, localePath, type Locale } from '@/lib/copy';
 import { LanguageSwitcher } from '@/components/language-switcher';
 import { BrandLink, NavLinks } from '@/components/nav-links';
@@ -36,8 +36,13 @@ export function SiteNav() {
   const toggleRef = useRef<HTMLButtonElement>(null);
 
   // Re-checked on every route change, not just mount: signing in navigates
-  // client-side (no remount of the layout), and the CTA must follow.
+  // client-side (no remount of the layout), and the CTA must follow. The
+  // marker check keeps anonymous page views from touching the worker at all.
   useEffect(() => {
+    if (!probablySignedIn()) {
+      setAccount(null);
+      return;
+    }
     let cancelled = false;
     me()
       .then((user) => {
