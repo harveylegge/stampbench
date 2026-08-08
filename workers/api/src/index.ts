@@ -23,7 +23,9 @@ import {
   withXRechnungDefaults,
   type Invoice,
 } from '@stampbench/core';
+import Anthropic from '@anthropic-ai/sdk';
 import {
+  AI_GLOBAL_MONTHLY_CAP,
   FEATURE_LIMITS,
   PLANS,
   currentPeriodKey,
@@ -53,6 +55,10 @@ export interface Env {
   MAILER?: Fetcher;
   JWT_SECRET: string;
   ADMIN_SECRET: string;
+  /** Unset = AI explanations disabled site-wide; the UI hides the button. */
+  ANTHROPIC_API_KEY?: string;
+  /** Override the explanation model; defaults to Haiku per the cost budget. */
+  AI_MODEL?: string;
 }
 
 const MAX_BODY = 1_500_000; // ~1.5 MB — the largest official test invoice is far smaller
@@ -333,6 +339,84 @@ async function handleUpgrade(request: Request, env: Env, user: UserRow): Promise
   return json({ ok: true, mailed, ...(mailError ? { mailError } : {}) });
 }
 
+// ---------------------------------------------------------------- AI explanations
+
+/**
+ * The "credit jar": one shared Anthropic key, per-user monthly quotas, and a
+ * global monthly cap so total upstream spend is bounded no matter how many
+ * users sign up. Both meters are charged before the upstream call and
+ * refunded on failure — an Anthropic outage must not eat anyone's quota.
+ */
+async function unmeter(env: Env, userId: string, feature: FeatureId): Promise<void> {
+  await env.DB.prepare(
+    'UPDATE usage SET count = count - 1 WHERE user_id = ? AND feature = ? AND period = ? AND count > 0',
+  )
+    .bind(userId, feature, currentPeriodKey())
+    .run();
+}
+
+async function meterGlobalAi(env: Env): Promise<boolean> {
+  const period = currentPeriodKey();
+  await env.DB.prepare(
+    'INSERT INTO usage (user_id, feature, period, count) VALUES (?, ?, ?, 0) ON CONFLICT DO NOTHING',
+  )
+    .bind('__global__', 'ai', period)
+    .run();
+  const row = await env.DB.prepare(
+    'UPDATE usage SET count = count + 1 WHERE user_id = ? AND feature = ? AND period = ? AND count < ? RETURNING count',
+  )
+    .bind('__global__', 'ai', period, AI_GLOBAL_MONTHLY_CAP)
+    .first<{ count: number }>();
+  return row !== null;
+}
+
+async function handleAiExplain(request: Request, env: Env, user: UserRow): Promise<Response> {
+  if (!env.ANTHROPIC_API_KEY) {
+    return fail(503, 'disabled', 'AI explanations are not enabled yet.');
+  }
+  const body = await readJson(request);
+  const violations = Array.isArray(body?.violations) ? body.violations.slice(0, 50) : null;
+  if (!violations?.length) return fail(400, 'bad_request', 'Provide { "violations": [...] }.');
+
+  if (!(await meterGlobalAi(env))) {
+    return fail(503, 'pool_empty', 'The monthly AI allowance is used up site-wide — back next month.');
+  }
+  const spent = await meter(env, user.id, user.plan, 'ai');
+  if (spent === null) {
+    await unmeter(env, '__global__', 'ai');
+    return fail(402, 'quota', `AI explanations used up for this month (${featureLimit(user.plan, 'ai')} on ${planFor(user.plan).name}). Upgrade for more.`);
+  }
+
+  try {
+    const client = new Anthropic({ apiKey: env.ANTHROPIC_API_KEY });
+    const response = await client.messages.create({
+      model: env.AI_MODEL ?? 'claude-haiku-4-5',
+      max_tokens: 1024,
+      system:
+        'You explain e-invoice (EN 16931 / XRechnung) validation failures to developers who are not compliance experts. ' +
+        'For the violations given, write a short plain-language explanation of what is wrong and what to change, ' +
+        'grouped sensibly. Be concrete and honest; never invent field values the data does not contain.',
+      messages: [
+        {
+          role: 'user',
+          content: `Validation violations:\n${JSON.stringify(violations, null, 1).slice(0, 20_000)}`,
+        },
+      ],
+    });
+    const text = response.content
+      .filter((block): block is Anthropic.TextBlock => block.type === 'text')
+      .map((block) => block.text)
+      .join('\n');
+    if (!text) throw new Error('empty completion');
+    return json({ explanation: text });
+  } catch (e) {
+    await unmeter(env, '__global__', 'ai');
+    await unmeter(env, user.id, 'ai');
+    console.error('ai explain failed', e);
+    return fail(502, 'upstream', 'The explanation service had a hiccup — your quota was not charged. Try again.');
+  }
+}
+
 // ---------------------------------------------------------------- admin
 
 async function handleAdminSetPlan(request: Request, env: Env): Promise<Response> {
@@ -361,6 +445,9 @@ async function handleApi(request: Request, env: Env): Promise<Response> {
   const method = request.method;
 
   if (path === '/api/health') return json({ ok: true });
+  if (path === '/api/ai/status' && method === 'GET') {
+    return json({ enabled: !!env.ANTHROPIC_API_KEY });
+  }
 
   // Hosted API — key-authed, no cookies, no CSRF concern.
   if (path === '/api/v1/validate' && method === 'POST') return handleHostedApi(request, env, 'validate');
@@ -438,6 +525,7 @@ async function handleApi(request: Request, env: Env): Promise<Response> {
     const limit = featureLimit(user.plan, 'regress');
     return json({ ok: true, remaining: limit < 0 ? -1 : limit - spent });
   }
+  if (path === '/api/ai/explain' && method === 'POST') return handleAiExplain(request, env, user);
   if (path === '/api/upgrade' && method === 'POST') return handleUpgrade(request, env, user);
 
   return fail(404, 'not_found', 'No such endpoint.');

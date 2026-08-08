@@ -25,5 +25,8 @@
     "esbuild@0.28.1": true,
     "prisma@6.19.3": true,
     "sharp@0.34.5": true
+  },
+  "dependencies": {
+    "@anthropic-ai/sdk": "^0.116.0"
   }
 }

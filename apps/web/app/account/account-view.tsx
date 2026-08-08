@@ -28,6 +28,7 @@ const FEATURE_LABELS: Record<FeatureId, string> = {
   api: 'Hosted API calls',
   share: 'Shared reports',
   regress: 'Future-ruleset checks',
+  ai: 'AI explanations',
 };
 const FEATURE_ORDER: FeatureId[] = ['api', 'share', 'regress'];
 

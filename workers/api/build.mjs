@@ -26,7 +26,10 @@ await build({
   target: 'es2022',
   platform: 'browser',
   conditions: ['workerd', 'import'],
-  external: ['cloudflare:*'],
+  // node:* stays external: the Anthropic SDK lazily imports node:fs/path for
+  // credential-file auth we never trigger (we pass apiKey explicitly). The
+  // Pages project runs with the nodejs_compat flag so the imports resolve.
+  external: ['cloudflare:*', 'node:*'],
   minify: true,
   logLevel: 'info',
 });

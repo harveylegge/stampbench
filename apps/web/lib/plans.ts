@@ -92,14 +92,22 @@ export function planFor(id: string | null | undefined): Plan {
  *
  * -1 = unlimited. Quotas are per calendar month (UTC).
  */
-export type FeatureId = 'api' | 'share' | 'regress';
+export type FeatureId = 'api' | 'share' | 'regress' | 'ai';
 
 export const FEATURE_LIMITS: Record<PlanId, Record<FeatureId, number>> = {
-  free: { api: 100, share: 10, regress: 5 },
-  starter: { api: 5_000, share: 100, regress: -1 },
-  pro: { api: 25_000, share: 500, regress: -1 },
-  scale: { api: 100_000, share: 2_000, regress: -1 },
+  free: { api: 100, share: 10, regress: 5, ai: 5 },
+  starter: { api: 5_000, share: 100, regress: -1, ai: 100 },
+  pro: { api: 25_000, share: 500, regress: -1, ai: 400 },
+  scale: { api: 100_000, share: 2_000, regress: -1, ai: 1_500 },
 };
+
+/**
+ * The "credit jar" lid for AI explanations: the total across ALL users per
+ * calendar month. Per-user quotas above cap individuals; this caps Harvey's
+ * Anthropic bill no matter how many users sign up. Counted in the same usage
+ * table under the reserved user id '__global__'.
+ */
+export const AI_GLOBAL_MONTHLY_CAP = 10_000;
 
 export function featureLimit(plan: string | null | undefined, feature: FeatureId): number {
   return FEATURE_LIMITS[planFor(plan).id][feature];

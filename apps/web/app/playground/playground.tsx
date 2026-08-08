@@ -13,7 +13,7 @@ import {
   type Invoice,
   type RegressionReport,
 } from '@stampbench/core';
-import { ApiError, regressCredit, shareReport } from '@/lib/account-client';
+import { aiExplain, aiStatus, ApiError, regressCredit, shareReport } from '@/lib/account-client';
 import { FEATURE_LIMITS } from '@/lib/plans';
 import { FixPanel } from './fix-panel';
 import { SAMPLE_GENERATE_JSON, SAMPLE_XML } from './samples';
@@ -21,10 +21,9 @@ import { SAMPLE_GENERATE_JSON, SAMPLE_XML } from './samples';
 /**
  * Validation and generation run entirely in the browser — the engine is pure
  * TypeScript, so the playground IS the product claim: your invoice never
- * leaves your machine. Only the optional AI explanation needs a server, so it
- * is absent from the static build.
+ * leaves your machine. Only the optional AI explanation calls the server; its
+ * button renders only when /api/ai/status says the feature is switched on.
  */
-const HAS_SERVER = process.env.NEXT_PUBLIC_STATIC_EXPORT !== '1';
 
 interface Violation {
   ruleId: string;
@@ -394,6 +393,15 @@ export function Playground() {
   const [result, setResult] = useState<ValidationResult | null>(null);
   const [genResult, setGenResult] = useState<{ xml: string; validation?: ValidationResult } | null>(null);
   const [explanation, setExplanation] = useState<string | null>(null);
+  // null until the one-time server probe answers; the button only renders
+  // when the feature is actually switched on, so a dormant key costs nothing.
+  const [aiEnabled, setAiEnabled] = useState(false);
+  const [explainGate, setExplainGate] = useState<'signup' | 'quota' | null>(null);
+  useEffect(() => {
+    aiStatus()
+      .then((s) => setAiEnabled(s.enabled))
+      .catch(() => setAiEnabled(false));
+  }, []);
   const [busy, setBusy] = useState<string | null>(null);
   const [error, setError] = useState<string | null>(null);
 
@@ -458,11 +466,18 @@ export function Playground() {
     if (!result?.violations.length) return;
     setBusy('explain');
     setError(null);
+    setExplainGate(null);
     try {
-      const data = await post('/api/ai/explain', { violations: result.violations });
+      const data = await aiExplain(result.violations);
       setExplanation(data.explanation);
     } catch (e) {
-      setError((e as Error).message);
+      if (e instanceof ApiError && e.code === 'unauthenticated') {
+        setExplainGate('signup');
+      } else if (e instanceof ApiError && e.code === 'quota') {
+        setExplainGate('quota');
+      } else {
+        setError((e as Error).message);
+      }
     } finally {
       setBusy(null);
     }
@@ -556,14 +571,34 @@ export function Playground() {
               {result && (
                 <>
                   <ViolationList result={result} />
-                  {HAS_SERVER && result.violations.length > 0 && (
-                    <button
-                      onClick={runExplain}
-                      disabled={busy !== null}
-                      className="mt-4 rounded-lg border border-accent/40 bg-accent-dim/40 px-4 py-2 text-sm font-medium text-accent-hi transition hover:bg-accent-dim disabled:opacity-40"
-                    >
-                      {busy === 'explain' ? 'Thinking…' : '✦ Explain with AI'}
-                    </button>
+                  {aiEnabled && result.violations.length > 0 && (
+                    <>
+                      <button
+                        onClick={runExplain}
+                        disabled={busy !== null}
+                        className="mt-4 rounded-lg border border-accent/40 bg-accent-dim/40 px-4 py-2 text-sm font-medium text-accent-hi transition hover:bg-accent-dim disabled:opacity-40"
+                      >
+                        {busy === 'explain' ? 'Thinking…' : '✦ Explain with AI'}
+                      </button>
+                      {explainGate === 'signup' && (
+                        <p className="mt-2 text-xs text-muted">
+                          AI explanations need a free account ({FEATURE_LIMITS.free.ai}/month).{' '}
+                          <Link href="/signup" className="text-accent-hi hover:underline">
+                            Create one
+                          </Link>
+                          .
+                        </p>
+                      )}
+                      {explainGate === 'quota' && (
+                        <p className="mt-2 text-xs text-muted">
+                          AI explanations used up for this month.{' '}
+                          <Link href="/account" className="text-accent-hi hover:underline">
+                            Upgrade for more
+                          </Link>
+                          .
+                        </p>
+                      )}
+                    </>
                   )}
                   {explanation && (
                     <div

@@ -131,3 +131,16 @@ export function regressCredit(): Promise<{ ok: true; remaining: number }> {
 export function requestUpgrade(plan: Exclude<PlanId, 'free'>): Promise<{ ok: true }> {
   return call('/api/upgrade', { method: 'POST', body: JSON.stringify({ plan }) });
 }
+
+/** Whether the AI-explanation feature is switched on server-side at all. */
+export function aiStatus(): Promise<{ enabled: boolean }> {
+  return call('/api/ai/status');
+}
+
+/**
+ * Ask the shared "credit jar" for one AI explanation. Metered per user
+ * ('quota'), capped globally ('pool_empty'), off entirely ('disabled').
+ */
+export function aiExplain(violations: unknown[]): Promise<{ explanation: string }> {
+  return call('/api/ai/explain', { method: 'POST', body: JSON.stringify({ violations }) });
+}

@@ -46,6 +46,15 @@ arranges payment manually → activates with the admin command in `.env.local`.
 The legacy Next.js (auth)/dashboard/api tree is now SUPERSEDED by this worker (it
 still builds for `npm run dev` but nothing links to it; retire it when convenient).
 
+**AI "credit jar" built 2026-08-08, DORMANT.** /api/ai/explain + /api/ai/status exist;
+one shared Anthropic key (Pages secret ANTHROPIC_API_KEY, unset), per-user 'ai' quotas
+in FEATURE_LIMITS (5/100/400/1500), global cap 10,000/mo (usage row user_id='__global__'),
+both meters refunded on upstream failure. Default model claude-haiku-4-5 (AI_MODEL env
+overrides). Playground's "Explain with AI" button renders only when status says enabled.
+Uses @anthropic-ai/sdk (root dep); worker bundling externalizes node:* and the Pages
+project runs compatibility_flags=["nodejs_compat"] — REMOVING that flag breaks the
+worker. To activate: set the secret via the Pages API/dashboard, redeploy.
+
 Known gaps, deliberate: no email verification, no self-serve password reset (mailto
 support), no per-minute rate limiting on the hosted API (monthly quota only), German
 /de playground shows the three new panels in English, upgrade-email deliverability to
