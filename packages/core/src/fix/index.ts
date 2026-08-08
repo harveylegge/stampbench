@@ -24,6 +24,11 @@
  * would then pass validation. Those violations are reported as unfixable, with
  * the reason.
  *
+ * One *structural* repair is included under the same standard: a closing tag
+ * that does not match the tag it closes. The parser states the expected tag
+ * name, so the correction is derived, not guessed — and without it a single
+ * typo blocks every other check.
+ *
  * The result is verified, not assumed: {@link fixXml} re-validates after
  * editing and discards the whole attempt if the error count did not fall.
  */
@@ -97,6 +102,9 @@ export interface FixPlan {
 
 /** Why a located violation was rejected for automatic repair. */
 function rejectionReason(v: LocatedViolation): string | undefined {
+  if (v.ruleId === 'SYNTAX') {
+    return 'structural XML errors of this kind are not auto-repaired — correct the XML by hand at the reported line';
+  }
   if (v.expected === undefined) {
     return 'no derivable correct value — this needs a human decision, not arithmetic';
   }
@@ -107,6 +115,50 @@ function rejectionReason(v: LocatedViolation): string | undefined {
     return 'the element carries no text value to replace';
   }
   return undefined;
+}
+
+/**
+ * Structural repair: a closing tag that does not match the tag it closes.
+ *
+ * The one parse failure with a derivable answer. The parser names both the tag
+ * it found and the tag the document opened, so renaming the closing tag is as
+ * mechanical as correcting a total — no business data is involved. Every other
+ * kind of malformed XML is still refused, because there is no stated correct
+ * value to write.
+ */
+const CLOSING_TAG_MISMATCH =
+  /^Malformed XML at line (\d+): Expected closing tag '([^']+)' \(opened in line \d+, col \d+\) instead of closing tag '([^']+)'\.$/;
+
+/** The line a SYNTAX violation reports, for measuring parser progress. */
+function reportedSyntaxLine(violations: readonly Violation[]): number | undefined {
+  const v = violations.find((x) => x.ruleId === 'SYNTAX');
+  const match = v === undefined ? null : /^Malformed XML at line (\d+):/.exec(v.message);
+  return match === null ? undefined : Number(match[1]);
+}
+
+function planClosingTagRepair(xml: string, message: string): TextEdit | undefined {
+  const match = CLOSING_TAG_MISMATCH.exec(message);
+  if (match === null) return undefined;
+  const line = Number(match[1]);
+  const expected = match[2]!;
+  const found = match[3]!;
+  const text = xml.split(/\r\n|\r|\n/)[line - 1];
+  if (text === undefined) return undefined;
+  const needle = `</${found}>`;
+  const first = text.indexOf(needle);
+  // Absent, or present twice on the same line: the position is ambiguous and a
+  // wrong pick would corrupt rather than repair. Refuse.
+  if (first === -1 || text.indexOf(needle, first + 1) !== -1) return undefined;
+  return {
+    line,
+    column: first + 1,
+    previous: needle,
+    replacement: `</${expected}>`,
+    ruleId: 'SYNTAX',
+    reason: `SYNTAX: </${found}> → </${expected}>`,
+    // Structural repairs precede the arithmetic dependency chain entirely.
+    depth: -1,
+  };
 }
 
 /**
@@ -302,6 +354,50 @@ export function fixXml(xml: string, options: FixOptions = {}): FixResult {
     const result = validateXml(current, { profile });
     if (result.syntax === undefined) break;
     unfixable = [];
+
+    // A document that does not parse blocks every other check, so structural
+    // repair comes before arithmetic. Only the one parse failure with a
+    // derivable answer is attempted: a closing tag that does not match the
+    // tag it closes, which the parser names exactly.
+    if (result.invoice === undefined) {
+      const syntaxViolation = result.violations.find((v) => v.ruleId === 'SYNTAX');
+      const edit =
+        syntaxViolation === undefined
+          ? undefined
+          : planClosingTagRepair(current, syntaxViolation.message);
+      if (edit === undefined) {
+        unfixable = result.violations.map((v) => ({
+          ruleId: v.ruleId,
+          message: v.message,
+          reason:
+            'structural XML errors of this kind are not auto-repaired — correct the XML by hand at the reported line',
+        }));
+        break;
+      }
+      const candidate = applyEdits(current, [edit]);
+      const after = validateXml(candidate, { profile });
+      // Progress means the document now parses, or the parser got past the
+      // line just repaired (several tags may be broken). Anything else, the
+      // repair was wrong for this document — keep the previous text.
+      if (after.invoice === undefined) {
+        const nextLine = reportedSyntaxLine(after.violations);
+        if (nextLine === undefined || nextLine <= edit.line) {
+          unfixable = [
+            {
+              ruleId: 'SYNTAX',
+              message: edit.reason,
+              reason: 'applying this repair did not make the document parseable, so it was discarded',
+            },
+          ];
+          break;
+        }
+      }
+      current = candidate;
+      previousErrors = after.errorCount;
+      applied.push(edit);
+      continue;
+    }
+
     const plan = planFixes(current, result.violations, result.syntax);
     unfixable = plan.unfixable;
     if (result.errorCount === 0) break;

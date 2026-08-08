@@ -56,6 +56,13 @@ The arithmetic chain — the values EN 16931 defines as derived from others:
 | BR-S/Z/E/AE/K/G-08 | Taxable amount per category (BT-116) | lines − allowances + charges in that category |
 | BR-S/Z/E/AE/K/G-09 | VAT amount per category (BT-117) | taxable amount × rate, or 0 for the zero-rated categories |
 
+One **structural** repair is included under the same no-guessing standard: a
+closing tag that does not match the tag it closes (`</ubl:Invoce>` under an
+opening `<ubl:Invoice>`). The parser states the expected tag name, so the
+correction is derived, not guessed — and without it a single typo blocks every
+other check, because a document that does not parse cannot be validated at all.
+Any other kind of malformed XML is still refused, with the reason.
+
 Everything else is reported and left alone. That includes every missing
 mandatory field, every code-list violation, and every rule whose remedy depends
 on facts the document does not contain.

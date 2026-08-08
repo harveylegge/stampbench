@@ -91,8 +91,8 @@ export function FixPanel({
           Fix automatically
         </button>
         <p className="mt-2 text-xs text-faint">
-          Free, in your browser. Repairs only values the rules can derive arithmetically — it will
-          not guess business data.
+          Free, in your browser. Repairs values the rules can derive arithmetically and mismatched
+          closing tags the parser names exactly — it will not guess business data.
         </p>
         {error && <p className="mt-2 text-sm text-danger">{error}</p>}
       </div>

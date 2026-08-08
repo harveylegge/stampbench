@@ -2,6 +2,7 @@ import { describe, expect, it } from 'vitest';
 import {
   compareRulesets,
   computeTotals,
+  fixXml,
   generateXRechnungUbl,
   getRuleset,
   listRulesets,
@@ -512,5 +513,41 @@ describe('parseUblInvoice', () => {
   it('rejects empty input', () => {
     const result = validateUblXml('');
     expect(result.valid).toBe(false);
+  });
+});
+
+describe('fixXml structural repair', () => {
+  it('repairs a mismatched closing tag the parser names exactly', () => {
+    const broken = RAW_UBL_SAMPLE.replace('</ubl:Invoice>', '</ubl:InvalidClosingTag>');
+    expect(broken).not.toBe(RAW_UBL_SAMPLE);
+    expect(validateXml(broken).invoice).toBeUndefined();
+
+    const result = fixXml(broken, { profile: 'xrechnung' });
+    const syntaxEdits = result.applied.filter((e) => e.ruleId === 'SYNTAX');
+    expect(syntaxEdits).toHaveLength(1);
+    expect(syntaxEdits[0]?.previous).toBe('</ubl:InvalidClosingTag>');
+    expect(syntaxEdits[0]?.replacement).toBe('</ubl:Invoice>');
+    // The repaired document parses again and, since the sample was clean,
+    // validates clean — and the rest of the bytes are untouched.
+    expect(result.xml).toBe(RAW_UBL_SAMPLE);
+    expect(result.valid).toBe(true);
+  });
+
+  it('repairs several mismatched tags across rounds', () => {
+    const broken = RAW_UBL_SAMPLE.replace('</cbc:ID>', '</cbc:Wrong>').replace(
+      '</ubl:Invoice>',
+      '</ubl:AlsoWrong>',
+    );
+    const result = fixXml(broken, { profile: 'xrechnung' });
+    expect(result.applied.filter((e) => e.ruleId === 'SYNTAX')).toHaveLength(2);
+    expect(result.xml).toBe(RAW_UBL_SAMPLE);
+    expect(result.valid).toBe(true);
+  });
+
+  it('still refuses malformed XML it cannot derive a repair for', () => {
+    // An unclosed tag: the parser cannot state a single mechanical correction.
+    const result = fixXml('<ubl:Invoice><cbc:ID>x</cbc:ID>', { profile: 'xrechnung' });
+    expect(result.applied).toEqual([]);
+    expect(result.unfixable[0]?.reason).toMatch(/structural|parsed/i);
   });
 });
