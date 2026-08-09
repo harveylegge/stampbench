@@ -41,8 +41,22 @@ hamburger nav, playground Fix-automatically (free, client-side), Share-report
 sb_live_… keys, free 100/mo per pricing page). Quotas in `apps/web/lib/plans.ts`
 FEATURE_LIMITS — the worker imports that file, single source of truth.
 
-**No Stripe.** Paid plans: user clicks Request → D1 row + email to Harvey → Harvey
-arranges payment manually → activates with the admin command in `.env.local`.
+**Stripe self-serve billing BUILT 2026-08-09, DORMANT** (same pattern as the AI jar).
+Upgrade-only: the account must exist, then `/api/billing/checkout` starts a Checkout
+session and the **signed webhook** at `/api/stripe/webhook` is the only thing that
+changes a plan — the browser can never grant entitlement. `/api/billing/portal` gives
+customers self-serve card changes and cancellation. Plan mapping reads
+`metadata.plan_id` off the Stripe price (already set on the three test-mode products),
+so there are no price ids in env vars. `past_due` drops to free. To activate: complete
+Stripe onboarding (the live account is **not** activated — `charges_enabled: false`),
+mirror the three products into live mode, then set Pages secrets `STRIPE_SECRET_KEY`
+and `STRIPE_WEBHOOK_SECRET` and register the webhook endpoint for
+`checkout.session.completed` + `customer.subscription.*`. Until both secrets exist,
+`/api/billing/status` reports `enabled:false` and the pricing/account pages fall back
+to the manual Request path automatically.
+
+**The manual path still exists** as the fallback: user clicks Request → D1 row + email
+to Harvey → Harvey arranges payment → activates with the admin command in `.env.local`.
 The legacy Next.js (auth)/dashboard/api tree is now SUPERSEDED by this worker (it
 still builds for `npm run dev` but nothing links to it; retire it when convenient).
 
@@ -54,6 +68,21 @@ overrides). Playground's "Explain with AI" button renders only when status says 
 Uses @anthropic-ai/sdk (root dep); worker bundling externalizes node:* and the Pages
 project runs compatibility_flags=["nodejs_compat"] — REMOVING that flag breaks the
 worker. To activate: set the secret via the Pages API/dashboard, redeploy.
+
+**Security + GDPR pass 2026-08-09.** Rate limiting on login (per IP *and* per email),
+register, checkout and admin, in a new `rate_limits` D1 table (fails open on DB error
+so a blip cannot lock everyone out). Login now hashes against a dummy credential when
+the email is unknown — previously the *timing* leaked which addresses were customers
+even though the message was neutral. Admin secret compared in constant time; the
+same-origin guard covers every state-changing method (not just POST) and no longer
+carries a blanket `localhost` allowance; HSTS + `base-uri`/`object-src`/`form-action`
+added. **GDPR:** `/api/account/export` (Art. 20), `DELETE /api/account` (Art. 17,
+cancels any live subscription first and refuses rather than orphaning it), and
+per-report deletion — all surfaced in a "Your data" section on /account.
+**The worker is now typechecked**: it had no tsconfig, so esbuild was stripping types
+unchecked; `workers/api/build.mjs` now runs `tsc --noEmit` and refuses to bundle on
+error. Migration `workers/api/migrations/002_security_and_billing.sql` is **already
+applied to remote D1**.
 
 Known gaps, deliberate: no email verification, no self-serve password reset (mailto
 support), no per-minute rate limiting on the hosted API (monthly quota only), German
