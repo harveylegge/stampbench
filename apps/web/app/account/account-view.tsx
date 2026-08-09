@@ -3,9 +3,13 @@
 /**
  * Account dashboard. The page itself is statically exported, so everything
  * here happens after mount: fetch the session from the worker, bounce
- * signed-out visitors to /signin, and render usage, API keys and the upgrade
- * cards. Upgrades are a request, not a checkout — no payment happens on the
- * site, so the copy says so plainly.
+ * signed-out visitors to /signin, and render usage, API keys, billing and the
+ * data controls.
+ *
+ * Upgrades take one of two paths depending on what the server reports in
+ * `billing.enabled`: Stripe Checkout when card payment is configured, and the
+ * original email-us request when it is not. The copy follows the path actually
+ * available, so the page never promises a checkout that would 503.
  */
 
 import { useEffect, useRef, useState } from 'react';
@@ -13,12 +17,16 @@ import { useRouter, useSearchParams } from 'next/navigation';
 
 import {
   ApiError,
+  billingPortal,
   createKey,
+  deleteAccount,
+  exportAccount,
   listKeys,
   logout,
   me,
   requestUpgrade,
   revokeKey,
+  startCheckout,
   type ApiKeySummary,
   type Me,
 } from '@/lib/account-client';
@@ -75,6 +83,11 @@ export function AccountView() {
   // Upgrade requests
   const [armedPlan, setArmedPlan] = useState<UpgradeId | null>(null);
   const [upgradeError, setUpgradeError] = useState<string | null>(null);
+
+  // Data controls (GDPR export / erasure)
+  const [dataError, setDataError] = useState<string | null>(null);
+  const [deleteArmed, setDeleteArmed] = useState(false);
+  const [deleteConfirm, setDeleteConfirm] = useState('');
 
   const [busy, setBusy] = useState<string | null>(null);
   const cardRefs = useRef<Partial<Record<UpgradeId, HTMLDivElement | null>>>({});
@@ -161,6 +174,28 @@ export function AccountView() {
     }
   }
 
+  /**
+   * Card path. Deliberately does **not** touch local plan state: the account
+   * is upgraded when Stripe's signed webhook lands, not when the browser
+   * navigates. Showing the new plan optimistically here would display a paid
+   * tier to someone who then abandons the payment form.
+   */
+  async function onCheckout(plan: UpgradeId) {
+    setBusy(`upgrade:${plan}`);
+    setUpgradeError(null);
+    setArmedPlan(null);
+    try {
+      const { url } = await startCheckout(plan);
+      if (!url) throw new Error('No checkout URL returned.');
+      window.location.assign(url);
+    } catch (e) {
+      setUpgradeError(apiMessage(e, 'Could not start checkout. Try again, or email hello@stampbench.com.'));
+      setBusy(null);
+    }
+    // No `finally`: on success the page is navigating away, and clearing the
+    // busy flag would flash the button back to idle mid-redirect.
+  }
+
   async function onRequestUpgrade(plan: UpgradeId) {
     if (!account) return;
     setBusy(`upgrade:${plan}`);
@@ -175,6 +210,59 @@ export function AccountView() {
       setAccount(previous);
       setUpgradeError(apiMessage(e, 'Could not send the request. Try again, or email hello@stampbench.com.'));
     } finally {
+      setBusy(null);
+    }
+  }
+
+  /** Route to whichever upgrade mechanism the server actually has available. */
+  function onUpgrade(plan: UpgradeId) {
+    if (account?.billing.enabled) void onCheckout(plan);
+    else void onRequestUpgrade(plan);
+  }
+
+  async function onManageBilling() {
+    setBusy('portal');
+    setUpgradeError(null);
+    try {
+      const { url } = await billingPortal();
+      if (!url) throw new Error('No portal URL returned.');
+      window.location.assign(url);
+    } catch (e) {
+      setUpgradeError(apiMessage(e, 'Could not open the billing portal.'));
+      setBusy(null);
+    }
+  }
+
+  async function onExportData() {
+    setBusy('export');
+    setDataError(null);
+    try {
+      const data = await exportAccount();
+      const url = URL.createObjectURL(
+        new Blob([JSON.stringify(data, null, 2)], { type: 'application/json' }),
+      );
+      const a = document.createElement('a');
+      a.href = url;
+      a.download = 'stampbench-account-export.json';
+      a.click();
+      URL.revokeObjectURL(url);
+    } catch (e) {
+      setDataError(apiMessage(e, 'Could not export your data.'));
+    } finally {
+      setBusy(null);
+    }
+  }
+
+  async function onDeleteAccount() {
+    setBusy('delete');
+    setDataError(null);
+    try {
+      await deleteAccount(deleteConfirm.trim());
+      // Everything is gone, including the session — a hard navigation avoids
+      // rendering a dashboard for an account that no longer exists.
+      window.location.assign('/?deleted=1');
+    } catch (e) {
+      setDataError(apiMessage(e, 'Could not delete the account.'));
       setBusy(null);
     }
   }
@@ -204,6 +292,14 @@ export function AccountView() {
 
   const plan = PLANS[account.plan] ?? PLANS.free;
   const pendingPlan = account.pendingUpgrade ? PLANS[account.pendingUpgrade] : null;
+
+  /* Button wording follows the mechanism actually in use: "Subscribe to X"
+     promises a checkout, "Request X" promises an email. Saying the wrong one
+     is a small lie that costs trust at exactly the moment someone is deciding
+     whether to hand over a card. */
+  const cardCopy = account.billing.enabled
+    ? { idle: 'Subscribe to', confirm: 'Continue to payment —', busy: 'Redirecting…' }
+    : { idle: 'Request', confirm: 'Confirm request for', busy: 'Sending…' };
 
   return (
     <div className="mx-auto max-w-4xl px-4 py-16">
@@ -371,11 +467,24 @@ export function AccountView() {
 
       {/* ————— Upgrade ————— */}
       <section className="rounded-xl border border-border bg-surface p-5">
-        <h2 className="mb-2 text-lg font-semibold tracking-tight">Upgrade</h2>
+        <h2 className="mb-2 text-lg font-semibold tracking-tight">
+          {account.billing.subscribed ? 'Plan & billing' : 'Upgrade'}
+        </h2>
         <p className="mb-4 text-sm text-muted">
-          No card is taken on the site. We email you, arrange payment, and activate the plan —
-          usually within a day.
+          {account.billing.enabled
+            ? 'Pay by card through Stripe — your plan activates as soon as the payment clears. Cancel any time from the billing portal.'
+            : 'No card is taken on the site. We email you, arrange payment, and activate the plan — usually within a day.'}
         </p>
+
+        {(account.billing.subscribed || account.billing.hasCustomer) && (
+          <button
+            onClick={onManageBilling}
+            disabled={busy === 'portal'}
+            className="mb-4 rounded-lg border border-border bg-bg px-3.5 py-1.5 text-sm font-medium transition hover:border-border-hi disabled:opacity-40"
+          >
+            {busy === 'portal' ? 'Opening…' : 'Manage billing, invoices & cancellation'}
+          </button>
+        )}
 
         {upgradeError && <p className="mb-4 text-sm text-danger">{upgradeError}</p>}
 
@@ -421,11 +530,13 @@ export function AccountView() {
                 ) : armed ? (
                   <div className="mt-auto flex flex-col gap-2">
                     <button
-                      onClick={() => onRequestUpgrade(id)}
+                      onClick={() => onUpgrade(id)}
                       disabled={busy === `upgrade:${id}`}
                       className="rounded-lg bg-accent px-3.5 py-1.5 text-sm font-medium text-white transition hover:bg-accent-hi disabled:opacity-40"
                     >
-                      {busy === `upgrade:${id}` ? 'Sending…' : `Confirm ${p.name} request`}
+                      {busy === `upgrade:${id}`
+                        ? cardCopy.busy
+                        : `${cardCopy.confirm} ${p.name}`}
                     </button>
                     <button
                       onClick={() => setArmedPlan(null)}
@@ -436,17 +547,85 @@ export function AccountView() {
                   </div>
                 ) : (
                   <button
-                    onClick={() => onRequestUpgrade(id)}
+                    onClick={() => onUpgrade(id)}
                     disabled={busy?.startsWith('upgrade:') ?? false}
                     className="mt-auto rounded-lg border border-border bg-surface px-3.5 py-1.5 text-sm font-medium transition hover:border-border-hi disabled:opacity-40"
                   >
-                    {busy === `upgrade:${id}` ? 'Sending…' : `Request ${p.name}`}
+                    {busy === `upgrade:${id}` ? cardCopy.busy : `${cardCopy.idle} ${p.name}`}
                   </button>
                 )}
               </div>
             );
           })}
         </div>
+      </section>
+
+      {/* ————— Your data (GDPR Art. 15/17/20) ————— */}
+      <section className="mt-6 rounded-xl border border-border bg-surface p-5">
+        <h2 className="mb-2 text-lg font-semibold tracking-tight">Your data</h2>
+        <p className="mb-4 text-sm text-muted">
+          Take a copy of everything we hold about this account, or delete it permanently. Invoice
+          XML is never stored — only your account, usage counts and any reports you chose to share.
+        </p>
+
+        {dataError && <p className="mb-4 text-sm text-danger">{dataError}</p>}
+
+        <div className="flex flex-wrap gap-2">
+          <button
+            onClick={onExportData}
+            disabled={busy === 'export'}
+            className="rounded-lg border border-border bg-bg px-3.5 py-1.5 text-sm font-medium transition hover:border-border-hi disabled:opacity-40"
+          >
+            {busy === 'export' ? 'Preparing…' : 'Download my data (JSON)'}
+          </button>
+          {!deleteArmed && (
+            <button
+              onClick={() => setDeleteArmed(true)}
+              className="rounded-lg border border-danger/40 px-3.5 py-1.5 text-sm font-medium text-danger transition hover:border-danger"
+            >
+              Delete my account
+            </button>
+          )}
+        </div>
+
+        {deleteArmed && (
+          <div className="mt-4 rounded-lg border border-danger/40 bg-danger/5 p-4">
+            <p className="text-sm">
+              This permanently deletes your account, API keys, usage history and shared reports.
+              {account.billing.subscribed && ' Your subscription is cancelled at the same time.'} It
+              cannot be undone.
+            </p>
+            <label className="mt-3 block text-xs text-muted" htmlFor="delete-confirm">
+              Type <span className="font-mono text-text">{account.email}</span> to confirm
+            </label>
+            <input
+              id="delete-confirm"
+              value={deleteConfirm}
+              onChange={(e) => setDeleteConfirm(e.target.value)}
+              autoComplete="off"
+              className="mt-1.5 w-full max-w-sm rounded-lg border border-border bg-bg px-3 py-1.5 font-mono text-sm"
+            />
+            <div className="mt-3 flex flex-wrap gap-2">
+              <button
+                onClick={onDeleteAccount}
+                disabled={busy === 'delete' || deleteConfirm.trim() !== account.email}
+                className="rounded-lg bg-danger px-3.5 py-1.5 text-sm font-medium text-white transition disabled:opacity-40"
+              >
+                {busy === 'delete' ? 'Deleting…' : 'Permanently delete'}
+              </button>
+              <button
+                onClick={() => {
+                  setDeleteArmed(false);
+                  setDeleteConfirm('');
+                  setDataError(null);
+                }}
+                className="rounded-lg border border-border px-3.5 py-1.5 text-sm font-medium transition hover:border-border-hi"
+              >
+                Keep my account
+              </button>
+            </div>
+          </div>
+        )}
       </section>
     </div>
   );

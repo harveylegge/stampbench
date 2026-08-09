@@ -2,6 +2,7 @@ import type { Metadata } from 'next';
 import Link from 'next/link';
 
 import { PLANS } from '@/lib/plans';
+import { BillingNote } from './billing-note';
 
 export const metadata: Metadata = {
   title: 'Pricing',
@@ -103,12 +104,8 @@ export default function PricingPage() {
               >
                 {id === 'free' ? 'Start free' : `Choose ${p.name}`}
               </Link>
-              {/* No checkout exists yet — say so before signup, not after. */}
-              {id !== 'free' && (
-                <p className="mt-2 text-center text-xs text-faint">
-                  No card on the site — we email you to arrange payment and activation.
-                </p>
-              )}
+              {/* How payment happens, stated before signup rather than after. */}
+              {id !== 'free' && <BillingNote />}
             </div>
           );
         })}

@@ -37,6 +37,27 @@ export async function sha256Hex(text: string): Promise<string> {
   return hex(await crypto.subtle.digest('SHA-256', enc.encode(text)));
 }
 
+/**
+ * Compare two secrets without leaking their contents through timing.
+ *
+ * A plain `===` on strings returns as soon as it finds a differing byte, so
+ * response time reveals how much of a guess was correct — enough to recover a
+ * secret byte-by-byte. This always walks the full length. Length itself is not
+ * hidden; that is acceptable for fixed-length digests and tokens.
+ */
+export function timingSafeEqual(a: string, b: string): boolean {
+  if (a.length !== b.length) return false;
+  let diff = 0;
+  for (let i = 0; i < a.length; i++) diff |= a.charCodeAt(i) ^ b.charCodeAt(i);
+  return diff === 0;
+}
+
+/** HMAC-SHA256 of `message` under `secret`, hex-encoded. */
+export async function hmacSha256Hex(secret: string, message: string): Promise<string> {
+  const sig = await crypto.subtle.sign('HMAC', await hmacKey(secret), enc.encode(message));
+  return hex(sig);
+}
+
 async function pbkdf2(password: string, salt: Uint8Array, iterations: number): Promise<string> {
   const key = await crypto.subtle.importKey('raw', enc.encode(password), 'PBKDF2', false, [
     'deriveBits',
@@ -62,16 +83,30 @@ export async function verifyPassword(
   storedSaltHex: string,
 ): Promise<boolean> {
   const [, itersStr, digest] = storedHash.split(':');
+  const iterations = Number(itersStr);
+  // A malformed stored hash must fail closed, not throw: verifyPassword is
+  // also called against a dummy record to equalise login timing, and an
+  // exception there would reintroduce the very timing signal it removes.
+  if (!digest || !Number.isFinite(iterations) || iterations <= 0) return false;
   const salt = Uint8Array.from(
     storedSaltHex.match(/.{2}/g)?.map((h) => parseInt(h, 16)) ?? [],
   );
-  const candidate = await pbkdf2(password, salt, Number(itersStr));
-  // Constant-time compare over equal-length hex strings.
-  if (candidate.length !== digest.length) return false;
-  let diff = 0;
-  for (let i = 0; i < candidate.length; i++) diff |= candidate.charCodeAt(i) ^ digest.charCodeAt(i);
-  return diff === 0;
+  const candidate = await pbkdf2(password, salt, iterations);
+  return timingSafeEqual(candidate, digest);
 }
+
+/**
+ * A syntactically valid hash record that no password matches.
+ *
+ * Login verifies against this when the email is unknown, so a missing account
+ * costs the same ~100k PBKDF2 iterations as a real one. Without it the
+ * response time alone distinguishes registered emails from unregistered ones,
+ * which turns a neutral error message into a customer-list oracle.
+ */
+export const DUMMY_CREDENTIAL = {
+  hash: `v1:${ITERATIONS}:${'0'.repeat(64)}`,
+  salt: '0'.repeat(32),
+} as const;
 
 async function hmacKey(secret: string): Promise<CryptoKey> {
   return crypto.subtle.importKey('raw', enc.encode(secret), { name: 'HMAC', hash: 'SHA-256' }, false, [

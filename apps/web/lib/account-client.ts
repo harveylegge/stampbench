@@ -30,6 +30,14 @@ export interface Me {
   createdAt: number;
   usage: Record<FeatureId, { used: number; limit: number }>;
   pendingUpgrade: PlanId | null;
+  billing: {
+    /** Card payment is configured server-side; false = fall back to Request upgrade. */
+    enabled: boolean;
+    /** A subscription is currently entitling this account. */
+    subscribed: boolean;
+    /** Has billing history, so the Stripe portal has something to show. */
+    hasCustomer: boolean;
+  };
 }
 
 export interface ApiKeySummary {
@@ -127,9 +135,39 @@ export function regressCredit(): Promise<{ ok: true; remaining: number }> {
   return call('/api/features/regress', { method: 'POST', body: JSON.stringify({}) });
 }
 
-/** Records the request and emails Harvey; provisioning is manual for now. */
+/** Records the request and emails Harvey; the manual path, kept as a fallback. */
 export function requestUpgrade(plan: Exclude<PlanId, 'free'>): Promise<{ ok: true }> {
   return call('/api/upgrade', { method: 'POST', body: JSON.stringify({ plan }) });
+}
+
+/**
+ * Start Stripe Checkout for an existing signed-in account and get the hosted
+ * URL to send the browser to.
+ *
+ * The response is only a redirect target — it grants nothing. The plan changes
+ * when Stripe's signed webhook says the payment settled, never because the
+ * browser came back from a success URL, which anyone could visit directly.
+ */
+export function startCheckout(plan: Exclude<PlanId, 'free'>): Promise<{ url: string }> {
+  return call('/api/billing/checkout', { method: 'POST', body: JSON.stringify({ plan }) });
+}
+
+/** Stripe's hosted portal: card changes, invoices, and self-serve cancellation. */
+export function billingPortal(): Promise<{ url: string }> {
+  return call('/api/billing/portal', { method: 'POST', body: JSON.stringify({}) });
+}
+
+/** GDPR Art. 20 — everything held about the account, as JSON. */
+export function exportAccount(): Promise<Record<string, unknown>> {
+  return call('/api/account/export');
+}
+
+/**
+ * GDPR Art. 17 — irreversible erasure. `confirm` must equal the account email;
+ * the server re-checks, so this is not merely a UI guard.
+ */
+export function deleteAccount(confirm: string): Promise<{ ok: true; deleted: true }> {
+  return call('/api/account', { method: 'DELETE', body: JSON.stringify({ confirm }) });
 }
 
 /** Whether the AI-explanation feature is switched on server-side at all. */

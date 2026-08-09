@@ -7,7 +7,18 @@ CREATE TABLE IF NOT EXISTS users (
   pw_hash    TEXT NOT NULL,
   pw_salt    TEXT NOT NULL,
   plan       TEXT NOT NULL DEFAULT 'free',
-  created_at INTEGER NOT NULL
+  created_at INTEGER NOT NULL,
+  -- Stripe linkage; NULL until the account first checks out.
+  stripe_customer_id     TEXT,
+  stripe_subscription_id TEXT
+);
+
+-- Fixed-window abuse counters keyed by "<action>:<client ip>". Disposable:
+-- deleting rows only resets counts. See migrations/002 for the rationale.
+CREATE TABLE IF NOT EXISTS rate_limits (
+  bucket       TEXT PRIMARY KEY,
+  count        INTEGER NOT NULL,
+  window_start INTEGER NOT NULL
 );
 
 CREATE TABLE IF NOT EXISTS api_keys (
@@ -46,3 +57,5 @@ CREATE TABLE IF NOT EXISTS upgrade_requests (
 
 CREATE INDEX IF NOT EXISTS idx_api_keys_user ON api_keys(user_id);
 CREATE INDEX IF NOT EXISTS idx_reports_user ON reports(user_id);
+CREATE INDEX IF NOT EXISTS idx_rate_limits_window ON rate_limits(window_start);
+CREATE INDEX IF NOT EXISTS idx_users_stripe_customer ON users(stripe_customer_id);

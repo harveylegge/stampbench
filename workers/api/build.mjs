@@ -7,16 +7,31 @@
  *   node workers/api/build.mjs
  */
 import { build } from 'esbuild';
+import { execFileSync } from 'node:child_process';
 import { writeFileSync, existsSync } from 'node:fs';
 import { dirname, join } from 'node:path';
 import { fileURLToPath } from 'node:url';
 
-const root = join(dirname(fileURLToPath(import.meta.url)), '..', '..');
+const here = dirname(fileURLToPath(import.meta.url));
+const root = join(here, '..', '..');
 const outDir = join(root, 'apps', 'web', 'out');
 
 if (!existsSync(outDir)) {
   throw new Error('apps/web/out does not exist — run the static build first.');
 }
+
+// esbuild strips types without checking them, so a type error here would ship
+// silently and only surface as a runtime fault in production — on the session
+// and billing paths, of all places. Typecheck first and refuse to bundle.
+console.log('[worker] typechecking…');
+// Run the compiler's own entry point under this Node rather than going through
+// `npx`: no shell, so no platform-dependent quoting and no deprecation warning.
+execFileSync(process.execPath, [
+  join(root, 'node_modules', 'typescript', 'bin', 'tsc'),
+  '-p',
+  join(here, 'tsconfig.json'),
+  '--noEmit',
+], { cwd: here, stdio: 'inherit' });
 
 await build({
   entryPoints: [join(root, 'workers', 'api', 'src', 'index.ts')],
