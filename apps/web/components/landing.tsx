@@ -67,24 +67,36 @@ export function Landing({ copy }: { copy: Copy }) {
               <span className="text-accent">{copy.hero.titleAccent}</span>
             </h1>
             <p className="mb-8 max-w-md text-lg leading-relaxed text-text/90">{copy.hero.lede}</p>
-            <div className="flex flex-wrap items-center gap-4">
+            {/* The two things the product does, as the two buttons.
+                Previously the second slot went to a "choose your market"
+                anchor, which meant the generator had no entry point here at
+                all — and on mobile, where the nav is behind a hamburger, no
+                entry point anywhere on the page. The market band is the very
+                next section, so its link steps down to text without becoming
+                hard to find. Full-width when stacked: two buttons wrapping
+                mid-row on a phone reads as one broken button. */}
+            <div className="flex flex-col gap-3 sm:flex-row sm:flex-wrap sm:items-center sm:gap-4">
+              <Link
+                href="/invoice-generator"
+                className="rounded-lg bg-accent px-5 py-3 text-center font-medium text-white transition hover:bg-accent-hi sm:py-2.5"
+              >
+                {copy.hero.ctaCreate}
+              </Link>
               <Link
                 href={path('playground')}
-                className="rounded-lg bg-accent px-5 py-2.5 font-medium text-white transition hover:bg-accent-hi"
+                className="rounded-lg border border-border bg-surface px-5 py-3 text-center font-medium transition hover:border-border-hi sm:py-2.5"
               >
                 {copy.hero.ctaPrimary}
               </Link>
+            </div>
+            <div className="mt-6 flex flex-wrap items-center gap-x-5 gap-y-2 text-sm">
               {/* An in-page anchor, not a route: the answer to "is this for my
-                  business?" is one scroll away, so sending the visitor to
-                  another page to find it would be friction for nothing. */}
-              <a
-                href="#markets"
-                className="rounded-lg border border-border bg-surface px-5 py-2.5 font-medium transition hover:border-border-hi"
-              >
-                {copy.hero.ctaSecondary}
+                  business?" is one scroll away. */}
+              <a href="#markets" className="font-medium text-accent-hi hover:underline">
+                {copy.hero.ctaSecondary} ↓
               </a>
             </div>
-            <div className="mt-8 flex flex-wrap items-center gap-x-5 gap-y-2 font-mono text-sm text-faint">
+            <div className="mt-6 flex flex-wrap items-center gap-x-5 gap-y-2 font-mono text-sm text-faint">
               <span>
                 {copy.hero.install} <span className="text-accent">@stampbench/core</span>
               </span>
@@ -293,12 +305,22 @@ export function Landing({ copy }: { copy: Copy }) {
         <div className="mx-auto max-w-6xl px-4 text-center">
           <h2 className="mb-3 text-3xl font-semibold tracking-tight">{copy.cta.heading}</h2>
           <p className="mx-auto mb-8 max-w-md text-muted">{copy.cta.body}</p>
-          <Link
-            href={path('playground')}
-            className="inline-block rounded-lg bg-accent px-6 py-3 font-medium text-white transition hover:bg-accent-hi"
-          >
-            {copy.cta.button}
-          </Link>
+          {/* Both doors again at the foot of the page — a visitor who read the
+              whole thing should not have to scroll back up to act. */}
+          <div className="mx-auto flex max-w-sm flex-col gap-3 sm:max-w-none sm:flex-row sm:justify-center sm:gap-4">
+            <Link
+              href="/invoice-generator"
+              className="rounded-lg bg-accent px-6 py-3 font-medium text-white transition hover:bg-accent-hi"
+            >
+              {copy.hero.ctaCreate}
+            </Link>
+            <Link
+              href={path('playground')}
+              className="rounded-lg border border-border bg-surface px-6 py-3 font-medium transition hover:border-border-hi"
+            >
+              {copy.cta.button}
+            </Link>
+          </div>
           <div className="mt-5 font-mono text-sm text-faint">
             {copy.cta.install} <span className="text-accent">@stampbench/core</span>
           </div>

@@ -65,7 +65,11 @@ export interface Copy {
     titleTop: string;
     titleAccent: string;
     lede: string;
+    /** Leads the hero: the generator. */
+    ctaCreate: string;
+    /** The validator — the older, deeper capability. */
     ctaPrimary: string;
+    /** Scrolls to the market band; a text link, not a button. */
     ctaSecondary: string;
     install: string;
   };
@@ -195,6 +199,7 @@ export const en: Copy = {
     titleAccent: 'In whichever market you bill.',
     lede:
       'Stampbench validates, repairs and creates structured e-invoices against the standard your customer actually requires — with the exact rule, the exact field and the exact line that failed.',
+    ctaCreate: 'Create invoice',
     ctaPrimary: 'Validate an invoice',
     ctaSecondary: 'Choose your market',
     install: 'npm install',
@@ -419,6 +424,7 @@ export const de: Copy = {
     titleAccent: 'TypeScript-nativ. Ohne Java.',
     lede:
       'Das Entwickler-Toolkit für XRechnung und EN 16931: jeden Regelverstoß erkennen, genau verstehen, was fehlschlug, und sicher korrigieren, was sich herleiten lässt — vollständig auf Ihrem Rechner.',
+    ctaCreate: 'Rechnung erstellen',
     ctaPrimary: 'Rechnung prüfen',
     ctaSecondary: 'Markt wählen',
     install: 'npm install',
