@@ -422,6 +422,17 @@ async function handleUpgrade(request: Request, env: Env, user: UserRow): Promise
   const body = await readJson(request);
   const plan = String(body?.plan ?? '');
   if (!(plan in PLANS) || plan === 'free') return fail(400, 'bad_request', 'Unknown plan.');
+
+  // Throttle. This was the one mutating authenticated endpoint with no rate
+  // limit, and it both writes a row and emails the operator — so a logged-in
+  // account driving its own session with curl (the same-origin gate only
+  // stops cross-site *browsers*) could mail-flood the inbox and inflate D1.
+  // Every other write here is already throttled; five requests an hour is
+  // plenty for a human choosing a plan, and it bounds both the email volume
+  // and the row growth. (No dedup here on purpose — that needs a partial
+  // unique index, i.e. a migration; the rate limit already closes the issue.)
+  if (!(await rateLimit(env, 'upgrade', user.id, 5, 60 * 60_000))) return TOO_MANY(3600);
+
   await env.DB.prepare(
     'INSERT INTO upgrade_requests (id, user_id, email, plan, created_at) VALUES (?, ?, ?, ?, ?)',
   )

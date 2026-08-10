@@ -208,6 +208,22 @@ describe('document-level tax, discount, shipping and payment', () => {
     expect(() => toInvoiceModel(migrated)).not.toThrow();
   });
 
+  it('groups a discount with its lines even for the O (outside-scope) category', () => {
+    // Regression: the display path derived the line rate as undefined for 'O'
+    // but the adjustment inherited 0, so the discount landed in a separate
+    // VAT group ('O@0' vs 'O@') and the on-screen breakdown split in two.
+    const draft: InvoiceDraft = {
+      ...base(),
+      lines: [{ ...newLine('O', ''), description: 'Out of scope', quantity: '1', unitPrice: '1000.00' }],
+      discount: { enabled: true, mode: 'amount', value: '100.00' },
+    };
+    const totals = computeDraftTotals(draft);
+    // One category group, taxable 900, no tax.
+    expect(totals.categories).toHaveLength(1);
+    expect(toDecimal(totals.categories[0]!.taxable)).toBe(900);
+    expect(toDecimal(totals.tax)).toBe(0);
+  });
+
   it('ignores an adjustment that is switched on but empty', () => {
     const draft: InvoiceDraft = {
       ...base(),

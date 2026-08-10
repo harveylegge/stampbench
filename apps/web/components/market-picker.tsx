@@ -54,7 +54,7 @@ export function MarketPicker({ copy }: { copy: MarketsCopy }) {
                 href={marketHref(card.id)}
                 onClick={() => writeMarket(card.id)}
                 aria-current={isCurrent ? 'true' : undefined}
-                className={`group flex items-start gap-3 rounded-xl border bg-surface p-4 transition sm:flex-col sm:items-stretch sm:gap-0 sm:p-5 ${
+                className={`sb-lift group flex items-start gap-3 rounded-xl border bg-surface p-4 transition sm:flex-col sm:items-stretch sm:gap-0 sm:p-5 ${
                   isCurrent
                     ? 'border-accent/50 ring-1 ring-accent/20'
                     : 'border-border hover:border-border-hi hover:shadow-sm'

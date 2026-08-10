@@ -18,6 +18,13 @@ const securityHeaders = [
       "font-src 'self' data:",
       "connect-src 'self'",
       "frame-ancestors 'none'",
+      // Parity with the static build's _headers CSP (build-static.mjs): lock
+      // down the base tag, plugins, and form targets. The server build is
+      // dormant, but a weaker policy on the credentialed surface is exactly
+      // the wrong asymmetry to leave lying around.
+      "base-uri 'none'",
+      "object-src 'none'",
+      "form-action 'self'",
     ].join('; '),
   },
 ];

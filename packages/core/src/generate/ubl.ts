@@ -69,6 +69,13 @@ class Xml {
   /** Emit a leaf element if the value is present. */
   leaf(tag: string, value: string | number | undefined, attrs?: Record<string, string | undefined>): void {
     if (value === undefined || value === '') return;
+    // A non-finite number would serialise as the literal "NaN" or "Infinity"
+    // in the document. The money/price helpers already coerce amounts to
+    // "0.00", but structural numeric leaves (quantity, VAT percent, base
+    // quantity, multiplier) pass raw numbers through here — for those, emit
+    // nothing rather than a poisoned value, so validation reports an honest
+    // "missing field" instead of the receiver's parser choking on "Infinity".
+    if (typeof value === 'number' && !Number.isFinite(value)) return;
     const a = Object.entries(attrs ?? {})
       .filter(([, v]) => v !== undefined && v !== '')
       .map(([k, v]) => ` ${k}="${esc(v as string)}"`)

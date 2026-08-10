@@ -44,7 +44,7 @@ import { prepareLogo } from '@/lib/invoice/logo';
 import { applyTemplate, templatesForMarket } from '@/lib/invoice/templates';
 import { categoriesFor, getVatCategory, US_TAX_NOTE, type VatCategoryCode } from '@/lib/invoice/tax';
 import { readMarket, writeMarket } from '@/lib/market-preference';
-import { MARKETS, PAGE_MARKETS, type MarketId } from '@/lib/markets';
+import { isMarketId, MARKETS, PAGE_MARKETS, type MarketId } from '@/lib/markets';
 
 /**
  * The invoice generator: market → format → editor → generate → validate →
@@ -89,10 +89,19 @@ function loadDraft(): InvoiceDraft | null {
     if (!raw) return null;
     const parsed = JSON.parse(raw) as Partial<InvoiceDraft>;
     if (!parsed || !Array.isArray(parsed.lines)) return null;
-    const base = emptyDraft(parsed.market ?? 'eu', new Date());
+    // Validate the market before trusting it. Every render of the saved-draft
+    // banner dereferences MARKETS[draft.market] — a corrupted or
+    // cross-version localStorage value that is not a known market id would
+    // throw during that render, and because the throw kills the banner the
+    // "Discard" button never mounts, so the user cannot clear the poison and
+    // every reload re-throws. isMarketId is the same guard the picker uses.
+    const market = isMarketId(parsed.market) ? parsed.market : 'eu';
+    const base = emptyDraft(market, new Date());
     return {
       ...base,
       ...parsed,
+      // Wins over the spread above, so a bad persisted market cannot survive.
+      market,
       seller: { ...base.seller, ...parsed.seller },
       buyer: { ...base.buyer, ...parsed.buyer },
       shipTo: { ...base.shipTo, ...parsed.shipTo },
@@ -232,7 +241,7 @@ export function InvoiceGenerator({ initialMarket }: { initialMarket?: MarketId }
                 <button
                   key={id}
                   onClick={() => chooseMarket(id)}
-                  className={`group rounded-xl border bg-surface p-5 text-left transition hover:border-border-hi hover:shadow-sm ${
+                  className={`sb-lift group rounded-xl border bg-surface p-5 text-left transition hover:border-border-hi hover:shadow-sm ${
                     startMarket === id ? 'border-accent/50 ring-1 ring-accent/20' : 'border-border'
                   }`}
                 >
@@ -272,7 +281,7 @@ export function InvoiceGenerator({ initialMarket }: { initialMarket?: MarketId }
                   setDraft(next);
                   setPhase('build');
                 }}
-                className="rounded-xl border border-border bg-surface p-4 text-left transition hover:border-border-hi"
+                className="sb-lift rounded-xl border border-border bg-surface p-4 text-left transition hover:border-border-hi"
               >
                 <span className="mb-2 flex items-center gap-2">
                   <Flag code={MARKETS[template.market].flag} size={20} />

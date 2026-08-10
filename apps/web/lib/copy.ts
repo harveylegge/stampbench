@@ -402,7 +402,7 @@ INVALID — 1 error, 0 warnings (40 rules run)`,
     note: 'MIT-licensed engine — run it locally, verify every number yourself.',
   },
   statsBoard: {
-    tests: { label: 'Automated tests passing', sub: '136 library · 50 CLI · 70 web', failing: '0 failing · 0 skipped' },
+    tests: { label: 'Automated tests passing', sub: '140 library · 50 CLI · 71 web', failing: '0 failing · 0 skipped' },
     docs: { label: 'Official test documents run', sub: '0 crashes · 3 divergences, published' },
     rules: { label: 'Validation rules active', families: ['EN 16931 core structure', 'VAT category rules', 'BR-DE profile (Germany only)'], subtotal: 'European rules, before any national profile' },
     located: {
@@ -681,7 +681,7 @@ INVALID — 1 error, 0 warnings (56 rules run)`,
     note: 'MIT-lizenzierte Engine — lokal ausführen und jede Zahl selbst überprüfen.',
   },
   statsBoard: {
-    tests: { label: 'Automatisierte Tests bestehen', sub: '136 Bibliothek · 50 CLI · 70 Web', failing: '0 fehlgeschlagen · 0 übersprungen' },
+    tests: { label: 'Automatisierte Tests bestehen', sub: '140 Bibliothek · 50 CLI · 71 Web', failing: '0 fehlgeschlagen · 0 übersprungen' },
     docs: { label: 'Offizielle Testdokumente geprüft', sub: '0 Abbrüche · 3 Abweichungen, veröffentlicht' },
     rules: { label: 'Aktive Prüfregeln', families: ['EN 16931 Kernstruktur', 'USt-Kategorieregeln', 'BR-DE-Profil (nur Deutschland)'], subtotal: 'Europäische Regeln, ohne nationales Profil' },
     located: {

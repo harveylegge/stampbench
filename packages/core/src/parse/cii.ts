@@ -64,9 +64,13 @@ function attr(node: Node, name: string): string | undefined {
   return undefined;
 }
 
+// See parse/ubl.ts: reject non-decimal forms (hex, exponent, Infinity) that
+// Number() would otherwise silently accept but the XSD decimal type forbids.
+const DECIMAL_RE = /^[+-]?(\d+(\.\d+)?|\.\d+)$/;
 function num(node: Node): number | undefined {
   const t = text(node);
   if (t === undefined) return undefined;
+  if (!DECIMAL_RE.test(t.trim())) return undefined;
   const n = Number(t);
   return Number.isFinite(n) ? n : undefined;
 }

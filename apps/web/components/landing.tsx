@@ -60,7 +60,7 @@ export function Landing({ copy }: { copy: Copy }) {
           on a panel they have no context for yet. The panel is still there —
           it moved into the showcase below, where it has tabs and a caption. */}
       <section className="hero-grid relative">
-        <div className="relative mx-auto max-w-3xl px-4 pb-10 pt-14 text-center sm:pt-20">
+        <div className="sb-rise relative mx-auto max-w-3xl px-4 pb-10 pt-14 text-center sm:pt-20">
           <Link
             href="/markets"
             className="mb-6 inline-flex items-center gap-2 rounded-full border border-border bg-surface px-3.5 py-1.5 text-xs text-muted transition hover:border-border-hi hover:text-text"
@@ -85,13 +85,13 @@ export function Landing({ copy }: { copy: Copy }) {
           <div className="flex flex-col items-stretch gap-3 sm:flex-row sm:items-center sm:justify-center sm:gap-4">
             <Link
               href="/invoice-generator"
-              className="rounded-lg bg-accent px-6 py-3 text-center font-medium text-white transition hover:bg-accent-hi"
+              className="sb-press rounded-lg bg-accent px-6 py-3 text-center font-medium text-white transition hover:bg-accent-hi"
             >
               {copy.hero.ctaCreate}
             </Link>
             <Link
               href={path('playground')}
-              className="rounded-lg border border-border bg-surface px-6 py-3 text-center font-medium transition hover:border-border-hi"
+              className="sb-press rounded-lg border border-border bg-surface px-6 py-3 text-center font-medium transition hover:border-border-hi"
             >
               {copy.hero.ctaPrimary}
             </Link>
@@ -314,13 +314,13 @@ export function Landing({ copy }: { copy: Copy }) {
           <div className="mx-auto flex max-w-sm flex-col gap-3 sm:max-w-none sm:flex-row sm:justify-center sm:gap-4">
             <Link
               href="/invoice-generator"
-              className="rounded-lg bg-accent px-6 py-3 font-medium text-white transition hover:bg-accent-hi"
+              className="sb-press rounded-lg bg-accent px-6 py-3 font-medium text-white transition hover:bg-accent-hi"
             >
               {copy.hero.ctaCreate}
             </Link>
             <Link
               href={path('playground')}
-              className="rounded-lg border border-border bg-surface px-6 py-3 font-medium transition hover:border-border-hi"
+              className="sb-press rounded-lg border border-border bg-surface px-6 py-3 font-medium transition hover:border-border-hi"
             >
               {copy.cta.button}
             </Link>

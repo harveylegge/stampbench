@@ -68,9 +68,16 @@ function attr(node: Node, name: string): string | undefined {
   return undefined;
 }
 
+// EN 16931 amounts are XSD decimals: an optional sign and digits with an
+// optional fractional part. `Number()` is looser than that — it happily
+// accepts "0x1F" (31), "1e3" (1000) and "Infinity", none of which are valid
+// in the document, so a hostile or malformed file could smuggle a value the
+// eye would never read as a number. Reject anything that is not plain decimal.
+const DECIMAL_RE = /^[+-]?(\d+(\.\d+)?|\.\d+)$/;
 function num(node: Node): number | undefined {
   const t = text(node);
   if (t === undefined) return undefined;
+  if (!DECIMAL_RE.test(t.trim())) return undefined;
   const n = Number(t);
   return Number.isFinite(n) ? n : undefined;
 }

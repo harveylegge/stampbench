@@ -103,24 +103,37 @@ export default function PrivacyPage() {
         </p>
       </Clause>
 
-      <Clause n="4." title="AI-generated explanations (optional)">
+      <Clause n="4." title="Optional AI features">
         <p>
-          The hosted AI-explanation feature is{' '}
-          <strong className="text-text">not currently enabled</strong>. From the day it launches:
-          the validation findings for that request — rule identifiers, business term references and
-          our own message text — are sent to Anthropic for processing so that a plain-language fix
-          list can be generated, opt-in per request. If you do not use that feature, no data is
-          sent to Anthropic. We will update this policy when it goes live.
+          Two optional, opt-in AI features can send data to Anthropic. Both are{' '}
+          <strong className="text-text">not currently enabled</strong>, and if you do not use them
+          nothing is sent to Anthropic. We will update this policy when they go live.
         </p>
+        <ul>
+          <li>
+            <strong className="text-text">Explain a validation result.</strong> The findings for
+            that request — rule identifiers, business term references and our own message text — are
+            sent so a plain-language fix list can be generated.
+          </li>
+          <li>
+            <strong className="text-text">AI assist in the invoice builder.</strong> The
+            free-text description you type (for example &ldquo;12 hours of design work at
+            £95/hr&rdquo;) is sent so it can be turned into draft line items. Only that text is sent
+            — never the rest of the invoice, and never anything you did not type into that box.
+          </li>
+        </ul>
       </Clause>
 
       <Clause n="5." title="Cookies">
         <p>
-          We use a single strictly necessary cookie to keep you signed in. It is HttpOnly, SameSite
-          and Secure. We do not use advertising or cross-site tracking cookies, so we do not show a
-          consent banner for them. We also run no analytics scripts at all — traffic is measured as
-          aggregate request counts at our infrastructure provider&apos;s edge, with no cookies and
-          nothing executing in your browser.
+          We use two strictly necessary cookies, and only when you sign in. The first holds your
+          session; it is HttpOnly, SameSite and Secure, so it cannot be read by scripts. The second
+          is a small non-secret flag that simply records that you are signed in, so the site knows
+          to show your account rather than the sign-in button without calling our server on every
+          page — it contains no personal data and no session token. We use no advertising or
+          cross-site tracking cookies, so we show no consent banner for them, and we run no
+          analytics scripts at all: traffic is measured as aggregate request counts at our
+          infrastructure provider&apos;s edge, with nothing executing in your browser.
         </p>
       </Clause>
 
@@ -133,8 +146,8 @@ export default function PrivacyPage() {
             @stampbench.com addresses.
           </li>
           <li>
-            <strong className="text-text">Anthropic</strong> — AI explanations, applicable only
-            once that optional feature is enabled (see clause 4).
+            <strong className="text-text">Anthropic</strong> — the optional AI features (see
+            clause 4), applicable only once they are enabled.
           </li>
         </ul>
         <p>

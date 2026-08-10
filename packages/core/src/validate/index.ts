@@ -103,6 +103,14 @@ export function validateUblXml(xml: string, options: ValidateOptions = {}): Vali
  */
 export function validateXml(xml: string, options: ValidateOptions = {}): ValidateXmlResult {
   const profile = options.profile ?? 'xrechnung';
+  // Guard the type at the door. The detection regex below calls `xml.slice`
+  // before the try/catch, so a non-string argument (a caller that forgot to
+  // stringify, JSON that decoded to a number, `undefined`) would throw an
+  // uncaught TypeError and defeat this function's documented promise never to
+  // throw. A non-string is simply an unparseable document.
+  if (typeof xml !== 'string') {
+    return syntaxFailure(profile, 'Expected an XML string.');
+  }
   const detected: Syntax = /CrossIndustryInvoice[\s>]/.test(xml.slice(0, 4000)) ? 'cii' : 'ubl';
   try {
     const invoice = detected === 'cii' ? parseCiiInvoice(xml) : parseUblInvoice(xml);

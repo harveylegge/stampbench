@@ -44,7 +44,21 @@ export function ScrollReveal() {
     }
     // Hidden state only arms after the in-view sections are already revealed.
     document.documentElement.classList.add('reveal-ready');
-    return () => observer.disconnect();
+
+    // Hero entrance failsafe. The CSS entrance hides its children via the
+    // animation's opening frame; a background-loaded tab pauses there. This
+    // guarantees they are never stuck invisible: after the animation's own
+    // duration has comfortably passed, cancel it and restore the resting
+    // state. For a foreground visitor the animation has long finished, so
+    // this is a no-op; for a background tab it is the safety net.
+    const failsafe = window.setTimeout(() => {
+      document.documentElement.classList.add('sb-rise-safe');
+    }, 1500);
+
+    return () => {
+      observer.disconnect();
+      window.clearTimeout(failsafe);
+    };
   }, [pathname]);
 
   return null;

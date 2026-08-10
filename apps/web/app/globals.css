@@ -71,6 +71,91 @@ pre {
   }
 }
 
+/* ------------------------------------------------------------------ motion
+ *
+ * Deliberately small. The brand is "procurement office, not crypto landing
+ * page", so these are the kind of movements you notice only if they are
+ * missing: a hero that settles in on load, cards that lift a millimetre under
+ * the cursor, a button that acknowledges a press. Every one is inside the
+ * no-preference query, so reduced-motion users get a completely static site,
+ * and the default (no-JS, no-CSS) state is always the visible/resting one —
+ * nothing here can leave content stuck hidden.
+ */
+@media (prefers-reduced-motion: no-preference) {
+  /* Hero entrance. The homepage hero is above the fold, so the scroll-reveal
+     above snaps it visible instantly with no motion; this gives it a gentle
+     settle instead. `.sb-rise` children stagger via --sb-rise-i. */
+  @keyframes sb-rise {
+    from {
+      opacity: 0;
+      transform: translateY(12px);
+    }
+    to {
+      opacity: 1;
+      transform: none;
+    }
+  }
+  .sb-rise > * {
+    animation: sb-rise 0.55s cubic-bezier(0.22, 1, 0.36, 1) both;
+  }
+  /* Failsafe: the entrance hides its children via the animation's `from`
+     frame, so a tab opened in the background pauses them at opacity 0 until
+     focused. Native visibility-resume handles that the instant the user
+     looks — but this guarantees the invariant the whole site holds to
+     ("content is never left invisible"): once JS has run, the animation is
+     cancelled and the resting state restored no matter what. */
+  html.sb-rise-safe .sb-rise > * {
+    animation: none;
+  }
+  .sb-rise > *:nth-child(1) { animation-delay: 0ms; }
+  .sb-rise > *:nth-child(2) { animation-delay: 70ms; }
+  .sb-rise > *:nth-child(3) { animation-delay: 140ms; }
+  .sb-rise > *:nth-child(4) { animation-delay: 210ms; }
+  .sb-rise > *:nth-child(5) { animation-delay: 280ms; }
+  .sb-rise > *:nth-child(6) { animation-delay: 350ms; }
+  .sb-rise > *:nth-child(n + 7) { animation-delay: 420ms; }
+
+  /* Hover lift for cards and tiles. Pairs with the existing border/shadow
+     hover the elements already carry — this just adds the vertical nudge. */
+  .sb-lift {
+    transition:
+      transform 0.2s ease-out,
+      box-shadow 0.2s ease-out,
+      border-color 0.2s ease-out;
+    will-change: transform;
+  }
+  .sb-lift:hover {
+    transform: translateY(-2px);
+  }
+
+  /* Primary buttons acknowledge a press. Applied via .sb-press so it never
+     touches disabled or non-button controls. */
+  .sb-press {
+    transition:
+      transform 0.12s ease-out,
+      background-color 0.2s ease-out,
+      border-color 0.2s ease-out;
+  }
+  .sb-press:active {
+    transform: translateY(1px) scale(0.99);
+  }
+
+  /* Showcase tab panels crossfade in when switched. */
+  @keyframes sb-fade-in {
+    from {
+      opacity: 0;
+      transform: translateY(4px);
+    }
+    to {
+      opacity: 1;
+      transform: none;
+    }
+  }
+  .sb-panel-in {
+    animation: sb-fade-in 0.28s ease-out both;
+  }
+}
+
 /* Subtle grid backdrop for hero sections. The grid + fade mask live on a
    ::before layer so the mask never applies to the section's actual content
    (a mask on the section itself would fade the text and buttons out too). */

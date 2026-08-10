@@ -131,7 +131,7 @@ export default function MarketsPage() {
             <Link
               key={id}
               href={`/markets/${id}`}
-              className="group rounded-xl border border-border bg-surface p-5 transition hover:border-border-hi hover:shadow-sm"
+              className="sb-lift group rounded-xl border border-border bg-surface p-5 transition hover:border-border-hi hover:shadow-sm"
             >
               <span className="mb-3 block text-muted">
                 <Flag code={market.flag} size={28} />

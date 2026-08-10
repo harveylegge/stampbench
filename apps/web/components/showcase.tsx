@@ -209,11 +209,15 @@ export function ProductShowcase({ copy }: { copy: Copy }) {
         })}
       </div>
 
+      {/* key={tab} remounts on switch so the crossfade replays; the panel is
+          otherwise identical markup. */}
       <div
+        key={tab}
         role="tabpanel"
         id={`showcase-panel-${tab}`}
         aria-labelledby={`showcase-tab-${tab}`}
         tabIndex={0}
+        className="sb-panel-in"
       >
         {tab === 'create' && <CreatePanel copy={copy} />}
         {tab === 'check' && <CheckPanel copy={copy} />}

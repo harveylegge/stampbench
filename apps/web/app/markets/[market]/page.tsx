@@ -198,7 +198,7 @@ INVALID — 1 error, 0 warnings (${ruleset.ruleCount} rules run)`}
             <Link
               key={other}
               href={`/markets/${other}`}
-              className="flex items-center gap-3 rounded-xl border border-border bg-surface p-4 transition hover:border-border-hi"
+              className="sb-lift flex items-center gap-3 rounded-xl border border-border bg-surface p-4 transition hover:border-border-hi"
             >
               <span className="text-muted">
                 <Flag code={MARKETS[other].flag} size={22} />

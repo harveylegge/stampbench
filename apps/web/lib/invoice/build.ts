@@ -104,6 +104,19 @@ export interface DraftTotals {
  * a mixed-rate invoice leaves it unresolved and validation says so rather than
  * the builder picking a rate on the user's behalf.
  */
+/**
+ * A line's numeric VAT rate, as the totals grouping sees it: undefined for a
+ * category that carries no rate at all (O — outside scope), 0 for a zero rate,
+ * otherwise the typed number. Both the line grouping and the document-level
+ * adjustment inheritance below must agree on this, or a discount lands in a
+ * different VAT group from the lines it discounts and the on-screen breakdown
+ * splits in two.
+ */
+function lineRate(line: DraftLine): number | undefined {
+  const category = getVatCategory(line.vatCategory);
+  return category.rate === 'absent' ? undefined : category.rate === 'zero' ? 0 : number(line.vatRate);
+}
+
 export function adjustmentsFor(draft: InvoiceDraft, lineSubtotal: Money): AllowanceCharge[] {
   const out: AllowanceCharge[] = [];
   const sole = new Set(draft.lines.map((l) => `${l.vatCategory}@${l.vatRate}`));
@@ -111,7 +124,7 @@ export function adjustmentsFor(draft: InvoiceDraft, lineSubtotal: Money): Allowa
     sole.size === 1
       ? {
           vatCategoryCode: draft.lines[0]!.vatCategory,
-          vatRate: number(draft.lines[0]!.vatRate) ?? 0,
+          vatRate: lineRate(draft.lines[0]!),
         }
       : {};
 
@@ -167,8 +180,7 @@ export function lineNetAmount(line: DraftLine): Money {
  */
 export function computeDraftTotals(draft: InvoiceDraft): DraftTotals {
   const lines: LineTotal[] = draft.lines.map((line) => {
-    const category = getVatCategory(line.vatCategory);
-    const rate = category.rate === 'absent' ? undefined : category.rate === 'zero' ? 0 : number(line.vatRate);
+    const rate = lineRate(line);
     return {
       key: line.key,
       net: lineNetAmount(line),

@@ -111,7 +111,7 @@ export function SiteNav() {
             {account ? (
               <Link
                 href="/account"
-                className="rounded-lg bg-accent px-3.5 py-1.5 font-medium text-white transition hover:bg-accent-hi"
+                className="sb-press rounded-lg bg-accent px-3.5 py-1.5 font-medium text-white transition hover:bg-accent-hi"
               >
                 {copy.nav.account}
               </Link>
@@ -128,7 +128,7 @@ export function SiteNav() {
                     footer; it just no longer occupies the primary button. */}
                 <Link
                   href={localePath(locale, 'playground')}
-                  className="rounded-lg bg-accent px-3.5 py-1.5 font-medium text-white transition hover:bg-accent-hi"
+                  className="sb-press rounded-lg bg-accent px-3.5 py-1.5 font-medium text-white transition hover:bg-accent-hi"
                 >
                   {copy.nav.cta}
                 </Link>

@@ -14,9 +14,9 @@ import type { Copy } from '@/lib/copy';
  */
 
 const TESTS = [
-  { label: 'library', n: 136 },
+  { label: 'library', n: 140 },
   { label: 'CLI', n: 50 },
-  { label: 'web', n: 70 },
+  { label: 'web', n: 71 },
 ];
 const TESTS_TOTAL = TESTS.reduce((s, t) => s + t.n, 0);
 
@@ -49,7 +49,7 @@ function Card({ children, href }: { children: React.ReactNode; href: string }) {
   return (
     <Link
       href={href}
-      className="group flex flex-col rounded-xl border border-border bg-surface p-5 transition hover:border-accent"
+      className="sb-lift group flex flex-col rounded-xl border border-border bg-surface p-5 transition hover:border-accent"
     >
       {children}
     </Link>
