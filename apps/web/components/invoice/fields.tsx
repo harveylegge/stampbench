@@ -168,6 +168,76 @@ export function SelectField({
   );
 }
 
+/**
+ * A field that lives *on* the invoice rather than in a form beside it.
+ *
+ * The document layout has no room for a visible label above every box, so the
+ * label moves to `aria-label` and the placeholder carries the hint visually.
+ * That is the one place placeholder-as-label is defensible — the surrounding
+ * document supplies the context a sighted reader needs ("Bill To" above the
+ * box), and the accessible name is still there in full for everyone else.
+ */
+export function DocField({
+  label,
+  value,
+  onChange,
+  placeholder,
+  type = 'text',
+  className = '',
+  align = 'left',
+  inputMode,
+  bold,
+}: {
+  label: string;
+  value: string;
+  onChange: (value: string) => void;
+  placeholder?: string;
+  type?: string;
+  className?: string;
+  align?: 'left' | 'right';
+  inputMode?: 'text' | 'decimal' | 'numeric' | 'email' | 'tel';
+  bold?: boolean;
+}) {
+  return (
+    <input
+      type={type}
+      value={value}
+      aria-label={label}
+      placeholder={placeholder ?? label}
+      inputMode={inputMode}
+      onChange={(e) => onChange(e.target.value)}
+      className={`w-full rounded-lg border border-border bg-surface px-3 py-2 text-sm outline-none transition placeholder:text-faint focus:border-accent ${
+        align === 'right' ? 'text-right' : ''
+      } ${bold ? 'font-medium' : ''} ${className}`}
+    />
+  );
+}
+
+/** Collapsible detail that keeps the document uncluttered by default. */
+export function DocDetails({
+  summary,
+  children,
+  incomplete,
+}: {
+  summary: string;
+  children: React.ReactNode;
+  /** Shows a dot when the ruleset needs something in here that is missing. */
+  incomplete?: boolean;
+}) {
+  return (
+    <details className="group mt-2">
+      <summary className="inline-flex cursor-pointer list-none items-center gap-1.5 rounded-lg px-1.5 py-1 text-xs font-medium text-accent-hi transition hover:bg-accent-dim/40">
+        {incomplete && (
+          <span className="h-1.5 w-1.5 rounded-full bg-warning" aria-label="Something here is still needed" />
+        )}
+        <span className="group-open:hidden">+ {summary}</span>
+        <span className="hidden group-open:inline">− {summary}</span>
+      </summary>
+      <div className="mt-3 grid gap-3 rounded-lg border border-border bg-bg p-3 sm:grid-cols-2">{children}</div>
+    </details>
+  );
+}
+
 /** A titled group of fields. Sections are landmarks, so they get a heading. */
 export function Section({
   title,

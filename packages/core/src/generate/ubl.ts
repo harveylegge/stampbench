@@ -248,6 +248,37 @@ export function generateXRechnungUbl(invoice: Invoice, options?: GenerateOptions
       emitParty(doc, 'cac:AccountingCustomerParty', invoice.buyer, { role: 'buyer' });
       if (invoice.payee) emitParty(doc, 'cac:PayeeParty', invoice.payee, { role: 'payee' });
 
+      // BG-13. Sits between the parties and PaymentMeans — UBL sequences are
+      // ordered, so this position is not a style choice.
+      if (invoice.delivery) {
+        const d = invoice.delivery;
+        doc.wrap('cac:Delivery', () => {
+          doc.leaf('cbc:ActualDeliveryDate', d.actualDate);
+          if (d.locationId || d.address) {
+            doc.wrap('cac:DeliveryLocation', () => {
+              doc.leaf('cbc:ID', d.locationId, { schemeID: d.locationIdScheme });
+              if (d.address) {
+                doc.wrap('cac:Address', () => {
+                  doc.leaf('cbc:StreetName', d.address?.streetName);
+                  doc.leaf('cbc:AdditionalStreetName', d.address?.additionalStreet);
+                  doc.leaf('cbc:CityName', d.address?.city);
+                  doc.leaf('cbc:PostalZone', d.address?.postCode);
+                  doc.leaf('cbc:CountrySubentity', d.address?.countrySubdivision);
+                  doc.wrap('cac:Country', () =>
+                    doc.leaf('cbc:IdentificationCode', d.address?.countryCode),
+                  );
+                });
+              }
+            });
+          }
+          if (d.name) {
+            doc.wrap('cac:DeliveryParty', () =>
+              doc.wrap('cac:PartyName', () => doc.leaf('cbc:Name', d.name)),
+            );
+          }
+        });
+      }
+
       if (invoice.payment) {
         const pm = invoice.payment;
         const transfers = pm.creditTransfers?.length ? pm.creditTransfers : [undefined];

@@ -113,6 +113,113 @@ describe('draft totals', () => {
   });
 });
 
+describe('document-level tax, discount, shipping and payment', () => {
+  function base(): InvoiceDraft {
+    const draft = emptyDraft('uk', NOW);
+    draft.seller = { ...draft.seller, name: 'Thornbury Ltd', vatId: 'GB428915370', city: 'London', postCode: 'EC1V 9BW' };
+    draft.buyer = { ...draft.buyer, name: 'Halden plc', city: 'Manchester', postCode: 'M3 4AN' };
+    draft.lines = [{ ...newLine('S', '20'), description: 'Consulting', quantity: '10', unitPrice: '100.00' }];
+    return draft;
+  }
+
+  it('applies a percentage discount as a document allowance (BT-107)', () => {
+    const draft = { ...base(), discount: { enabled: true, mode: 'percent' as const, value: '10' } };
+    const totals = computeDraftTotals(draft);
+    expect(toDecimal(totals.net)).toBe(1000);
+    expect(toDecimal(totals.allowances)).toBe(100);
+    expect(toDecimal(totals.taxable)).toBe(900);
+    // The discount joins the VAT group, so tax is 20% of 900, not of 1000.
+    expect(toDecimal(totals.tax)).toBe(180);
+    expect(toDecimal(totals.gross)).toBe(1080);
+
+    const invoice = toInvoiceModel(draft);
+    expect(invoice.totals?.allowanceTotal).toBe(100);
+    expect(invoice.totals?.taxExclusive).toBe(900);
+    expect(invoice.totals?.taxInclusive).toBe(1080);
+  });
+
+  it('applies shipping as a document charge (BT-108)', () => {
+    const draft = { ...base(), shipping: { enabled: true, mode: 'amount' as const, value: '25.00' } };
+    const totals = computeDraftTotals(draft);
+    expect(toDecimal(totals.charges)).toBe(25);
+    expect(toDecimal(totals.taxable)).toBe(1025);
+    expect(toDecimal(totals.tax)).toBe(205);
+    expect(toInvoiceModel(draft).totals?.chargeTotal).toBe(25);
+  });
+
+  it('leaves a balance due after a part payment (BT-113 → BT-115)', () => {
+    const draft = { ...base(), amountPaid: '500' };
+    const totals = computeDraftTotals(draft);
+    expect(toDecimal(totals.gross)).toBe(1200);
+    expect(toDecimal(totals.paid)).toBe(500);
+    expect(toDecimal(totals.balance)).toBe(700);
+    expect(toInvoiceModel(draft).totals?.amountDue).toBe(700);
+  });
+
+  it('generates a document that still validates with all three applied', () => {
+    const draft: InvoiceDraft = {
+      ...base(),
+      discount: { enabled: true, mode: 'percent', value: '10' },
+      shipping: { enabled: true, mode: 'amount', value: '25.00' },
+      amountPaid: '100',
+      formatId: 'en16931-ubl',
+    };
+    const generated = generateDocument(draft);
+    const result = validateXml(generated.xml!, { profile: 'en16931' });
+    expect(result.errorCount, result.violations.map((v) => `${v.ruleId} ${v.message}`).join(' | ')).toBe(0);
+  });
+
+  it('writes ship-to as delivery information, not as a second buyer', () => {
+    const draft: InvoiceDraft = {
+      ...base(),
+      shipToEnabled: true,
+      shipTo: {
+        ...emptyDraft('uk', NOW).shipTo,
+        name: 'Halden Warehouse 2',
+        street: 'Unit 4, Trafford Park',
+        city: 'Manchester',
+        postCode: 'M17 1AB',
+        countryCode: 'GB',
+      },
+      document: { ...base().document, deliveryDate: '2026-08-08' },
+    };
+    const invoice = toInvoiceModel(draft);
+    expect(invoice.delivery?.name).toBe('Halden Warehouse 2');
+    expect(invoice.delivery?.actualDate).toBe('2026-08-08');
+    expect(invoice.delivery?.address?.city).toBe('Manchester');
+    // And the buyer is untouched by it.
+    expect(invoice.buyer?.name).toBe('Halden plc');
+    expect(invoice.buyer?.address?.city).toBe('Manchester');
+    expect(generateDocument(draft).xml).toContain('<cac:Delivery>');
+  });
+
+  it('survives a draft saved before these fields existed', () => {
+    // What a previous build wrote: no tax, discount, shipping, shipTo or
+    // amountPaid. The totals code reaches into `discount.enabled`, so an
+    // unmigrated draft would throw and take the editor down on mount.
+    const legacy = JSON.parse(JSON.stringify(base())) as Record<string, unknown>;
+    for (const key of ['tax', 'discount', 'shipping', 'shipTo', 'shipToEnabled', 'amountPaid']) {
+      delete legacy[key];
+    }
+    const migrated = { ...emptyDraft('uk', NOW), ...legacy } as InvoiceDraft;
+    expect(() => computeDraftTotals(migrated)).not.toThrow();
+    expect(toDecimal(computeDraftTotals(migrated).net)).toBe(1000);
+    expect(() => toInvoiceModel(migrated)).not.toThrow();
+  });
+
+  it('ignores an adjustment that is switched on but empty', () => {
+    const draft: InvoiceDraft = {
+      ...base(),
+      discount: { enabled: true, mode: 'percent', value: '' },
+      shipping: { enabled: true, mode: 'amount', value: '' },
+    };
+    const totals = computeDraftTotals(draft);
+    expect(toDecimal(totals.allowances)).toBe(0);
+    expect(toDecimal(totals.charges)).toBe(0);
+    expect(toInvoiceModel(draft).allowancesCharges).toBeUndefined();
+  });
+});
+
 describe('the builder never invents data', () => {
   it('leaves absent fields absent rather than filling them to pass validation', () => {
     const draft = emptyDraft('germany', NOW);

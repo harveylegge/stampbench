@@ -16,18 +16,43 @@ export const metadata: Metadata = {
   },
 };
 
+/**
+ * The invoice comes first.
+ *
+ * Everything explanatory sits below the editor: someone who arrived here wants
+ * to make an invoice, and a screen of prose before the first field is a toll
+ * gate. The detail is still on the page for anyone who scrolls, which is also
+ * where a search engine expects to find it.
+ */
 export default function InvoiceGeneratorPage() {
   return (
-    <div className="mx-auto max-w-6xl px-4 py-10 sm:py-12">
-      <div className="mb-8 max-w-2xl">
-        <h1 className="mb-3 text-3xl font-semibold tracking-tight sm:text-4xl">Invoice generator</h1>
-        <p className="leading-relaxed text-muted">
-          Build an invoice, and Stampbench validates it against the ruleset for your market in the same
-          step — {RULE_COUNTS.en16931} rules for the European core, {RULE_COUNTS.xrechnung} for the German
-          profile. Totals are computed in exact minor units, the structured document is the deliverable,
-          and nothing leaves your browser.
-        </p>
-        <p className="mt-3 text-sm leading-relaxed text-faint">
+    <div className="mx-auto max-w-6xl px-4 py-8 sm:py-10">
+      <h1 className="mb-6 text-2xl font-semibold tracking-tight sm:text-3xl">Create an invoice</h1>
+
+      <InvoiceGenerator />
+
+      <section className="mt-16 border-t border-border pt-10">
+        <div className="grid gap-8 sm:grid-cols-2">
+          <div>
+            <h2 className="mb-2 text-lg font-semibold tracking-tight">What this does</h2>
+            <p className="text-sm leading-relaxed text-muted">
+              Build the invoice, and Stampbench checks it against the ruleset for your market in the same
+              step — {RULE_COUNTS.en16931} rules for the European core, {RULE_COUNTS.xrechnung} for the
+              German profile. Totals are computed in exact minor units, so the figure on screen is the
+              figure in the file.
+            </p>
+          </div>
+          <div>
+            <h2 className="mb-2 text-lg font-semibold tracking-tight">Where it runs</h2>
+            <p className="text-sm leading-relaxed text-muted">
+              In your browser. The engine is an open-source npm package, so the invoice is never uploaded
+              and the draft is kept only in this browser. No account is needed to create, validate or
+              export one.
+            </p>
+          </div>
+        </div>
+
+        <p className="mt-8 text-sm text-faint">
           Per-market detail:{' '}
           {PAGE_MARKETS.map((id, index) => (
             <span key={id}>
@@ -37,9 +62,12 @@ export default function InvoiceGeneratorPage() {
               </Link>
             </span>
           ))}
+          <span className="mx-2">·</span>
+          <Link href="/playground" className="text-accent-hi hover:underline">
+            Validate an invoice you already have
+          </Link>
         </p>
-      </div>
-      <InvoiceGenerator />
+      </section>
     </div>
   );
 }

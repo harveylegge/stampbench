@@ -9,9 +9,11 @@ import { XMLParser, XMLValidator } from 'fast-xml-parser';
 import type {
   AllowanceCharge,
   CreditTransfer,
+  Delivery,
   Invoice,
   InvoiceLine,
   Party,
+  PostalAddress,
   VatBreakdown,
 } from '../model/invoice.js';
 
@@ -80,6 +82,23 @@ function obj(node: unknown): Record<string, unknown> | undefined {
 function arr(node: unknown): Record<string, unknown>[] {
   if (node === undefined || node === null) return [];
   return (Array.isArray(node) ? node : [node]).map((n) => obj(n) ?? {});
+}
+
+/** BG-5 / BG-8 / BG-15 all use the same address shape. */
+function parseAddress(node: unknown): PostalAddress | undefined {
+  const postal = obj(node);
+  if (!postal) return undefined;
+  const address: PostalAddress = {};
+  const set = (key: keyof PostalAddress, v: string | undefined) => {
+    if (v) (address as Record<string, string>)[key] = v;
+  };
+  set('streetName', text(postal['StreetName'] as Node));
+  set('additionalStreet', text(postal['AdditionalStreetName'] as Node));
+  set('city', text(postal['CityName'] as Node));
+  set('postCode', text(postal['PostalZone'] as Node));
+  set('countrySubdivision', text(postal['CountrySubentity'] as Node));
+  set('countryCode', text(obj(postal['Country'])?.['IdentificationCode'] as Node));
+  return Object.keys(address).length ? address : undefined;
 }
 
 function parseParty(container: unknown): Party | undefined {
@@ -305,6 +324,29 @@ export function parseUblInvoice(xml: string): Invoice {
   if (buyer) inv.buyer = buyer;
   const payee = parseParty({ Party: obj(root['PayeeParty']) });
   if (payee) inv.payee = payee;
+
+  // BG-13. Read as well as written, so parse → generate no longer drops the
+  // delivery address of a document that had one.
+  const deliveryNode = obj(arr(root['Delivery'])[0] ?? root['Delivery']);
+  if (deliveryNode) {
+    const delivery: Delivery = {};
+    const actualDate = text(deliveryNode['ActualDeliveryDate'] as Node);
+    if (actualDate) delivery.actualDate = actualDate;
+    const location = obj(deliveryNode['DeliveryLocation']);
+    if (location) {
+      const locationId = location['ID'] as Node;
+      if (text(locationId)) {
+        delivery.locationId = text(locationId);
+        const scheme = attr(locationId, 'schemeID');
+        if (scheme) delivery.locationIdScheme = scheme;
+      }
+      const address = parseAddress(location['Address']);
+      if (address) delivery.address = address;
+    }
+    const partyName = text(obj(obj(deliveryNode['DeliveryParty'])?.['PartyName'])?.['Name'] as Node);
+    if (partyName) delivery.name = partyName;
+    if (Object.keys(delivery).length) inv.delivery = delivery;
+  }
 
   const paymentMeans = arr(root['PaymentMeans']);
   if (paymentMeans.length) {

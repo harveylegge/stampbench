@@ -19,6 +19,7 @@ export type {
   AllowanceCharge,
   Contact,
   CreditTransfer,
+  Delivery,
   Invoice,
   InvoiceLine,
   Item,

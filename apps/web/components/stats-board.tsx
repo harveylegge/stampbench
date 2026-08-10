@@ -14,9 +14,9 @@ import type { Copy } from '@/lib/copy';
  */
 
 const TESTS = [
-  { label: 'library', n: 132 },
+  { label: 'library', n: 136 },
   { label: 'CLI', n: 50 },
-  { label: 'web', n: 55 },
+  { label: 'web', n: 62 },
 ];
 const TESTS_TOTAL = TESTS.reduce((s, t) => s + t.n, 0);
 
@@ -31,13 +31,13 @@ const RULE_FAMILIES = [32, 8, 16] as const;
 /**
  * Test cases per package, counted from the repository's commit history —
  * `git grep -c "^\s*(it|test)\("` at the last commit of each day. Re-derive
- * with the same command; the final points match today's live run (132 / 50).
+ * with the same command; the final points match today's live run (136 / 50).
  * Counted 2026-08-10.
  */
 const GROWTH = {
   days: ['2', '3', '4', '5', '6', '7', '8', '9', '10'],
   series: [
-    { color: '#5b2bd6', points: [21, 106, 110, 110, 110, 110, 113, 113, 132] },
+    { color: '#5b2bd6', points: [21, 106, 110, 110, 110, 110, 113, 113, 136] },
     { color: '#0d9488', points: [0, 42, 50, 50, 50, 50, 50, 50, 50] },
   ],
   yMax: 140,

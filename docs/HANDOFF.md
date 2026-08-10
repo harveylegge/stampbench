@@ -16,6 +16,47 @@ browser OTP, which only Harvey can complete:
 
 ---
 
+## GENERATOR IS NOW THE DOCUMENT (2026-08-10, second pass)
+
+Harvey asked for the invoice-generator.com shape: type on the invoice, actions in
+a right rail. The form-beside-preview layout is gone — the fields now sit where
+their values print, and there is one document rather than two views to drift
+apart. **248 tests** (136 library / 50 CLI / 62 web).
+
+- **Layout**: document left, rail right on `lg`; below that the rail **stacks
+  first** (`order-first lg:order-none`) so "Create invoice" is never buried
+  under a full invoice. Page prose moved *below* the editor on
+  `/invoice-generator` and the four market pages. Nav label is "Create invoice".
+- **Compliance fields live in `<DocDetails>` disclosures** under the block they
+  belong to (VAT ids, contact, electronic address, payment). Each shows a warning
+  dot when the chosen ruleset needs something inside it that is missing.
+- **Tax is one document-level rate** that rewrites every standard-rated line;
+  lines that disagree make it read "Mixed" rather than silently flattening them.
+  **There is deliberately no flat-amount toggle**: BR-S-09 requires tax to equal
+  taxable × rate, so a lump sum could not be a valid EN 16931 document. The
+  screenshot's ⇄ moved to Discount, where percent↔amount *is* supported.
+- **Discount and Shipping are real** BG-20/BG-21 allowance/charge entries, so
+  they join the VAT group before tax is computed (verified: VAT lands on the
+  post-discount taxable amount, not the raw subtotal). **Amount paid** is BT-113
+  and drives BT-115 balance due.
+- **⚠️ BG-13 delivery added to the engine** (`model` + UBL writer *and* parser +
+  tests) so "Ship to" is structured data rather than another print-only field.
+  `cac:Delivery` sits between the parties and PaymentMeans — UBL sequences are
+  ordered, and there is a test pinning that position.
+- **AI assist** (`/api/ai/draft`) turns plain English into line items only. The
+  system prompt forbids tax rates, VAT numbers, addresses and dates, and the
+  handler re-validates the shape server-side. Same dormant key and credit jar as
+  the explainer, so it is off until `ANTHROPIC_API_KEY` is set — and the button
+  says so rather than pretending.
+- **Migration guard**: `loadDraft()` merges a saved draft over a fresh one. A
+  draft written by the previous build has no `discount`, and the totals code
+  reaches into `discount.enabled` — without this it throws on mount and takes
+  the editor with it. Tested.
+- Logo upload is data-URL, capped at 400 kB, and labelled print-only (EN 16931
+  has no logo field).
+
+---
+
 ## INVOICE GENERATOR (2026-08-10) — Stampbench now creates as well as checks
 
 `/invoice-generator` (+ `/invoice-generator/{uk,germany,eu,us}`) is a real

@@ -177,10 +177,34 @@ export function InvoicePreview({ draft, totals }: { draft: InvoiceDraft; totals:
               </div>
             );
           })}
+          {totals.allowances.units !== 0 && (
+            <div className="flex justify-between py-1 text-sm">
+              <span className="text-muted">Discount</span>
+              <span className="tabular-nums text-muted">−{money(totals.allowances, currency, locale)}</span>
+            </div>
+          )}
+          {totals.charges.units !== 0 && (
+            <div className="flex justify-between py-1 text-sm">
+              <span className="text-muted">Shipping</span>
+              <span className="tabular-nums text-muted">{money(totals.charges, currency, locale)}</span>
+            </div>
+          )}
           <div className="mt-2 flex justify-between border-t border-border pt-2 text-base font-semibold">
             <span>Total</span>
             <span className="tabular-nums">{money(totals.gross, currency, locale)}</span>
           </div>
+          {totals.paid.units !== 0 && (
+            <>
+              <div className="flex justify-between py-1 text-sm">
+                <span className="text-muted">Amount paid</span>
+                <span className="tabular-nums text-muted">−{money(totals.paid, currency, locale)}</span>
+              </div>
+              <div className="mt-1 flex justify-between border-t border-border pt-2 text-base font-semibold">
+                <span>Balance due</span>
+                <span className="tabular-nums">{money(totals.balance, currency, locale)}</span>
+              </div>
+            </>
+          )}
           {toDecimal(totals.tax) === 0 && totals.categories.length > 0 && (
             <p className="mt-2 text-xs leading-relaxed text-faint">
               {getVatCategory(totals.categories[0]!.categoryCode).label}

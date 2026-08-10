@@ -536,6 +536,88 @@ async function handleAiExplain(request: Request, env: Env, user: UserRow): Promi
   }
 }
 
+/**
+ * AI assist for the invoice builder: plain English in, line items out.
+ *
+ * Scoped deliberately narrowly. It may propose descriptions, quantities, unit
+ * codes and unit prices — the commercial content the user is describing to it
+ * — and nothing else. It is never asked for, and its output is never read for,
+ * a VAT identifier, a tax rate, a tax category, an address, a buyer reference
+ * or a payment detail. Those are the fields where a plausible invention turns
+ * "invalid" into "quietly wrong", and the builder's whole premise is that it
+ * would rather fail honestly than guess.
+ *
+ * Metering, the shared credit jar and the refund-on-failure behaviour are the
+ * same as the explainer's — one dormant key switches both on.
+ */
+async function handleAiDraft(request: Request, env: Env, user: UserRow): Promise<Response> {
+  if (!env.ANTHROPIC_API_KEY) {
+    return fail(503, 'disabled', 'AI assist is not enabled yet.');
+  }
+  const body = await readJson(request);
+  const description = typeof body?.description === 'string' ? body.description.trim().slice(0, 2000) : '';
+  const currency = typeof body?.currency === 'string' ? body.currency.slice(0, 3) : 'EUR';
+  if (description.length < 3) return fail(400, 'bad_request', 'Provide { "description": "…" }.');
+
+  if (!(await meterGlobalAi(env))) {
+    return fail(503, 'pool_empty', 'The monthly AI allowance is used up site-wide — back next month.');
+  }
+  const spent = await meter(env, user.id, user.plan, 'ai');
+  if (spent === null) {
+    await unmeter(env, '__global__', 'ai');
+    return fail(402, 'quota', `AI assists used up for this month (${featureLimit(user.plan, 'ai')} on ${planFor(user.plan).name}). Upgrade for more.`);
+  }
+
+  try {
+    const client = new Anthropic({ apiKey: env.ANTHROPIC_API_KEY });
+    const response = await client.messages.create({
+      model: env.AI_MODEL ?? 'claude-haiku-4-5',
+      max_tokens: 1024,
+      system:
+        'You turn a plain-English description of work or goods into invoice line items. ' +
+        'Reply with JSON only, no prose: {"lines":[{"description":string,"quantity":number,"unitCode":string,"unitPrice":number}],"note":string}. ' +
+        'unitCode is a UN/ECE Rec 20 code: C62 (item), HUR (hour), DAY, MON (month), ANN (year), KGM, MTR, E48 (service unit). ' +
+        `Amounts are in ${currency}, as plain numbers with no symbol or separators. ` +
+        'Only state a quantity or price the description actually gives you; if a price is not stated, use 0 and leave it for the user. ' +
+        'Never output tax rates, tax categories, VAT numbers, addresses, dates, invoice numbers or payment details — you are not given them and must not invent them. ' +
+        'Keep "note" to one short sentence, or an empty string.',
+      messages: [{ role: 'user', content: description }],
+    });
+    const text = response.content
+      .filter((block): block is Anthropic.TextBlock => block.type === 'text')
+      .map((block) => block.text)
+      .join('\n')
+      .trim();
+
+    // The model was told to answer in JSON; a fenced block is the usual way it
+    // disobeys, so unwrap that before parsing rather than failing the request.
+    const unfenced = text.replace(/^```(?:json)?\s*/i, '').replace(/```\s*$/, '');
+    const parsed = JSON.parse(unfenced) as { lines?: unknown; note?: unknown };
+    const lines = (Array.isArray(parsed.lines) ? parsed.lines : [])
+      .slice(0, 30)
+      .map((raw) => {
+        const line = (raw ?? {}) as Record<string, unknown>;
+        const quantity = Number(line.quantity);
+        const unitPrice = Number(line.unitPrice);
+        return {
+          description: String(line.description ?? '').slice(0, 300),
+          quantity: Number.isFinite(quantity) && quantity > 0 ? quantity : 1,
+          unitCode: /^[A-Z0-9]{1,3}$/.test(String(line.unitCode ?? '')) ? String(line.unitCode) : 'C62',
+          unitPrice: Number.isFinite(unitPrice) && unitPrice >= 0 ? unitPrice : 0,
+        };
+      })
+      .filter((line) => line.description.length > 0);
+
+    if (!lines.length) throw new Error('no usable lines');
+    return json({ lines, note: typeof parsed.note === 'string' ? parsed.note.slice(0, 300) : '' });
+  } catch (e) {
+    await unmeter(env, '__global__', 'ai');
+    await unmeter(env, user.id, 'ai');
+    console.error('ai draft failed', e);
+    return fail(502, 'upstream', 'The assist service had a hiccup — your quota was not charged. Try again.');
+  }
+}
+
 // ---------------------------------------------------------------- billing
 
 /**
@@ -1030,6 +1112,7 @@ async function handleApi(request: Request, env: Env): Promise<Response> {
     return json({ ok: true, remaining: limit < 0 ? -1 : limit - spent });
   }
   if (path === '/api/ai/explain' && method === 'POST') return handleAiExplain(request, env, user);
+  if (path === '/api/ai/draft' && method === 'POST') return handleAiDraft(request, env, user);
   if (path === '/api/upgrade' && method === 'POST') return handleUpgrade(request, env, user);
 
   return fail(404, 'not_found', 'No such endpoint.');

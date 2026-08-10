@@ -101,20 +101,57 @@ export interface DraftPayment {
   remittance: string;
 }
 
+/**
+ * A document-level adjustment — EN 16931's BG-20 (allowance) and BG-21
+ * (charge). "Discount" and "Shipping" are the two everybody actually uses, so
+ * they get names in the UI, but both land in `allowancesCharges` and flow
+ * through BT-107/BT-108 and the VAT breakdown like any other.
+ */
+export interface DraftAdjustment {
+  enabled: boolean;
+  /** Percentage of the line subtotal, or a flat amount. */
+  mode: 'percent' | 'amount';
+  value: string;
+}
+
 export interface InvoiceDraft {
   market: MarketId;
   formatId: string;
   seller: DraftParty;
   buyer: DraftParty;
+  /**
+   * BG-13. Not a second buyer: where the supply actually went. Optional, and
+   * only written into the document when the user turns it on.
+   */
+  shipTo: DraftParty;
+  shipToEnabled: boolean;
   document: DraftDocument;
   lines: DraftLine[];
   payment: DraftPayment;
+  /**
+   * The single tax rate the whole invoice uses, which is how most people think
+   * about it. Writing here sets every standard-rated line, and lines that
+   * disagree make this read "Mixed" rather than silently flattening them.
+   */
+  tax: { rate: string };
+  discount: DraftAdjustment;
+  shipping: DraftAdjustment;
+  /** BT-113 — already paid, which makes the balance due (BT-115) meaningful. */
+  amountPaid: string;
+  /**
+   * A logo, as a data URL. Print-only: EN 16931 has no field for it, so it
+   * appears on the document a human reads and nowhere in the XML.
+   */
+  logo?: string;
   /**
    * BT-120 per VAT category. Keyed by category code because the breakdown is
    * grouped by category, and the engine wants one reason per group.
    */
   exemptionReasons: Partial<Record<VatCategoryCode, string>>;
 }
+
+/** Largest logo we will keep. Data URLs live in localStorage, which is small. */
+export const MAX_LOGO_BYTES = 400_000;
 
 export const EMPTY_PARTY: DraftParty = {
   name: '',
@@ -210,11 +247,18 @@ export function suggestInvoiceNumber(now: Date, sequence: number): string {
 
 export function emptyDraft(market: MarketId, now: Date, sequence = 1): InvoiceDraft {
   const country = getCountry(defaultCountryFor(market));
+  const defaultRate = country.commonVatRates?.[0];
   return {
     market,
     formatId: DEFAULT_FORMAT[market] ?? 'en16931-ubl',
     seller: { ...EMPTY_PARTY, countryCode: country.code },
     buyer: { ...EMPTY_PARTY, countryCode: country.code },
+    shipTo: { ...EMPTY_PARTY, countryCode: country.code },
+    shipToEnabled: false,
+    tax: { rate: defaultRate !== undefined ? String(defaultRate) : '' },
+    discount: { enabled: false, mode: 'percent', value: '' },
+    shipping: { enabled: false, mode: 'amount', value: '' },
+    amountPaid: '',
     document: {
       number: suggestInvoiceNumber(now, sequence),
       issueDate: isoToday(now),

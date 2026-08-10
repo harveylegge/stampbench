@@ -26,10 +26,12 @@ import {
   parseMoney,
   percentOf,
   PRICE_SCALE,
+  subtract,
   sum,
   toDecimal,
   withComputedTotals,
   withProfileDefaults,
+  type AllowanceCharge,
   type Invoice,
   type InvoiceLine,
   type Money,
@@ -76,10 +78,71 @@ export interface DraftTotals {
   categories: CategoryTotal[];
   /** BT-106 — sum of line net amounts. */
   net: Money;
+  /** BT-107 — document-level allowances (the discount). */
+  allowances: Money;
+  /** BT-108 — document-level charges (shipping). */
+  charges: Money;
+  /** BT-109 — total without VAT, after allowances and charges. */
+  taxable: Money;
   /** BT-110 — total VAT. */
   tax: Money;
   /** BT-112 — total with VAT. */
   gross: Money;
+  /** BT-113 — already paid. */
+  paid: Money;
+  /** BT-115 — balance due. */
+  balance: Money;
+}
+
+/**
+ * The document-level allowance (discount) and charge (shipping), as the engine
+ * models them.
+ *
+ * Both need a VAT category: EN 16931 does not allow an untaxed adjustment to
+ * sit beside taxed lines without saying how it is treated. When every line
+ * shares one category the engine inherits it, which covers the ordinary case;
+ * a mixed-rate invoice leaves it unresolved and validation says so rather than
+ * the builder picking a rate on the user's behalf.
+ */
+export function adjustmentsFor(draft: InvoiceDraft, lineSubtotal: Money): AllowanceCharge[] {
+  const out: AllowanceCharge[] = [];
+  const sole = new Set(draft.lines.map((l) => `${l.vatCategory}@${l.vatRate}`));
+  const inherit =
+    sole.size === 1
+      ? {
+          vatCategoryCode: draft.lines[0]!.vatCategory,
+          vatRate: number(draft.lines[0]!.vatRate) ?? 0,
+        }
+      : {};
+
+  if (draft.discount.enabled) {
+    const amount =
+      draft.discount.mode === 'percent'
+        ? percentOf(lineSubtotal, number(draft.discount.value) ?? 0)
+        : (parseMoney(draft.discount.value, SCALE) ?? money(0, SCALE));
+    if (amount.units !== 0) {
+      const entry: AllowanceCharge = {
+        isCharge: false,
+        amount: toDecimal(amount),
+        reason: 'Discount',
+        ...inherit,
+      };
+      if (draft.discount.mode === 'percent') {
+        entry.percentage = number(draft.discount.value);
+        entry.baseAmount = toDecimal(lineSubtotal);
+      }
+      out.push(entry);
+    }
+  }
+
+  if (draft.shipping.enabled) {
+    const amount = parseMoney(draft.shipping.value, SCALE) ?? money(0, SCALE);
+    if (amount.units !== 0) {
+      out.push({ isCharge: true, amount: toDecimal(amount), reason: 'Shipping', ...inherit });
+    }
+  }
+
+  return out;
 }
 
 /**
@@ -117,35 +180,62 @@ export function computeDraftTotals(draft: InvoiceDraft): DraftTotals {
     };
   });
 
+  const net = sum(
+    lines.map((l) => l.net),
+    SCALE,
+  );
+
+  // Document-level adjustments join their VAT group before the tax is worked
+  // out, which is what BR-S-08 checks: the taxable amount of a group is
+  // lines − allowances + charges, not lines alone.
+  const adjustments = adjustmentsFor(draft, net);
+  const allowances = sum(
+    adjustments.filter((a) => !a.isCharge).map((a) => fromDecimal(a.amount, SCALE)),
+    SCALE,
+  );
+  const charges = sum(
+    adjustments.filter((a) => a.isCharge).map((a) => fromDecimal(a.amount, SCALE)),
+    SCALE,
+  );
+
   const groups = new Map<string, CategoryTotal>();
-  for (const line of lines) {
-    const key = `${line.categoryCode}@${line.rate ?? ''}`;
+  const addToGroup = (categoryCode: VatCategoryCode, rate: number | undefined, amount: Money) => {
+    const key = `${categoryCode}@${rate ?? ''}`;
     const existing = groups.get(key);
-    if (existing) {
-      existing.taxable = add(existing.taxable, line.net);
-    } else {
-      groups.set(key, {
-        categoryCode: line.categoryCode,
-        rate: line.rate,
-        taxable: line.net,
-        tax: money(0, SCALE),
-      });
-    }
+    if (existing) existing.taxable = add(existing.taxable, amount);
+    else groups.set(key, { categoryCode, rate, taxable: amount, tax: money(0, SCALE) });
+  };
+  for (const line of lines) addToGroup(line.categoryCode, line.rate, line.net);
+  for (const adjustment of adjustments) {
+    if (!adjustment.vatCategoryCode) continue;
+    const signed = fromDecimal(adjustment.isCharge ? adjustment.amount : -adjustment.amount, SCALE);
+    addToGroup(adjustment.vatCategoryCode as VatCategoryCode, adjustment.vatRate, signed);
   }
+
   const categories = [...groups.values()].map((group) => ({
     ...group,
     tax: percentOf(group.taxable, group.rate ?? 0),
   }));
 
-  const net = sum(
-    lines.map((l) => l.net),
-    SCALE,
-  );
   const tax = sum(
     categories.map((c) => c.tax),
     SCALE,
   );
-  return { lines, categories, net, tax, gross: add(net, tax) };
+  const taxable = add(subtract(net, allowances), charges);
+  const gross = add(taxable, tax);
+  const paid = parseMoney(draft.amountPaid, SCALE) ?? money(0, SCALE);
+  return {
+    lines,
+    categories,
+    net,
+    allowances,
+    charges,
+    taxable,
+    tax,
+    gross,
+    paid,
+    balance: subtract(gross, paid),
+  };
 }
 
 function toAddress(party: DraftParty) {
@@ -235,6 +325,26 @@ export function toInvoiceModel(draft: InvoiceDraft): Invoice {
   const note = text(draft.document.note);
   if (note) invoice.notes = [note];
 
+  // BG-13. Both halves are optional on their own — a delivery date with no
+  // address is ordinary, and so is a ship-to with no date.
+  const deliveryAddress = draft.shipToEnabled ? toAddress(draft.shipTo) : undefined;
+  const deliveryName = draft.shipToEnabled ? text(draft.shipTo.name) : undefined;
+  const deliveryDate = text(draft.document.deliveryDate);
+  if (deliveryAddress || deliveryName || deliveryDate) {
+    invoice.delivery = {
+      name: deliveryName,
+      actualDate: deliveryDate,
+      address: deliveryAddress,
+    };
+  }
+
+  const lineSubtotal = sum(
+    draft.lines.map(lineNetAmount),
+    SCALE,
+  );
+  const adjustments = adjustmentsFor(draft, lineSubtotal);
+  if (adjustments.length) invoice.allowancesCharges = adjustments;
+
   const payment = draft.payment;
   const accountId = text(payment.accountId);
   const providerId = text(payment.providerId);
@@ -251,7 +361,11 @@ export function toInvoiceModel(draft: InvoiceDraft): Invoice {
     }
   }
 
-  const withTotals = withComputedTotals(withProfileDefaults(invoice, { profile }));
+  const paid = parseMoney(draft.amountPaid, SCALE);
+  const withTotals = withComputedTotals(
+    withProfileDefaults(invoice, { profile }),
+    paid && paid.units !== 0 ? { paidAmount: toDecimal(paid) } : undefined,
+  );
 
   // Exemption reasons attach to the VAT breakdown the engine just built, so
   // they survive regrouping. Only categories that actually require one get a

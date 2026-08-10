@@ -197,6 +197,28 @@ export interface Totals {
   amountDue?: number;
 }
 
+/**
+ * BG-13 — delivery information: where the goods or services actually went,
+ * and when.
+ *
+ * Distinct from the buyer (BG-7) on purpose: an invoice is billed to one
+ * address and delivered to another often enough that EN 16931 gives delivery
+ * its own group. Without it a "ship to" on an invoice has nowhere structured
+ * to live and quietly becomes decoration on a PDF.
+ */
+export interface Delivery {
+  /** BT-70 — the name of the party the goods are delivered to. */
+  name?: string;
+  /** BT-71 — delivery location identifier (e.g. a GLN). */
+  locationId?: string;
+  /** Scheme of the location identifier (e.g. "0088" for GLN). */
+  locationIdScheme?: string;
+  /** BT-72 — the date the supply actually took place. */
+  actualDate?: string;
+  /** BG-15 — the delivery address. */
+  address?: PostalAddress;
+}
+
 /** BG-3 — reference to a preceding invoice (credit notes, corrections). */
 export interface PrecedingInvoiceReference {
   /** BT-25 — preceding invoice number. */
@@ -251,6 +273,8 @@ export interface Invoice {
   /** BG-10 — payee, if different from seller. */
   payee?: Party;
   /** BG-16 — payment instructions. */
+  /** BG-13 — where and when the supply was delivered. */
+  delivery?: Delivery;
   payment?: PaymentInstructions;
   /** BG-20/BG-21 — document-level allowances and charges. */
   allowancesCharges?: AllowanceCharge[];

@@ -10,14 +10,12 @@ import { defaultCountryFor } from '@/lib/invoice/draft';
 import { MARKETS, PAGE_MARKETS, rulesetFor, type MarketId } from '@/lib/markets';
 
 /**
- * Per-market generator pages.
+ * Per-market generator pages — four, not forty.
  *
- * Four, not forty. Each one exists because there is something specific and
- * true to say about generating an invoice for that market — which ruleset
- * runs, which fields the forms ask for, what is not implemented — and the
- * generator underneath opens on that market. A page that only differed by a
- * country name in the heading would be exactly the thin SEO page this product
- * has no business publishing.
+ * Each exists because there is something specific and true to say about
+ * generating an invoice for that market: which ruleset runs, which fields the
+ * forms ask for, what is not implemented. That detail sits *below* the editor,
+ * because the visitor came to make an invoice, not to read one.
  */
 
 export const dynamicParams = false;
@@ -80,8 +78,8 @@ export default async function MarketGeneratorPage({
   const country = getCountry(defaultCountryFor(id));
 
   return (
-    <div className="mx-auto max-w-6xl px-4 py-10 sm:py-12">
-      <nav aria-label="Breadcrumb" className="mb-6 text-sm text-faint">
+    <div className="mx-auto max-w-6xl px-4 py-8 sm:py-10">
+      <nav aria-label="Breadcrumb" className="mb-4 text-sm text-faint">
         <Link href="/invoice-generator" className="transition hover:text-muted">
           Invoice generator
         </Link>
@@ -91,49 +89,51 @@ export default async function MarketGeneratorPage({
         <span className="text-muted">{market.name}</span>
       </nav>
 
-      <div className="mb-8 max-w-2xl">
-        <div className="mb-4 text-muted">
-          <Flag code={market.flag} size={34} />
-        </div>
-        <h1 className="mb-3 text-3xl font-semibold tracking-tight sm:text-4xl">
-          Invoice generator for {market.name}
-        </h1>
-        <p className="leading-relaxed text-muted">{market.stance}</p>
-      </div>
+      <h1 className="mb-6 flex flex-wrap items-center gap-3 text-2xl font-semibold tracking-tight sm:text-3xl">
+        <Flag code={market.flag} size={30} />
+        Create an invoice for {market.name}
+      </h1>
 
-      <div className="mb-8 grid gap-3 sm:grid-cols-3">
-        <div className="rounded-xl border border-border bg-surface p-4">
-          <div className="mb-1 text-xs uppercase tracking-[0.12em] text-faint">Validated against</div>
-          <div className="text-sm font-medium">{ruleset.label}</div>
-          <div className="font-mono text-xs text-faint">
-            {ruleset.id} · {ruleset.ruleCount} rules
-          </div>
-        </div>
-        <div className="rounded-xl border border-border bg-surface p-4">
-          <div className="mb-1 text-xs uppercase tracking-[0.12em] text-faint">Form adapts to</div>
-          <div className="text-sm font-medium">{country.name || 'Your chosen country'}</div>
-          <div className="text-xs text-faint">
-            {country.address.postCodeLabel}
-            {country.address.subdivisionLabel ? `, ${country.address.subdivisionLabel}` : ''} ·{' '}
-            {country.bank === 'uk'
-              ? 'sort code + account number'
-              : country.bank === 'us'
-                ? 'routing + account number'
-                : 'IBAN + BIC'}
-          </div>
-        </div>
-        <div className="rounded-xl border border-border bg-surface p-4">
-          <div className="mb-1 text-xs uppercase tracking-[0.12em] text-faint">Exports</div>
-          <div className="text-sm font-medium">
-            {[...new Set(formats.filter(isUsable).flatMap((f) => f.outputs))]
-              .map((o) => (o === 'print' ? 'PDF (print)' : o.toUpperCase()))
-              .join(' · ')}
-          </div>
-          <div className="text-xs text-faint">Structured document first, printable view second.</div>
-        </div>
-      </div>
+      <InvoiceGenerator initialMarket={id} />
 
-      <div className="mb-10">
+      <section className="mt-16 border-t border-border pt-10">
+        <h2 className="mb-3 text-xl font-semibold tracking-tight">
+          What Stampbench does for {market.name}
+        </h2>
+        <p className="mb-8 max-w-2xl leading-relaxed text-muted">{market.stance}</p>
+
+        <div className="mb-10 grid gap-3 sm:grid-cols-3">
+          <div className="rounded-xl border border-border bg-surface p-4">
+            <div className="mb-1 text-xs uppercase tracking-[0.12em] text-faint">Validated against</div>
+            <div className="text-sm font-medium">{ruleset.label}</div>
+            <div className="font-mono text-xs text-faint">
+              {ruleset.id} · {ruleset.ruleCount} rules
+            </div>
+          </div>
+          <div className="rounded-xl border border-border bg-surface p-4">
+            <div className="mb-1 text-xs uppercase tracking-[0.12em] text-faint">Form adapts to</div>
+            <div className="text-sm font-medium">{country.name || 'Your chosen country'}</div>
+            <div className="text-xs text-faint">
+              {country.address.postCodeLabel}
+              {country.address.subdivisionLabel ? `, ${country.address.subdivisionLabel}` : ''} ·{' '}
+              {country.bank === 'uk'
+                ? 'sort code + account number'
+                : country.bank === 'us'
+                  ? 'routing + account number'
+                  : 'IBAN + BIC'}
+            </div>
+          </div>
+          <div className="rounded-xl border border-border bg-surface p-4">
+            <div className="mb-1 text-xs uppercase tracking-[0.12em] text-faint">Exports</div>
+            <div className="text-sm font-medium">
+              {[...new Set(formats.filter(isUsable).flatMap((f) => f.outputs))]
+                .map((o) => (o === 'print' ? 'PDF (print)' : o.toUpperCase()))
+                .join(' · ')}
+            </div>
+            <div className="text-xs text-faint">Structured document first, printable view second.</div>
+          </div>
+        </div>
+
         <h2 className="mb-3 text-lg font-semibold tracking-tight">Formats available here</h2>
         <div className="grid gap-2 sm:grid-cols-2">
           {formats.map((format) => (
@@ -166,26 +166,21 @@ export default async function MarketGeneratorPage({
             </div>
           ))}
         </div>
-      </div>
 
-      <div className="mb-6 border-t border-border pt-8">
-        <h2 className="text-2xl font-semibold tracking-tight">Create the invoice</h2>
-      </div>
-      <InvoiceGenerator initialMarket={id} />
-
-      <div className="mt-12 border-t border-border pt-6 text-sm text-faint">
-        <Link href={`/markets/${id}`} className="text-accent-hi hover:underline">
-          What else Stampbench covers for {market.name}
-        </Link>
-        <span className="mx-2">·</span>
-        <Link href="/docs" className="text-accent-hi hover:underline">
-          API documentation
-        </Link>
-        <span className="mx-2">·</span>
-        <Link href="/playground" className="text-accent-hi hover:underline">
-          Validate an invoice you already have
-        </Link>
-      </div>
+        <p className="mt-8 text-sm text-faint">
+          <Link href={`/markets/${id}`} className="text-accent-hi hover:underline">
+            What else Stampbench covers for {market.name}
+          </Link>
+          <span className="mx-2">·</span>
+          <Link href="/docs" className="text-accent-hi hover:underline">
+            API documentation
+          </Link>
+          <span className="mx-2">·</span>
+          <Link href="/playground" className="text-accent-hi hover:underline">
+            Validate an invoice you already have
+          </Link>
+        </p>
+      </section>
     </div>
   );
 }

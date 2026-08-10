@@ -182,3 +182,26 @@ export function aiStatus(): Promise<{ enabled: boolean }> {
 export function aiExplain(violations: unknown[]): Promise<{ explanation: string }> {
   return call('/api/ai/explain', { method: 'POST', body: JSON.stringify({ violations }) });
 }
+
+export interface AiDraftLine {
+  description: string;
+  quantity: number;
+  unitCode: string;
+  unitPrice: number;
+}
+
+/**
+ * Turn a plain-English description into line items. Same credit jar as the
+ * explainer. Deliberately returns *only* commercial content — the server never
+ * emits a tax rate, a VAT id, an address or a date, so there is nothing here
+ * that could quietly become a compliance claim.
+ */
+export function aiDraft(
+  description: string,
+  currency: string,
+): Promise<{ lines: AiDraftLine[]; note: string }> {
+  return call('/api/ai/draft', {
+    method: 'POST',
+    body: JSON.stringify({ description, currency }),
+  });
+}

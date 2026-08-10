@@ -9,11 +9,13 @@ import {
   BUTTON_PRIMARY,
   BUTTON_QUIET,
   BUTTON_SECONDARY,
-  Section,
+  DocDetails,
+  DocField,
   SelectField,
   TextAreaField,
   TextField,
 } from '@/components/invoice/fields';
+ import { AiAssist } from '@/components/invoice/ai-assist';
 import { InvoicePreview } from '@/components/invoice/preview';
 import { GenerationResult } from '@/components/invoice/result';
 import {
@@ -32,11 +34,10 @@ import {
 } from '@/lib/invoice/countries';
 import {
   emptyDraft,
+  MAX_LOGO_BYTES,
   newLine,
   PAYMENT_MEANS_OPTIONS,
   TYPE_CODE_OPTIONS,
-  UNIT_OPTIONS,
-  type DraftParty,
   type InvoiceDraft,
 } from '@/lib/invoice/draft';
 import { formatsForMarket, getFormat, isUsable, rulesetLabelFor, SUPPORT_LABEL } from '@/lib/invoice/formats';
@@ -73,12 +74,36 @@ const DRAFT_KEY = 'sb_invoice_draft';
 
 type Phase = 'market' | 'format' | 'build' | 'result';
 
+/**
+ * Read the saved draft, filling in anything a newer build expects.
+ *
+ * A draft written by an earlier version of this page is missing whatever has
+ * been added since — and the totals code reaches straight into `discount.
+ * enabled`, so a stale draft would throw on mount and take the whole editor
+ * with it. Merging over a fresh draft costs nothing and means someone's
+ * half-finished invoice survives a deploy.
+ */
 function loadDraft(): InvoiceDraft | null {
   try {
     const raw = window.localStorage.getItem(DRAFT_KEY);
     if (!raw) return null;
-    const parsed = JSON.parse(raw) as InvoiceDraft;
-    return parsed && Array.isArray(parsed.lines) ? parsed : null;
+    const parsed = JSON.parse(raw) as Partial<InvoiceDraft>;
+    if (!parsed || !Array.isArray(parsed.lines)) return null;
+    const base = emptyDraft(parsed.market ?? 'eu', new Date());
+    return {
+      ...base,
+      ...parsed,
+      seller: { ...base.seller, ...parsed.seller },
+      buyer: { ...base.buyer, ...parsed.buyer },
+      shipTo: { ...base.shipTo, ...parsed.shipTo },
+      document: { ...base.document, ...parsed.document },
+      payment: { ...base.payment, ...parsed.payment },
+      tax: { ...base.tax, ...parsed.tax },
+      discount: { ...base.discount, ...parsed.discount },
+      shipping: { ...base.shipping, ...parsed.shipping },
+      exemptionReasons: { ...parsed.exemptionReasons },
+      lines: parsed.lines.map((line) => ({ ...newLine(), ...line })),
+    };
   } catch {
     return null;
   }
@@ -92,123 +117,6 @@ function saveDraft(draft: InvoiceDraft | null): void {
     // Storage unavailable. The draft still lives in memory for this session;
     // it simply will not survive a reload, which is the right degradation.
   }
-}
-
-// ------------------------------------------------------------------ party form
-
-function PartyForm({
-  party,
-  onChange,
-  role,
-}: {
-  party: DraftParty;
-  onChange: (patch: Partial<DraftParty>) => void;
-  role: 'seller' | 'buyer';
-}) {
-  const country = getCountry(party.countryCode);
-  const isSeller = role === 'seller';
-
-  return (
-    <div className="grid gap-4 sm:grid-cols-2">
-      <TextField
-        label="Legal name"
-        value={party.name}
-        onChange={(name) => onChange({ name })}
-        required
-        className="sm:col-span-2"
-        hint={isSeller ? 'BT-27 — the registered name, as it appears on the company register.' : 'BT-44'}
-      />
-      <TextField
-        label="Trading name (optional)"
-        value={party.tradingName}
-        onChange={(tradingName) => onChange({ tradingName })}
-      />
-      <SelectField
-        label="Country"
-        value={party.countryCode}
-        onChange={(countryCode) => onChange({ countryCode, subdivision: '' })}
-        options={[
-          { value: '', label: 'Select a country…' },
-          ...COUNTRY_OPTIONS.map((c) => ({ value: c.code, label: c.name })),
-        ]}
-        required
-      />
-      <TextField
-        label={country.address.streetLabel}
-        value={party.street}
-        onChange={(street) => onChange({ street })}
-        className="sm:col-span-2"
-        autoComplete="off"
-      />
-      <TextField label={country.address.cityLabel} value={party.city} onChange={(city) => onChange({ city })} />
-      <TextField
-        label={country.address.postCodeLabel}
-        value={party.postCode}
-        onChange={(postCode) => onChange({ postCode })}
-        placeholder={country.address.postCodePlaceholder}
-      />
-      {country.address.subdivisionLabel &&
-        (country.address.subdivisions ? (
-          <SelectField
-            label={country.address.subdivisionLabel}
-            value={party.subdivision}
-            onChange={(subdivision) => onChange({ subdivision })}
-            required={country.address.subdivisionRequired}
-            options={[
-              { value: '', label: 'Select…' },
-              ...country.address.subdivisions.map((s) => ({ value: s.code, label: s.name })),
-            ]}
-          />
-        ) : (
-          <TextField
-            label={country.address.subdivisionLabel}
-            value={party.subdivision}
-            onChange={(subdivision) => onChange({ subdivision })}
-          />
-        ))}
-      <TextField
-        label={country.taxIdLabel}
-        value={party.vatId}
-        onChange={(vatId) => onChange({ vatId })}
-        placeholder={country.taxIdPlaceholder}
-        hint={isSeller ? 'BT-31' : 'BT-48 — needed for reverse charge and intra-community supplies.'}
-      />
-      {isSeller && (
-        <TextField
-          label="Tax registration (optional)"
-          value={party.taxRegistrationId}
-          onChange={(taxRegistrationId) => onChange({ taxRegistrationId })}
-          hint="BT-32 — a Steuernummer, UTR or EIN. Either this or the VAT identifier is required."
-        />
-      )}
-      {country.companyIdLabel && (
-        <TextField
-          label={`${country.companyIdLabel} (optional)`}
-          value={party.companyId}
-          onChange={(companyId) => onChange({ companyId })}
-        />
-      )}
-      <TextField
-        label="Contact name"
-        value={party.contactName}
-        onChange={(contactName) => onChange({ contactName })}
-      />
-      <TextField
-        label="Email"
-        type="email"
-        inputMode="email"
-        value={party.email}
-        onChange={(email) => onChange({ email })}
-      />
-      <TextField label="Telephone" inputMode="tel" value={party.phone} onChange={(phone) => onChange({ phone })} />
-      <TextField
-        label="Electronic address (optional)"
-        value={party.electronicAddress}
-        onChange={(electronicAddress) => onChange({ electronicAddress })}
-        hint={isSeller ? 'BT-34' : 'BT-49 — a Peppol participant id or email, used for electronic delivery.'}
-      />
-    </div>
-  );
 }
 
 // ------------------------------------------------------------------- generator
@@ -462,6 +370,16 @@ export function InvoiceGenerator({ initialMarket }: { initialMarket?: MarketId }
   }
 
   // ----------------------------------------------------------------- build step
+  //
+  // The invoice is the interface. Rather than a form on one side and a preview
+  // on the other — two views of the same data, inevitably drifting — the
+  // fields sit in the document where their values will print. What cannot fit
+  // there without turning an invoice into a tax form (VAT identifiers, contact
+  // details, exemption reasons) hides behind a disclosure under the block it
+  // belongs to, with a dot when the chosen ruleset needs it and it is missing.
+  //
+  // The rail on the right carries the actions and the compliance context, so
+  // the document stays a document.
 
   const sellerCountry = getCountry(draft.seller.countryCode);
   const buyerCountry = getCountry(draft.buyer.countryCode);
@@ -469,45 +387,858 @@ export function InvoiceGenerator({ initialMarket }: { initialMarket?: MarketId }
   const relation = tradeRelation(draft.seller.countryCode, draft.buyer.countryCode);
   const availableCategories = categoriesFor(draft.seller.countryCode, draft.buyer.countryCode);
   const usedCategories = [...new Set(draft.lines.map((l) => l.vatCategory))];
+  const reasonsNeeded = usedCategories.filter((c) => getVatCategory(c).exemptionReason === 'required');
   const bankLabels =
     sellerCountry.bank === 'uk'
-      ? { account: 'Account number', provider: 'Sort code', accountHint: 'BT-84', providerHint: 'BT-86' }
+      ? { account: 'Account number', provider: 'Sort code' }
       : sellerCountry.bank === 'us'
-        ? { account: 'Account number', provider: 'Routing number (ABA)', accountHint: 'BT-84', providerHint: 'BT-86' }
-        : { account: 'IBAN', provider: 'BIC / SWIFT', accountHint: 'BT-84', providerHint: 'BT-86' };
+        ? { account: 'Account number', provider: 'Routing number (ABA)' }
+        : { account: 'IBAN', provider: 'BIC / SWIFT' };
   const currency = draft.document.currency || 'EUR';
   const sellerLocale = sellerCountry.locale;
+  const cash = (amount: Parameters<typeof formatMoney>[0]) => formatMoney(amount, currency, sellerLocale);
+
+  // One rate for the whole invoice is how people think about tax. When the
+  // lines disagree the field says so instead of flattening them silently.
+  const standardRates = [
+    ...new Set(
+      draft.lines.filter((l) => getVatCategory(l.vatCategory).rate === 'positive').map((l) => l.vatRate),
+    ),
+  ];
+  const taxIsMixed = standardRates.length > 1;
 
   function setLine(index: number, patch: Partial<InvoiceDraft['lines'][number]>) {
     update({ lines: draft!.lines.map((line, i) => (i === index ? { ...line, ...patch } : line)) });
   }
 
+  /** Writing the document tax rate rewrites every standard-rated line. */
+  function setTaxRate(rate: string) {
+    update({
+      tax: { rate },
+      lines: draft!.lines.map((line) =>
+        getVatCategory(line.vatCategory).rate === 'positive' ? { ...line, vatRate: rate } : line,
+      ),
+    });
+  }
+
+  function readLogo(file: File) {
+    if (file.size > MAX_LOGO_BYTES) {
+      setErrors([`That logo is ${(file.size / 1024).toFixed(0)} kB — keep it under ${MAX_LOGO_BYTES / 1024} kB.`]);
+      return;
+    }
+    const reader = new FileReader();
+    reader.onload = () => update({ logo: String(reader.result) });
+    reader.readAsDataURL(file);
+  }
+
+  const partyIncomplete = (party: typeof draft.seller, seller: boolean) =>
+    seller
+      ? !party.vatId && !party.taxRegistrationId
+      : usedCategories.some((c) => getVatCategory(c).buyerVatRequired) && !party.vatId;
+
   return (
-    <div className="flex flex-col gap-6">
-      {/* Context bar: what is being built, and how to change it. */}
-      <div className="flex flex-wrap items-center justify-between gap-3 rounded-xl border border-border bg-surface px-4 py-3">
-        <div className="flex flex-wrap items-center gap-x-3 gap-y-2 text-sm">
-          <span className="flex items-center gap-2 font-medium">
-            <Flag code={MARKETS[draft.market].flag} size={20} />
-            {MARKETS[draft.market].name}
-          </span>
-          <span className="text-faint">·</span>
-          <span className="text-muted">{format!.name}</span>
-          <span className="font-mono text-xs text-faint">{rulesetLabelFor(format!)}</span>
+    <div className="grid gap-6 lg:grid-cols-[minmax(0,1fr)_15rem] lg:items-start">
+      {/* ------------------------------------------------------- the document */}
+      <div className="rounded-xl border border-border bg-surface p-5 sm:p-8 lg:p-10">
+        {/* Masthead */}
+        <div className="mb-8 flex flex-wrap items-start justify-between gap-6">
+          <div>
+            {draft.logo ? (
+              <div className="flex items-start gap-3">
+                {/* eslint-disable-next-line @next/next/no-img-element -- a data URL from the user's own disk; next/image cannot optimise it and would not try */}
+                <img src={draft.logo} alt="" className="max-h-24 max-w-[13rem] object-contain" />
+                <button
+                  onClick={() => update({ logo: undefined })}
+                  className="rounded-lg px-2 py-1 text-xs text-muted transition hover:text-danger"
+                >
+                  Remove
+                </button>
+              </div>
+            ) : (
+              <label className="flex h-24 w-52 cursor-pointer items-center justify-center rounded-lg border border-dashed border-border bg-bg text-sm text-muted transition hover:border-border-hi hover:text-text">
+                + Add your logo
+                <input
+                  type="file"
+                  accept="image/png,image/jpeg,image/svg+xml,image/webp"
+                  className="sr-only"
+                  onChange={(e) => {
+                    const file = e.target.files?.[0];
+                    if (file) readLogo(file);
+                  }}
+                />
+              </label>
+            )}
+            <p className="mt-1.5 max-w-[13rem] text-[11px] leading-relaxed text-faint">
+              Printed only — EN 16931 has no logo field, so it is not written into the XML.
+            </p>
+          </div>
+
+          <div className="text-right">
+            <h2 className="mb-2 text-3xl font-semibold tracking-tight sm:text-4xl">
+              {draft.document.typeCode === '381' ? 'CREDIT NOTE' : 'INVOICE'}
+            </h2>
+            <div className="flex items-center justify-end gap-2">
+              <span className="text-sm text-faint">#</span>
+              <DocField
+                label="Invoice number"
+                value={draft.document.number}
+                onChange={(number) => update({ document: { ...draft.document, number } })}
+                align="right"
+                className="w-44"
+              />
+            </div>
+          </div>
         </div>
-        <div className="flex flex-wrap gap-2">
-          <button onClick={() => setPhase('format')} className={BUTTON_QUIET}>
-            Change format
+
+        {/* From, and the dates */}
+        <div className="mb-8 grid gap-6 sm:grid-cols-2">
+          <div>
+            <div className="mb-1.5 text-xs font-medium uppercase tracking-[0.12em] text-faint">From</div>
+            <div className="grid gap-2">
+              <DocField
+                label="Your business name"
+                placeholder="Who is this from?"
+                value={draft.seller.name}
+                onChange={(name) => update({ seller: { ...draft.seller, name } })}
+                bold
+              />
+              <DocField
+                label={`Your ${sellerCountry.address.streetLabel.toLowerCase()}`}
+                placeholder={sellerCountry.address.streetLabel}
+                value={draft.seller.street}
+                onChange={(street) => update({ seller: { ...draft.seller, street } })}
+              />
+              <div className="grid grid-cols-2 gap-2">
+                <DocField
+                  label={`Your ${sellerCountry.address.cityLabel.toLowerCase()}`}
+                  placeholder={sellerCountry.address.cityLabel}
+                  value={draft.seller.city}
+                  onChange={(city) => update({ seller: { ...draft.seller, city } })}
+                />
+                <DocField
+                  label={`Your ${sellerCountry.address.postCodeLabel.toLowerCase()}`}
+                  placeholder={sellerCountry.address.postCodeLabel}
+                  value={draft.seller.postCode}
+                  onChange={(postCode) => update({ seller: { ...draft.seller, postCode } })}
+                />
+              </div>
+              <SelectField
+                label="Your country"
+                value={draft.seller.countryCode}
+                onChange={(countryCode) =>
+                  update({ seller: { ...draft.seller, countryCode, subdivision: '' } })
+                }
+                options={[
+                  { value: '', label: 'Select a country…' },
+                  ...COUNTRY_OPTIONS.map((c) => ({ value: c.code, label: c.name })),
+                ]}
+              />
+            </div>
+            <DocDetails summary="Tax and contact details" incomplete={partyIncomplete(draft.seller, true)}>
+              <TextField
+                label={sellerCountry.taxIdLabel}
+                value={draft.seller.vatId}
+                onChange={(vatId) => update({ seller: { ...draft.seller, vatId } })}
+                placeholder={sellerCountry.taxIdPlaceholder}
+                hint="BT-31"
+              />
+              <TextField
+                label="Tax registration"
+                value={draft.seller.taxRegistrationId}
+                onChange={(taxRegistrationId) => update({ seller: { ...draft.seller, taxRegistrationId } })}
+                hint="BT-32 — either this or the VAT identifier is required by every VAT category."
+              />
+              {sellerCountry.address.subdivisionLabel && (
+                <TextField
+                  label={sellerCountry.address.subdivisionLabel}
+                  value={draft.seller.subdivision}
+                  onChange={(subdivision) => update({ seller: { ...draft.seller, subdivision } })}
+                />
+              )}
+              {sellerCountry.companyIdLabel && (
+                <TextField
+                  label={sellerCountry.companyIdLabel}
+                  value={draft.seller.companyId}
+                  onChange={(companyId) => update({ seller: { ...draft.seller, companyId } })}
+                  hint="BT-30"
+                />
+              )}
+              <TextField
+                label="Contact name"
+                value={draft.seller.contactName}
+                onChange={(contactName) => update({ seller: { ...draft.seller, contactName } })}
+                hint="BT-41"
+              />
+              <TextField
+                label="Telephone"
+                inputMode="tel"
+                value={draft.seller.phone}
+                onChange={(phone) => update({ seller: { ...draft.seller, phone } })}
+                hint="BT-42"
+              />
+              <TextField
+                label="Email"
+                type="email"
+                inputMode="email"
+                value={draft.seller.email}
+                onChange={(email) => update({ seller: { ...draft.seller, email } })}
+                hint="BT-43"
+              />
+              <TextField
+                label="Electronic address"
+                value={draft.seller.electronicAddress}
+                onChange={(electronicAddress) => update({ seller: { ...draft.seller, electronicAddress } })}
+                hint="BT-34 — a Peppol participant id or email."
+              />
+            </DocDetails>
+          </div>
+
+          <div className="grid content-start gap-2">
+            {[
+              {
+                label: 'Date',
+                hint: 'BT-2',
+                type: 'date',
+                value: draft.document.issueDate,
+                set: (issueDate: string) => update({ document: { ...draft.document, issueDate } }),
+              },
+              {
+                label: 'Due date',
+                hint: 'BT-9',
+                type: 'date',
+                value: draft.document.dueDate,
+                set: (dueDate: string) => update({ document: { ...draft.document, dueDate } }),
+              },
+              {
+                label: 'Delivery date',
+                hint: 'BT-72',
+                type: 'date',
+                value: draft.document.deliveryDate,
+                set: (deliveryDate: string) => update({ document: { ...draft.document, deliveryDate } }),
+              },
+              {
+                label: 'PO number',
+                hint: 'BT-13',
+                type: 'text',
+                value: draft.document.orderReference,
+                set: (orderReference: string) => update({ document: { ...draft.document, orderReference } }),
+              },
+              {
+                label: 'Your reference',
+                hint: 'BT-10',
+                type: 'text',
+                value: draft.document.buyerReference,
+                set: (buyerReference: string) => update({ document: { ...draft.document, buyerReference } }),
+              },
+            ].map((row) => (
+              <div key={row.label} className="grid grid-cols-[minmax(0,1fr)_minmax(0,11rem)] items-center gap-3">
+                <span className="text-sm text-muted">
+                  {row.label}
+                  <span className="ml-1.5 font-mono text-[11px] text-faint">{row.hint}</span>
+                </span>
+                <DocField label={row.label} type={row.type} value={row.value} onChange={row.set} />
+              </div>
+            ))}
+          </div>
+        </div>
+
+        {/* Bill to / ship to */}
+        <div className="mb-8 grid gap-6 sm:grid-cols-2">
+          <div>
+            <div className="mb-1.5 text-xs font-medium uppercase tracking-[0.12em] text-faint">Bill to</div>
+            <div className="grid gap-2">
+              <DocField
+                label="Customer name"
+                placeholder="Who is this to?"
+                value={draft.buyer.name}
+                onChange={(name) => update({ buyer: { ...draft.buyer, name } })}
+                bold
+              />
+              <DocField
+                label={`Customer ${buyerCountry.address.streetLabel.toLowerCase()}`}
+                placeholder={buyerCountry.address.streetLabel}
+                value={draft.buyer.street}
+                onChange={(street) => update({ buyer: { ...draft.buyer, street } })}
+              />
+              <div className="grid grid-cols-2 gap-2">
+                <DocField
+                  label={`Customer ${buyerCountry.address.cityLabel.toLowerCase()}`}
+                  placeholder={buyerCountry.address.cityLabel}
+                  value={draft.buyer.city}
+                  onChange={(city) => update({ buyer: { ...draft.buyer, city } })}
+                />
+                <DocField
+                  label={`Customer ${buyerCountry.address.postCodeLabel.toLowerCase()}`}
+                  placeholder={buyerCountry.address.postCodeLabel}
+                  value={draft.buyer.postCode}
+                  onChange={(postCode) => update({ buyer: { ...draft.buyer, postCode } })}
+                />
+              </div>
+              <SelectField
+                label="Customer country"
+                value={draft.buyer.countryCode}
+                onChange={(countryCode) => update({ buyer: { ...draft.buyer, countryCode, subdivision: '' } })}
+                options={[
+                  { value: '', label: 'Select a country…' },
+                  ...COUNTRY_OPTIONS.map((c) => ({ value: c.code, label: c.name })),
+                ]}
+              />
+            </div>
+            <DocDetails summary="Tax and contact details" incomplete={partyIncomplete(draft.buyer, false)}>
+              <TextField
+                label={buyerCountry.taxIdLabel}
+                value={draft.buyer.vatId}
+                onChange={(vatId) => update({ buyer: { ...draft.buyer, vatId } })}
+                placeholder={buyerCountry.taxIdPlaceholder}
+                hint="BT-48 — required for reverse charge and intra-community supplies."
+              />
+              {buyerCountry.address.subdivisionLabel && (
+                <TextField
+                  label={buyerCountry.address.subdivisionLabel}
+                  value={draft.buyer.subdivision}
+                  onChange={(subdivision) => update({ buyer: { ...draft.buyer, subdivision } })}
+                />
+              )}
+              <TextField
+                label="Contact name"
+                value={draft.buyer.contactName}
+                onChange={(contactName) => update({ buyer: { ...draft.buyer, contactName } })}
+              />
+              <TextField
+                label="Email"
+                type="email"
+                inputMode="email"
+                value={draft.buyer.email}
+                onChange={(email) => update({ buyer: { ...draft.buyer, email } })}
+              />
+              <TextField
+                label="Electronic address"
+                value={draft.buyer.electronicAddress}
+                onChange={(electronicAddress) => update({ buyer: { ...draft.buyer, electronicAddress } })}
+                hint="BT-49"
+              />
+            </DocDetails>
+            {crossBorder && (
+              <p className="mt-3 rounded-lg border border-border bg-bg p-3 text-xs leading-relaxed text-muted">
+                {sellerCountry.name} → {buyerCountry.name}.{' '}
+                {relation === 'intra-eu'
+                  ? 'Intra-EU: the intra-community and reverse-charge categories are on the line items.'
+                  : relation === 'eu-export'
+                    ? 'Export from the EU: the export category is on the line items.'
+                    : 'Which tax treatment applies to this supply is your decision — Stampbench checks the document, not the transaction.'}
+              </p>
+            )}
+          </div>
+
+          <div>
+            <div className="mb-1.5 flex items-center justify-between">
+              <span className="text-xs font-medium uppercase tracking-[0.12em] text-faint">
+                Ship to
+                <span className="ml-1.5 font-mono text-[11px] normal-case tracking-normal">BG-13</span>
+              </span>
+              <button
+                onClick={() => update({ shipToEnabled: !draft.shipToEnabled })}
+                className="rounded-lg px-2 py-1 text-xs font-medium text-accent-hi transition hover:bg-accent-dim/40"
+              >
+                {draft.shipToEnabled ? 'Remove' : '+ Add'}
+              </button>
+            </div>
+            {draft.shipToEnabled ? (
+              <div className="grid gap-2">
+                <DocField
+                  label="Delivery party name"
+                  placeholder="Delivered to"
+                  value={draft.shipTo.name}
+                  onChange={(name) => update({ shipTo: { ...draft.shipTo, name } })}
+                  bold
+                />
+                <DocField
+                  label="Delivery street"
+                  placeholder="Street"
+                  value={draft.shipTo.street}
+                  onChange={(street) => update({ shipTo: { ...draft.shipTo, street } })}
+                />
+                <div className="grid grid-cols-2 gap-2">
+                  <DocField
+                    label="Delivery city"
+                    placeholder="City"
+                    value={draft.shipTo.city}
+                    onChange={(city) => update({ shipTo: { ...draft.shipTo, city } })}
+                  />
+                  <DocField
+                    label="Delivery post code"
+                    placeholder="Post code"
+                    value={draft.shipTo.postCode}
+                    onChange={(postCode) => update({ shipTo: { ...draft.shipTo, postCode } })}
+                  />
+                </div>
+                <SelectField
+                  label="Delivery country"
+                  value={draft.shipTo.countryCode}
+                  onChange={(countryCode) => update({ shipTo: { ...draft.shipTo, countryCode } })}
+                  options={[
+                    { value: '', label: 'Select a country…' },
+                    ...COUNTRY_OPTIONS.map((c) => ({ value: c.code, label: c.name })),
+                  ]}
+                />
+              </div>
+            ) : (
+              <p className="text-sm leading-relaxed text-faint">
+                Optional. Add it when the goods or services went somewhere other than the billing address —
+                it is written into the document as delivery information, not left on the printout.
+              </p>
+            )}
+          </div>
+        </div>
+
+        {/* Line items */}
+        <div className="mb-8">
+          <div className="hidden rounded-t-lg bg-text px-4 py-2.5 text-xs font-medium uppercase tracking-[0.08em] text-white sm:grid sm:grid-cols-[minmax(0,1fr)_5rem_7rem_8rem_7rem_2rem] sm:gap-3">
+            <span>Item</span>
+            <span className="text-right">Quantity</span>
+            <span className="text-right">Rate</span>
+            <span>Tax</span>
+            <span className="text-right">Amount</span>
+            <span className="sr-only">Actions</span>
+          </div>
+          <div className="flex flex-col gap-3 sm:gap-0">
+            {draft.lines.map((line, index) => {
+              const category = getVatCategory(line.vatCategory);
+              const lineTotal = totals!.lines[index];
+              return (
+                <div
+                  key={line.key}
+                  className="rounded-xl border border-border p-3 sm:grid sm:grid-cols-[minmax(0,1fr)_5rem_7rem_8rem_7rem_2rem] sm:items-center sm:gap-3 sm:rounded-none sm:border-x-0 sm:border-t-0 sm:px-4 sm:py-3"
+                >
+                  <div className="mb-2 sm:mb-0">
+                    <DocField
+                      label={`Line ${index + 1} description`}
+                      placeholder="Description of item or service…"
+                      value={line.description}
+                      onChange={(description) => setLine(index, { description })}
+                    />
+                  </div>
+                  <div className="mb-2 grid grid-cols-2 gap-2 sm:mb-0 sm:contents">
+                    <DocField
+                      label={`Line ${index + 1} quantity`}
+                      value={line.quantity}
+                      onChange={(quantity) => setLine(index, { quantity })}
+                      align="right"
+                      inputMode="decimal"
+                    />
+                    <DocField
+                      label={`Line ${index + 1} unit price`}
+                      value={line.unitPrice}
+                      onChange={(unitPrice) => setLine(index, { unitPrice })}
+                      align="right"
+                      inputMode="decimal"
+                      placeholder="0.00"
+                    />
+                  </div>
+                  <div className="mb-2 sm:mb-0">
+                    <SelectField
+                      label={`Line ${index + 1} tax category`}
+                      value={line.vatCategory}
+                      onChange={(value) => {
+                        const next = getVatCategory(value);
+                        setLine(index, {
+                          vatCategory: value as VatCategoryCode,
+                          vatRate:
+                            next.rate === 'positive' ? draft.tax.rate : next.rate === 'zero' ? '0' : '',
+                        });
+                      }}
+                      options={availableCategories.map((c) => ({ value: c.code, label: `${c.code} · ${c.label}` }))}
+                    />
+                  </div>
+                  <div className="flex items-center justify-between sm:justify-end">
+                    <span className="text-xs text-faint sm:hidden">Amount</span>
+                    <span className="text-sm font-medium tabular-nums">
+                      {lineTotal ? cash(lineTotal.net) : ''}
+                    </span>
+                  </div>
+                  <div className="mt-2 flex justify-end sm:mt-0">
+                    {draft.lines.length > 1 && (
+                      <button
+                        onClick={() => update({ lines: draft.lines.filter((_, i) => i !== index) })}
+                        className="rounded-lg px-2 py-1.5 text-sm text-muted transition hover:bg-bg hover:text-danger"
+                        aria-label={`Remove line ${index + 1}`}
+                      >
+                        ×
+                      </button>
+                    )}
+                  </div>
+                </div>
+              );
+            })}
+          </div>
+          <button
+            onClick={() =>
+              update({
+                lines: [
+                  ...draft.lines,
+                  newLine(
+                    draft.lines[draft.lines.length - 1]?.vatCategory ?? 'S',
+                    draft.lines[draft.lines.length - 1]?.vatRate ?? draft.tax.rate,
+                  ),
+                ],
+              })
+            }
+            className="w-full rounded-b-lg border border-border bg-bg py-2.5 text-sm font-medium text-accent-hi transition hover:bg-accent-dim/40"
+          >
+            + Line item
           </button>
-          <button onClick={() => setPendingMarket(draft.market)} className={BUTTON_QUIET}>
-            Change market
-          </button>
+        </div>
+
+        {/* Notes, terms and the totals */}
+        <div className="grid gap-8 sm:grid-cols-2">
+          <div className="grid content-start gap-4">
+            <TextAreaField
+              label="Notes"
+              value={draft.document.note}
+              onChange={(note) => update({ document: { ...draft.document, note } })}
+              placeholder="Any relevant information not already covered"
+              hint="BT-22"
+            />
+            <TextAreaField
+              label="Terms"
+              value={draft.document.paymentTerms}
+              onChange={(paymentTerms) => update({ document: { ...draft.document, paymentTerms } })}
+              placeholder="Late fees, payment methods, delivery schedule"
+              hint="BT-20"
+            />
+            <DocDetails summary="Payment details">
+              <SelectField
+                label="Payment means"
+                value={draft.payment.meansTypeCode}
+                onChange={(meansTypeCode) => update({ payment: { ...draft.payment, meansTypeCode } })}
+                options={PAYMENT_MEANS_OPTIONS.map((p) => ({ value: p.code, label: `${p.code} — ${p.label}` }))}
+                hint="BT-81"
+              />
+              <TextField
+                label="Account holder"
+                value={draft.payment.accountName}
+                onChange={(accountName) => update({ payment: { ...draft.payment, accountName } })}
+                hint="BT-85"
+              />
+              <TextField
+                label={bankLabels.account}
+                value={draft.payment.accountId}
+                onChange={(accountId) => update({ payment: { ...draft.payment, accountId } })}
+                hint="BT-84"
+              />
+              <TextField
+                label={bankLabels.provider}
+                value={draft.payment.providerId}
+                onChange={(providerId) => update({ payment: { ...draft.payment, providerId } })}
+                hint="BT-86"
+              />
+            </DocDetails>
+            {reasonsNeeded.length > 0 && (
+              <div className="rounded-xl border border-warning/40 bg-warning/5 p-4">
+                <h3 className="mb-1 text-sm font-medium">Exemption reasons</h3>
+                <p className="mb-3 text-xs leading-relaxed text-muted">
+                  The categories you used require a stated reason (BT-120). The placeholder is a starting
+                  point — replace it with the wording that is correct for your supply.
+                </p>
+                <div className="grid gap-3">
+                  {reasonsNeeded.map((code) => {
+                    const category = getVatCategory(code);
+                    return (
+                      <TextField
+                        key={code}
+                        label={`${category.code} — ${category.label}`}
+                        value={draft.exemptionReasons[code] ?? ''}
+                        onChange={(value) =>
+                          update({ exemptionReasons: { ...draft.exemptionReasons, [code]: value } })
+                        }
+                        placeholder={category.reasonSuggestion}
+                      />
+                    );
+                  })}
+                </div>
+              </div>
+            )}
+          </div>
+
+          <div className="grid content-start gap-1">
+            <div className="flex items-center justify-between py-1.5 text-sm">
+              <span className="text-muted">Subtotal</span>
+              <span className="tabular-nums">{cash(totals!.net)}</span>
+            </div>
+
+            <div className="flex items-center justify-between gap-3 py-1.5 text-sm">
+              <span className="text-muted">
+                Tax
+                {taxIsMixed && <span className="ml-2 text-xs text-warning">mixed rates</span>}
+              </span>
+              <span className="flex items-center gap-1">
+                <input
+                  aria-label="Tax rate for all standard-rated lines"
+                  value={taxIsMixed ? '' : draft.tax.rate}
+                  placeholder={taxIsMixed ? 'Mixed' : '0'}
+                  inputMode="decimal"
+                  onChange={(e) => setTaxRate(e.target.value)}
+                  className="w-20 rounded-lg border border-border bg-surface px-2 py-1.5 text-right text-sm outline-none transition focus:border-accent"
+                />
+                <span className="text-sm text-faint">%</span>
+              </span>
+            </div>
+            <p className="mb-1 text-[11px] leading-relaxed text-faint">
+              A rate, not a lump sum — BR-S-09 requires tax to equal taxable × rate.
+              {sellerCountry.commonVatRates && (
+                <> Common in {sellerCountry.name}: {sellerCountry.commonVatRates.join('%, ')}%.</>
+              )}
+            </p>
+            {sellerCountry.code === 'US' && (
+              <p className="mb-1 rounded-lg border border-border bg-bg p-2.5 text-[11px] leading-relaxed text-muted">
+                {US_TAX_NOTE}
+              </p>
+            )}
+
+            {draft.discount.enabled && (
+              <div className="flex items-center justify-between gap-3 py-1.5 text-sm">
+                <span className="text-muted">Discount</span>
+                <span className="flex items-center gap-1">
+                  <input
+                    aria-label="Discount value"
+                    value={draft.discount.value}
+                    inputMode="decimal"
+                    onChange={(e) => update({ discount: { ...draft.discount, value: e.target.value } })}
+                    className="w-20 rounded-lg border border-border bg-surface px-2 py-1.5 text-right text-sm outline-none transition focus:border-accent"
+                  />
+                  <button
+                    onClick={() =>
+                      update({
+                        discount: {
+                          ...draft.discount,
+                          mode: draft.discount.mode === 'percent' ? 'amount' : 'percent',
+                        },
+                      })
+                    }
+                    className="rounded-lg border border-border px-2 py-1.5 text-xs text-muted transition hover:text-text"
+                    aria-label={`Discount is ${draft.discount.mode === 'percent' ? 'a percentage' : 'a fixed amount'} — switch`}
+                  >
+                    {draft.discount.mode === 'percent' ? '%' : currency}
+                  </button>
+                  <button
+                    onClick={() => update({ discount: { ...draft.discount, enabled: false } })}
+                    className="rounded-lg px-1.5 py-1.5 text-xs text-muted transition hover:text-danger"
+                    aria-label="Remove discount"
+                  >
+                    ×
+                  </button>
+                </span>
+              </div>
+            )}
+
+            {draft.shipping.enabled && (
+              <div className="flex items-center justify-between gap-3 py-1.5 text-sm">
+                <span className="text-muted">Shipping</span>
+                <span className="flex items-center gap-1">
+                  <input
+                    aria-label="Shipping amount"
+                    value={draft.shipping.value}
+                    inputMode="decimal"
+                    onChange={(e) => update({ shipping: { ...draft.shipping, value: e.target.value } })}
+                    className="w-20 rounded-lg border border-border bg-surface px-2 py-1.5 text-right text-sm outline-none transition focus:border-accent"
+                  />
+                  <span className="px-2 py-1.5 text-xs text-faint">{currency}</span>
+                  <button
+                    onClick={() => update({ shipping: { ...draft.shipping, enabled: false } })}
+                    className="rounded-lg px-1.5 py-1.5 text-xs text-muted transition hover:text-danger"
+                    aria-label="Remove shipping"
+                  >
+                    ×
+                  </button>
+                </span>
+              </div>
+            )}
+
+            {(!draft.discount.enabled || !draft.shipping.enabled) && (
+              <div className="flex flex-wrap gap-4 py-1 text-sm">
+                {!draft.discount.enabled && (
+                  <button
+                    onClick={() => update({ discount: { ...draft.discount, enabled: true } })}
+                    className="font-medium text-accent-hi hover:underline"
+                  >
+                    + Discount
+                  </button>
+                )}
+                {!draft.shipping.enabled && (
+                  <button
+                    onClick={() => update({ shipping: { ...draft.shipping, enabled: true } })}
+                    className="font-medium text-accent-hi hover:underline"
+                  >
+                    + Shipping
+                  </button>
+                )}
+              </div>
+            )}
+
+            {totals!.categories.length > 0 && (
+              <div className="border-t border-border pt-2">
+                {totals!.categories.map((group) => {
+                  const category = getVatCategory(group.categoryCode);
+                  return (
+                    <div
+                      key={`${group.categoryCode}-${group.rate}`}
+                      className="flex justify-between py-0.5 text-xs text-faint"
+                    >
+                      <span>
+                        {category.code === 'S' ? `VAT ${group.rate ?? 0}%` : `${category.code} · ${category.label}`}
+                        {' on '}
+                        {cash(group.taxable)}
+                      </span>
+                      <span className="tabular-nums">{cash(group.tax)}</span>
+                    </div>
+                  );
+                })}
+              </div>
+            )}
+
+            <div className="mt-2 flex justify-between border-t border-border pt-3 text-base font-semibold">
+              <span>Total</span>
+              <span className="tabular-nums">{cash(totals!.gross)}</span>
+            </div>
+
+            <div className="flex items-center justify-between gap-3 py-1.5 text-sm">
+              <span className="text-muted">
+                Amount paid<span className="ml-1.5 font-mono text-[11px] text-faint">BT-113</span>
+              </span>
+              <span className="flex items-center gap-1">
+                <input
+                  aria-label="Amount already paid"
+                  value={draft.amountPaid}
+                  inputMode="decimal"
+                  placeholder="0"
+                  onChange={(e) => update({ amountPaid: e.target.value })}
+                  className="w-24 rounded-lg border border-border bg-surface px-2 py-1.5 text-right text-sm outline-none transition focus:border-accent"
+                />
+                <span className="px-1 text-xs text-faint">{currency}</span>
+              </span>
+            </div>
+
+            <div className="mt-1 flex justify-between border-t border-border pt-3 text-lg font-semibold">
+              <span>Balance due</span>
+              <span className="tabular-nums">{cash(totals!.balance)}</span>
+            </div>
+          </div>
         </div>
       </div>
 
+      {/* ------------------------------------------------------------- the rail */}
+      {/* Below the two-column breakpoint the rail stacks, and stacking it
+          *under* a full invoice buries the one button the page exists for.
+          So it leads on narrow screens and returns to the right on wide ones. */}
+      <aside className="order-first flex flex-col gap-4 lg:order-none lg:sticky lg:top-20">
+        {errors.length > 0 && (
+          <div role="alert" className="rounded-xl border border-danger/40 bg-danger/5 p-3 text-sm">
+            <p className="mb-1 font-medium text-danger">Before creating:</p>
+            <ul className="list-disc pl-4 text-muted">
+              {errors.map((error) => (
+                <li key={error}>{error}</li>
+              ))}
+            </ul>
+          </div>
+        )}
+
+        <button onClick={generate} className={`${BUTTON_PRIMARY} w-full`}>
+          Create invoice
+        </button>
+
+        <AiAssist
+          currency={currency}
+          onApply={(aiLines, note) =>
+            update({
+              lines: aiLines.map((line) =>
+                ({
+                  ...newLine(draft.lines[0]?.vatCategory ?? 'S', draft.tax.rate),
+                  description: line.description,
+                  quantity: String(line.quantity),
+                  unitCode: line.unitCode,
+                  unitPrice: line.unitPrice ? String(line.unitPrice) : '',
+                }),
+              ),
+              document: note ? { ...draft.document, note } : draft.document,
+            })
+          }
+        />
+
+        <div className="rounded-xl border border-border bg-surface p-4">
+          <details>
+            <summary className="cursor-pointer list-none text-sm font-medium">
+              Invoice settings
+              <span className="ml-1.5 text-xs font-normal text-faint">market, format, currency</span>
+            </summary>
+            <div className="mt-3 grid gap-3">
+              <div className="flex items-center gap-2 text-sm">
+                <Flag code={MARKETS[draft.market].flag} size={20} />
+                <span className="font-medium">{MARKETS[draft.market].name}</span>
+              </div>
+              <p className="font-mono text-[11px] text-faint">{rulesetLabelFor(format!)}</p>
+              <SelectField
+                label="Currency"
+                value={draft.document.currency}
+                onChange={(c) => update({ document: { ...draft.document, currency: c } })}
+                options={CURRENCY_OPTIONS.map((c) => ({ value: c, label: c }))}
+              />
+              <SelectField
+                label="Document type"
+                value={draft.document.typeCode}
+                onChange={(typeCode) => update({ document: { ...draft.document, typeCode } })}
+                options={TYPE_CODE_OPTIONS.map((t) => ({ value: t.code, label: `${t.code} — ${t.label}` }))}
+              />
+              <div className="flex flex-wrap gap-3 text-sm">
+                <button onClick={() => setPhase('format')} className={BUTTON_QUIET}>
+                  Change format
+                </button>
+                <button onClick={() => setPendingMarket(draft.market)} className={BUTTON_QUIET}>
+                  Change market
+                </button>
+              </div>
+            </div>
+          </details>
+        </div>
+
+        <div className="rounded-xl border border-border bg-surface p-4">
+          <h2 className="mb-2 text-sm font-medium">Compliance context</h2>
+          {checks.length === 0 ? (
+            <p className="text-sm leading-relaxed text-muted">
+              This format has no ruleset, so there is nothing to check.
+            </p>
+          ) : (
+            <ul className="flex flex-col gap-2">
+              {checks.map((check) => (
+                <li key={`${check.rule}-${check.label}`} className="flex items-start gap-2 text-xs">
+                  <span aria-hidden className={`mt-0.5 font-mono ${check.met ? 'text-success' : 'text-warning'}`}>
+                    {check.met ? '✓' : '○'}
+                  </span>
+                  <span>
+                    <span className={check.met ? 'text-muted' : 'text-text'}>{check.label}</span>
+                    <span className="ml-1 font-mono text-[10px] text-faint">{check.rule}</span>
+                    <span className="sr-only">{check.met ? ' — provided' : ' — still needed'}</span>
+                  </span>
+                </li>
+              ))}
+            </ul>
+          )}
+          <p className="mt-3 border-t border-border pt-3 text-[11px] leading-relaxed text-faint">
+            Each item names the rule that enforces it. Validation decides — this is a preview of it.
+          </p>
+        </div>
+
+        <p className="text-[11px] leading-relaxed text-faint">
+          Runs entirely in your browser. The invoice is not uploaded, and the draft is kept only in this
+          browser&apos;s local storage.{' '}
+          <Link href="/privacy" className="text-accent-hi hover:underline">
+            Privacy
+          </Link>
+        </p>
+      </aside>
+
       {/* Changing market is destructive enough to ask. */}
       {pendingMarket !== null && (
-        <div className="rounded-xl border border-warning/40 bg-warning/5 p-5">
+        <div className="rounded-xl border border-warning/40 bg-warning/5 p-5 lg:col-span-2">
           <h2 className="mb-1 font-medium tracking-tight">Change the market?</h2>
           <p className="mb-4 max-w-2xl text-sm leading-relaxed text-muted">
             A different market means a different ruleset, different required fields and a different format.
@@ -547,416 +1278,6 @@ export function InvoiceGenerator({ initialMarket }: { initialMarket?: MarketId }
           </div>
         </div>
       )}
-
-      <div className="grid gap-6 lg:grid-cols-[minmax(0,1fr)_minmax(0,22rem)]">
-        {/* ------------------------------------------------------ editor */}
-        <div className="flex flex-col gap-5">
-          <Section
-            title="Seller"
-            description={`Your business. ${sellerCountry.code ? `Fields follow ${sellerCountry.name}.` : ''}`}
-          >
-            <PartyForm
-              party={draft.seller}
-              role="seller"
-              onChange={(patch) => update({ seller: { ...draft.seller, ...patch } })}
-            />
-          </Section>
-
-          <Section
-            title="Buyer"
-            description="Who the invoice is addressed to."
-            aside={
-              crossBorder ? (
-                <span className="rounded-full bg-accent-dim px-2.5 py-1 text-xs font-medium text-accent-hi">
-                  Cross-border
-                </span>
-              ) : undefined
-            }
-          >
-            <PartyForm
-              party={draft.buyer}
-              role="buyer"
-              onChange={(patch) => update({ buyer: { ...draft.buyer, ...patch } })}
-            />
-            {crossBorder && (
-              <p className="mt-4 rounded-lg border border-border bg-bg p-3 text-sm leading-relaxed text-muted">
-                {sellerCountry.name} → {buyerCountry.name}.{' '}
-                {relation === 'intra-eu'
-                  ? 'Intra-EU: the intra-community and reverse-charge categories are available below.'
-                  : relation === 'eu-export'
-                    ? 'Export from the EU: the export category is available below.'
-                    : 'Stampbench checks the document against the selected ruleset. Which tax treatment applies to this supply is a question for you or your accountant — it is not determined here.'}
-              </p>
-            )}
-          </Section>
-
-          <Section title="Invoice details" description="Dates, references and the document type.">
-            <div className="grid gap-4 sm:grid-cols-2">
-              <TextField
-                label="Invoice number"
-                value={draft.document.number}
-                onChange={(number) => update({ document: { ...draft.document, number } })}
-                required
-                hint="BT-1"
-              />
-              <SelectField
-                label="Document type"
-                value={draft.document.typeCode}
-                onChange={(typeCode) => update({ document: { ...draft.document, typeCode } })}
-                options={TYPE_CODE_OPTIONS.map((t) => ({ value: t.code, label: `${t.code} — ${t.label}` }))}
-                hint="BT-3"
-              />
-              <TextField
-                label="Issue date"
-                type="date"
-                value={draft.document.issueDate}
-                onChange={(issueDate) => update({ document: { ...draft.document, issueDate } })}
-                required
-                hint="BT-2"
-              />
-              <TextField
-                label="Due date"
-                type="date"
-                value={draft.document.dueDate}
-                onChange={(dueDate) => update({ document: { ...draft.document, dueDate } })}
-                hint="BT-9"
-              />
-              <SelectField
-                label="Currency"
-                value={draft.document.currency}
-                onChange={(c) => update({ document: { ...draft.document, currency: c } })}
-                options={CURRENCY_OPTIONS.map((c) => ({ value: c, label: c }))}
-                hint="BT-5"
-              />
-              <TextField
-                label="Delivery date (optional)"
-                type="date"
-                value={draft.document.deliveryDate}
-                onChange={(deliveryDate) => update({ document: { ...draft.document, deliveryDate } })}
-                hint="Appears on the printable document only. The semantic model does not carry delivery information (BT-72 / BG-13) yet, so it is not written into the XML."
-              />
-              <TextField
-                label="Buyer reference"
-                value={draft.document.buyerReference}
-                onChange={(buyerReference) => update({ document: { ...draft.document, buyerReference } })}
-                hint={
-                  format!.validationProfile === 'xrechnung'
-                    ? 'BT-10 — required by BR-DE-15. The Leitweg-ID for German public buyers; otherwise the buyer’s own reference. Ask them; never invent it.'
-                    : 'BT-10 — the reference your buyer asked you to quote.'
-                }
-              />
-              <TextField
-                label="Order reference (optional)"
-                value={draft.document.orderReference}
-                onChange={(orderReference) => update({ document: { ...draft.document, orderReference } })}
-                hint="BT-13"
-              />
-              <TextField
-                label="Contract reference (optional)"
-                value={draft.document.contractReference}
-                onChange={(contractReference) =>
-                  update({ document: { ...draft.document, contractReference } })
-                }
-                hint="BT-12"
-                className="sm:col-span-2"
-              />
-              <TextAreaField
-                label="Payment terms"
-                value={draft.document.paymentTerms}
-                onChange={(paymentTerms) => update({ document: { ...draft.document, paymentTerms } })}
-                hint="BT-20"
-                className="sm:col-span-2"
-              />
-            </div>
-          </Section>
-
-          <Section
-            title="Line items"
-            description="Totals are computed from these — exactly, in minor units, never in floating point."
-            aside={
-              <button
-                onClick={() =>
-                  update({
-                    lines: [
-                      ...draft.lines,
-                      newLine(
-                        draft.lines[draft.lines.length - 1]?.vatCategory ?? 'S',
-                        draft.lines[draft.lines.length - 1]?.vatRate ?? '',
-                      ),
-                    ],
-                  })
-                }
-                className={BUTTON_SECONDARY}
-              >
-                Add line
-              </button>
-            }
-          >
-            <div className="flex flex-col gap-4">
-              {draft.lines.map((line, index) => {
-                const category = getVatCategory(line.vatCategory);
-                const rateDisabled = category.rate !== 'positive';
-                const lineTotal = totals!.lines[index];
-                return (
-                  <div key={line.key} className="rounded-xl border border-border bg-bg p-4">
-                    <div className="mb-3 flex items-center justify-between">
-                      <span className="text-xs font-medium uppercase tracking-[0.12em] text-faint">
-                        Line {index + 1}
-                      </span>
-                      {draft.lines.length > 1 && (
-                        <button
-                          onClick={() => update({ lines: draft.lines.filter((_, i) => i !== index) })}
-                          // -my-1.5 keeps the row height unchanged while the
-                          // padding gives the control a thumb-sized hit area.
-                          className="-my-1.5 rounded-lg px-2 py-1.5 text-sm text-muted transition hover:bg-surface hover:text-danger"
-                          aria-label={`Remove line ${index + 1}`}
-                        >
-                          Remove
-                        </button>
-                      )}
-                    </div>
-                    <div className="grid gap-3 sm:grid-cols-6">
-                      <TextField
-                        label="Description"
-                        value={line.description}
-                        onChange={(description) => setLine(index, { description })}
-                        className="sm:col-span-4"
-                      />
-                      <TextField
-                        label="Item code"
-                        value={line.sku}
-                        onChange={(sku) => setLine(index, { sku })}
-                        className="sm:col-span-2"
-                      />
-                      <TextField
-                        label="Quantity"
-                        inputMode="decimal"
-                        value={line.quantity}
-                        onChange={(quantity) => setLine(index, { quantity })}
-                        className="sm:col-span-1"
-                      />
-                      <SelectField
-                        label="Unit"
-                        value={line.unitCode}
-                        onChange={(unitCode) => setLine(index, { unitCode })}
-                        options={UNIT_OPTIONS.map((u) => ({ value: u.code, label: u.label }))}
-                        className="sm:col-span-1"
-                      />
-                      <TextField
-                        label={`Unit price (${currency})`}
-                        inputMode="decimal"
-                        value={line.unitPrice}
-                        onChange={(unitPrice) => setLine(index, { unitPrice })}
-                        className="sm:col-span-2"
-                      />
-                      <SelectField
-                        label="Tax category"
-                        value={line.vatCategory}
-                        onChange={(value) => {
-                          const next = getVatCategory(value);
-                          setLine(index, {
-                            vatCategory: value as VatCategoryCode,
-                            vatRate: next.rate === 'positive' ? line.vatRate : next.rate === 'zero' ? '0' : '',
-                          });
-                        }}
-                        options={availableCategories.map((c) => ({ value: c.code, label: `${c.code} — ${c.label}` }))}
-                        className="sm:col-span-1"
-                      />
-                      <TextField
-                        label="Rate %"
-                        inputMode="decimal"
-                        value={rateDisabled ? (category.rate === 'zero' ? '0' : '—') : line.vatRate}
-                        onChange={(vatRate) => setLine(index, { vatRate })}
-                        className="sm:col-span-1"
-                      />
-                    </div>
-                    <div className="mt-3 flex flex-wrap items-center justify-between gap-2 border-t border-border pt-3 text-sm">
-                      <span className="text-faint">{category.description}</span>
-                      <span className="font-medium tabular-nums">
-                        {lineTotal ? formatMoney(lineTotal.net, currency, sellerLocale) : ''}
-                      </span>
-                    </div>
-                  </div>
-                );
-              })}
-            </div>
-
-            {sellerCountry.commonVatRates && (
-              <p className="mt-4 text-xs leading-relaxed text-faint">
-                Rates commonly used in {sellerCountry.name}: {sellerCountry.commonVatRates.join('%, ')}%.
-                These are suggestions, not advice — the rate that applies to your supply is your decision.
-              </p>
-            )}
-            {sellerCountry.code === 'US' && (
-              <p className="mt-3 rounded-lg border border-border bg-bg p-3 text-sm leading-relaxed text-muted">
-                {US_TAX_NOTE}
-              </p>
-            )}
-          </Section>
-
-          {usedCategories.some((code) => getVatCategory(code).exemptionReason === 'required') && (
-            <Section
-              title="Exemption reasons"
-              description="The categories you have used require a stated reason (BT-120). Stampbench will not write one for you."
-            >
-              <div className="grid gap-4">
-                {usedCategories
-                  .filter((code) => getVatCategory(code).exemptionReason === 'required')
-                  .map((code) => {
-                    const category = getVatCategory(code);
-                    return (
-                      <TextField
-                        key={code}
-                        label={`${category.code} — ${category.label}`}
-                        value={draft.exemptionReasons[code] ?? ''}
-                        onChange={(value) =>
-                          update({ exemptionReasons: { ...draft.exemptionReasons, [code]: value } })
-                        }
-                        placeholder={category.reasonSuggestion}
-                        hint="A suggestion appears as placeholder text. Replace it with the wording that is correct for your supply."
-                      />
-                    );
-                  })}
-              </div>
-            </Section>
-          )}
-
-          <Section title="Payment" description={`Bank details in the form ${sellerCountry.name} uses.`}>
-            <div className="grid gap-4 sm:grid-cols-2">
-              <SelectField
-                label="Payment means"
-                value={draft.payment.meansTypeCode}
-                onChange={(meansTypeCode) => update({ payment: { ...draft.payment, meansTypeCode } })}
-                options={PAYMENT_MEANS_OPTIONS.map((p) => ({ value: p.code, label: `${p.code} — ${p.label}` }))}
-                hint="BT-81"
-              />
-              <TextField
-                label="Account holder"
-                value={draft.payment.accountName}
-                onChange={(accountName) => update({ payment: { ...draft.payment, accountName } })}
-                hint="BT-85"
-              />
-              <TextField
-                label={bankLabels.account}
-                value={draft.payment.accountId}
-                onChange={(accountId) => update({ payment: { ...draft.payment, accountId } })}
-                hint={bankLabels.accountHint}
-              />
-              <TextField
-                label={bankLabels.provider}
-                value={draft.payment.providerId}
-                onChange={(providerId) => update({ payment: { ...draft.payment, providerId } })}
-                hint={bankLabels.providerHint}
-              />
-              <TextField
-                label="Payment reference (optional)"
-                value={draft.payment.remittance}
-                onChange={(remittance) => update({ payment: { ...draft.payment, remittance } })}
-                hint="BT-83"
-                className="sm:col-span-2"
-              />
-            </div>
-          </Section>
-
-          <Section title="Notes" description="Anything else that should appear on the document.">
-            <TextAreaField
-              label="Invoice note (optional)"
-              value={draft.document.note}
-              onChange={(note) => update({ document: { ...draft.document, note } })}
-              hint="BT-22"
-            />
-          </Section>
-        </div>
-
-        {/* ------------------------------------------------- summary rail */}
-        <div className="flex flex-col gap-4 lg:sticky lg:top-20 lg:self-start">
-          <div className="rounded-xl border border-border bg-surface p-5">
-            <h2 className="mb-3 text-sm font-medium uppercase tracking-[0.12em] text-faint">Totals</h2>
-            <div className="flex justify-between py-1 text-sm">
-              <span className="text-muted">Subtotal</span>
-              <span className="tabular-nums">{formatMoney(totals!.net, currency, sellerLocale)}</span>
-            </div>
-            {totals!.categories.map((group) => {
-              const category = getVatCategory(group.categoryCode);
-              return (
-                <div key={`${group.categoryCode}-${group.rate}`} className="flex justify-between py-1 text-sm">
-                  <span className="text-muted">
-                    {category.code === 'S' ? `VAT ${group.rate ?? 0}%` : `${category.label}`}
-                  </span>
-                  <span className="tabular-nums text-muted">{formatMoney(group.tax, currency, sellerLocale)}</span>
-                </div>
-              );
-            })}
-            <div className="mt-2 flex justify-between border-t border-border pt-2 font-semibold">
-              <span>Total</span>
-              <span className="tabular-nums">{formatMoney(totals!.gross, currency, sellerLocale)}</span>
-            </div>
-          </div>
-
-          <div className="rounded-xl border border-border bg-surface p-5">
-            <h2 className="mb-1 text-sm font-medium uppercase tracking-[0.12em] text-faint">
-              Compliance context
-            </h2>
-            <p className="mb-3 font-mono text-xs text-muted">{rulesetLabelFor(format!)}</p>
-            {checks.length === 0 ? (
-              <p className="text-sm text-muted">This format has no ruleset, so there is nothing to check.</p>
-            ) : (
-              <ul className="flex flex-col gap-2">
-                {checks.map((check) => (
-                  <li key={`${check.rule}-${check.label}`} className="flex items-start gap-2 text-sm">
-                    <span
-                      aria-hidden
-                      className={`mt-0.5 font-mono ${check.met ? 'text-success' : 'text-warning'}`}
-                    >
-                      {check.met ? '✓' : '○'}
-                    </span>
-                    <span>
-                      <span className={check.met ? 'text-muted' : 'text-text'}>{check.label}</span>
-                      <span className="ml-1.5 font-mono text-[11px] text-faint">{check.rule}</span>
-                      <span className="sr-only">{check.met ? ' — provided' : ' — still needed'}</span>
-                    </span>
-                  </li>
-                ))}
-              </ul>
-            )}
-            <p className="mt-3 border-t border-border pt-3 text-xs leading-relaxed text-faint">
-              Every item names the rule that enforces it. Validation is what decides — this is a preview of
-              it, not a second opinion.
-            </p>
-          </div>
-
-          <div className="rounded-xl border border-border bg-surface p-5">
-            {errors.length > 0 && (
-              <div role="alert" className="mb-3 rounded-lg border border-danger/40 bg-danger/5 p-3 text-sm">
-                <p className="mb-1 font-medium text-danger">Before generating:</p>
-                <ul className="list-disc pl-4 text-muted">
-                  {errors.map((error) => (
-                    <li key={error}>{error}</li>
-                  ))}
-                </ul>
-              </div>
-            )}
-            <button onClick={generate} className={`${BUTTON_PRIMARY} w-full`}>
-              Generate and validate
-            </button>
-            <p className="mt-3 text-xs leading-relaxed text-faint">
-              Runs in your browser. The invoice is not uploaded, and the draft is stored only in this
-              browser&apos;s local storage.{' '}
-              <Link href="/privacy" className="text-accent-hi hover:underline">
-                Privacy
-              </Link>
-            </p>
-          </div>
-        </div>
-      </div>
-
-      {/* The preview lives below the editor on every width — on desktop the
-          rail carries the numbers, and duplicating the document there would
-          shrink both to uselessness. */}
-      <div>
-        <h2 className="mb-3 text-lg font-semibold tracking-tight">Preview</h2>
-        <InvoicePreview draft={draft} totals={totals!} />
-      </div>
     </div>
   );
 }
