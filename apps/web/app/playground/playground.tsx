@@ -13,7 +13,17 @@ import {
   type Invoice,
   type RegressionReport,
 } from '@stampbench/core';
+import { MarketSwitcher } from '@/components/market-switcher';
 import { aiExplain, aiStatus, ApiError, regressCredit, shareReport } from '@/lib/account-client';
+import { onMarketChange, readMarket, writeMarket } from '@/lib/market-preference';
+import {
+  MARKETS,
+  profileFromSpecId,
+  rulesetFor,
+  SPEC_IDS,
+  type MarketId,
+  type MarketProfile,
+} from '@/lib/markets';
 import { FEATURE_LIMITS } from '@/lib/plans';
 import { FixPanel } from './fix-panel';
 import { SAMPLE_GENERATE_JSON, SAMPLE_XML } from './samples';
@@ -23,6 +33,16 @@ import { SAMPLE_GENERATE_JSON, SAMPLE_XML } from './samples';
  * TypeScript, so the playground IS the product claim: your invoice never
  * leaves your machine. Only the optional AI explanation calls the server; its
  * button renders only when /api/ai/status says the feature is switched on.
+ *
+ * The market is the one thing this screen asks before anything else, because
+ * "is my invoice valid?" is not a well-formed question until you say valid
+ * against what. It selects the profile the engine runs (40 European core rules
+ * or those plus the 16 German ones), it is remembered locally so nobody is
+ * asked twice, and the result always states which ruleset produced the
+ * verdict. Detection reads BT-24 — what the document declares itself to be —
+ * and offers a switch; it never changes the ruleset behind the user's back,
+ * because a validator that quietly picks its own jurisdiction is exactly the
+ * ambiguity this screen exists to remove.
  */
 
 interface Violation {
@@ -40,6 +60,10 @@ interface ValidationResult {
   errorCount: number;
   warningCount: number;
   violations: Violation[];
+  /** Rule count and ruleset version, straight from the engine. */
+  meta?: { rulesRun: number; rulesetVersion: string };
+  /** Present when the document parsed; BT-24 lives here. */
+  invoice?: { specificationIdentifier?: string };
 }
 
 /** Escape HTML then apply minimal markdown (bold, inline code) for AI output. */
@@ -66,20 +90,53 @@ function SeverityBadge({ severity }: { severity: 'error' | 'warning' }) {
   );
 }
 
-function ViolationList({ result }: { result: ValidationResult }) {
-  const syntaxLabel = result.syntax === 'cii' ? 'CII (ZUGFeRD/Factur-X)' : result.syntax === 'ubl' ? 'UBL' : null;
+/**
+ * What the verdict was measured against, stated on the result itself.
+ *
+ * Without this a visitor has to trust that Stampbench picked the right rules;
+ * with it, "valid" is a checkable claim: this ruleset, this many rules, this
+ * ruleset version. It is also what stops a non-German user reading a pass as
+ * broader than it is.
+ */
+function CheckedAgainst({ result, market }: { result: ValidationResult; market: MarketId }) {
+  const ruleset = rulesetFor(market);
+  const syntaxLabel =
+    result.syntax === 'cii' ? 'CII (ZUGFeRD / Factur-X)' : result.syntax === 'ubl' ? 'UBL 2.1' : null;
+  return (
+    <div className="rounded-lg border border-border bg-surface px-3 py-2">
+      <div className="text-[11px] uppercase tracking-[0.12em] text-faint">Checked against</div>
+      <div className="mt-1 flex flex-wrap items-center gap-x-2 gap-y-1 font-mono text-xs text-muted">
+        <span className="text-accent-hi">{ruleset.label}</span>
+        <span className="text-faint">·</span>
+        <span>{result.meta?.rulesRun ?? ruleset.ruleCount} rules</span>
+        <span className="text-faint">·</span>
+        <span>{ruleset.spec}</span>
+        {syntaxLabel && (
+          <>
+            <span className="text-faint">·</span>
+            <span>{syntaxLabel}</span>
+          </>
+        )}
+        {result.meta?.rulesetVersion && (
+          <>
+            <span className="text-faint">·</span>
+            <span className="text-faint">ruleset {result.meta.rulesetVersion}</span>
+          </>
+        )}
+      </div>
+    </div>
+  );
+}
+
+function ViolationList({ result, market }: { result: ValidationResult; market: MarketId }) {
   return (
     <div className="flex flex-col gap-2">
       <div className={`text-sm font-medium ${result.valid ? 'text-success' : 'text-danger'}`}>
         {result.valid
           ? '✓ Valid — no blocking errors'
           : `✗ ${result.errorCount} error${result.errorCount === 1 ? '' : 's'}, ${result.warningCount} warning${result.warningCount === 1 ? '' : 's'}`}
-        {syntaxLabel && (
-          <span className="ml-2 rounded bg-surface-2 px-1.5 py-0.5 font-mono text-[11px] font-normal text-muted">
-            {syntaxLabel}
-          </span>
-        )}
       </div>
+      <CheckedAgainst result={result} market={market} />
       {result.violations.map((v, i) => (
         <div key={i} className="rounded-lg border border-border bg-surface p-3 text-sm">
           <div className="mb-1 flex items-center gap-2">
@@ -384,13 +441,59 @@ function RegressPanel({ xml, fileName }: { xml: string; fileName: string | null 
   );
 }
 
-export function Playground() {
+/**
+ * Shown when the document's own BT-24 disagrees with the selected market.
+ * Never acted on automatically: BT-24 is written by whoever produced the file,
+ * so it is a strong hint about what ruleset was intended, not proof of which
+ * one the reader wants to be judged by.
+ */
+function DetectionNotice({
+  declared,
+  market,
+  onSwitch,
+}: {
+  declared: MarketProfile;
+  market: MarketId;
+  onSwitch: () => void;
+}) {
+  const current = rulesetFor(market);
+  const target = declared === 'xrechnung' ? rulesetFor('germany') : rulesetFor('eu');
+  return (
+    <div className="mb-3 rounded-lg border border-accent/40 bg-accent-dim/40 p-3 text-sm">
+      <p className="text-text">
+        {declared === 'xrechnung'
+          ? 'This document declares itself as XRechnung (BT-24), but it was checked against the European core only.'
+          : 'This document does not declare the XRechnung customization id (BT-24), and it was checked with the German rules on top.'}
+      </p>
+      <p className="mt-1 text-xs text-muted">
+        {current.label} · {current.ruleCount} rules → {target.label} · {target.ruleCount} rules
+      </p>
+      <button
+        onClick={onSwitch}
+        className="mt-2 rounded-lg bg-accent px-3.5 py-1.5 text-sm font-medium text-white transition hover:bg-accent-hi"
+      >
+        Re-check against {target.label}
+      </button>
+    </div>
+  );
+}
+
+export function Playground({ defaultMarket = 'eu' }: { defaultMarket?: MarketId }) {
   const [tab, setTab] = useState<'validate' | 'generate'>('validate');
   const [xml, setXml] = useState('');
   /** Name of a dropped file, kept only to name the fixed-XML download. */
   const [fileName, setFileName] = useState<string | null>(null);
   const [genJson, setGenJson] = useState(SAMPLE_GENERATE_JSON);
   const [result, setResult] = useState<ValidationResult | null>(null);
+  /**
+   * The exact text `result` describes. A verdict belongs to one document, so
+   * once the textarea no longer matches, the result is withdrawn rather than
+   * left sitting under a confident "Checked against EN 16931 core" header
+   * describing XML the visitor has since replaced. Tracking the source beats
+   * clearing on an effect, which would also wipe the result that "Use fixed
+   * XML" has just legitimately produced for its new text.
+   */
+  const [resultXml, setResultXml] = useState<string | null>(null);
   const [genResult, setGenResult] = useState<{ xml: string; validation?: ValidationResult } | null>(null);
   const [explanation, setExplanation] = useState<string | null>(null);
   // null until the one-time server probe answers; the button only renders
@@ -405,6 +508,24 @@ export function Playground() {
   const [busy, setBusy] = useState<string | null>(null);
   const [error, setError] = useState<string | null>(null);
 
+  /**
+   * The market, and with it the ruleset. Starts from the page's own default
+   * (the German page defaults to Germany — a reader who arrived in German has
+   * already told us their market) and is replaced on mount by whatever the
+   * visitor chose earlier, here or on the homepage.
+   */
+  const [market, setMarket] = useState<MarketId>(defaultMarket);
+  useEffect(() => {
+    const sync = () => {
+      const stored = readMarket();
+      if (stored) setMarket(stored);
+    };
+    sync();
+    return onMarketChange(sync);
+  }, []);
+
+  const profile: MarketProfile = MARKETS[market].profile;
+
   async function post(path: string, body: unknown) {
     const res = await fetch(path, {
       method: 'POST',
@@ -416,18 +537,31 @@ export function Playground() {
     return data;
   }
 
-  function runValidate() {
+  function runValidate(against: MarketProfile = profile) {
     setBusy('validate');
     setError(null);
     setExplanation(null);
     setResult(null);
     try {
-      setResult(validateXml(xml, { profile: 'xrechnung' }));
+      setResult(validateXml(xml, { profile: against }));
+      setResultXml(xml);
     } catch (e) {
       setError((e as Error).message);
     } finally {
       setBusy(null);
     }
+  }
+
+  /**
+   * Changing the market re-runs the check straight away when there is already
+   * a result on screen: leaving a verdict from the old ruleset next to a
+   * header naming the new one would be the single most misleading thing this
+   * page could do.
+   */
+  function changeMarket(next: MarketId) {
+    setMarket(next);
+    writeMarket(next);
+    if (result && xml.trim()) runValidate(MARKETS[next].profile);
   }
 
   /** Accept either the bare invoice object or a { "invoice": { … } } wrapper. */
@@ -444,9 +578,16 @@ export function Playground() {
     setError(null);
     setGenResult(null);
     try {
-      const invoice = withComputedTotals(withXRechnungDefaults(unwrapInvoice(JSON.parse(genJson))));
-      const generatedXml = generateXRechnungUbl(invoice);
-      setGenResult({ xml: generatedXml, validation: validateInvoice(invoice) });
+      // BT-24 follows the market: the generator defaults to the XRechnung
+      // customization id, which is right for Germany and wrong everywhere
+      // else — a document that announces itself as a German CIUS when it is
+      // not is a compliance claim we would be making on the user's behalf.
+      const options = { specificationIdentifier: SPEC_IDS[profile] };
+      const invoice = withComputedTotals(
+        withXRechnungDefaults(unwrapInvoice(JSON.parse(genJson)), options),
+      );
+      const generatedXml = generateXRechnungUbl(invoice, options);
+      setGenResult({ xml: generatedXml, validation: validateInvoice(invoice, { profile }) });
     } catch (e) {
       setError(e instanceof SyntaxError ? 'Input is not valid JSON.' : (e as Error).message);
     } finally {
@@ -459,7 +600,8 @@ export function Playground() {
     setXml(fixed);
     setExplanation(null);
     setError(null);
-    setResult(validateXml(fixed, { profile: 'xrechnung' }));
+    setResult(validateXml(fixed, { profile }));
+    setResultXml(fixed);
   }
 
   async function runExplain() {
@@ -488,8 +630,18 @@ export function Playground() {
       tab === t ? 'bg-accent text-white' : 'text-muted hover:text-text'
     }`;
 
+  // Only a result that still describes what is in the box gets shown.
+  const shown = result && resultXml === xml ? result : null;
+  // What the document says it is, versus what we just checked it against.
+  const declaredProfile = shown ? profileFromSpecId(shown.invoice?.specificationIdentifier) : null;
+  const mismatch = declaredProfile && declaredProfile !== profile ? declaredProfile : null;
+
   return (
     <div>
+      <div className="mb-5 border-b border-border pb-5">
+        <MarketSwitcher value={market} onChange={changeMarket} />
+      </div>
+
       <div className="mb-6 flex gap-1 rounded-xl border border-border bg-surface p-1 w-fit">
         <button className={tabClass('validate')} onClick={() => setTab('validate')}>
           Validate XML
@@ -546,7 +698,7 @@ export function Playground() {
               className="h-105 w-full resize-none rounded-xl border border-border bg-surface p-4 font-mono text-xs leading-relaxed outline-none transition focus:border-accent"
             />
             <button
-              onClick={runValidate}
+              onClick={() => runValidate()}
               disabled={busy !== null || !xml.trim()}
               className="mt-3 rounded-lg bg-accent px-5 py-2 text-sm font-medium text-white transition hover:bg-accent-hi disabled:opacity-40"
             >
@@ -556,22 +708,34 @@ export function Playground() {
           <div>
             <span className="mb-2 block text-sm text-muted">Result</span>
             <div className="min-h-105 rounded-xl border border-border bg-bg p-4">
-              {!result && !error && (
+              {!shown && !error && (
                 <p className="text-sm text-faint">
-                  Validation runs against EN 16931 core rules (including the BR-S/E/AE/Z/G/O VAT
-                  families) plus the German XRechnung (BR-DE) profile. Both syntaxes are
-                  auto-detected: UBL and CII (ZUGFeRD/Factur-X XML). Load the broken sample to see
-                  it catch a missing buyer reference and a VAT arithmetic error.
+                  This runs the{' '}
+                  <span className="font-medium text-muted">{rulesetFor(market).label}</span> ruleset
+                  — {rulesetFor(market).ruleCount} rules, including the BR-S/E/AE/Z/G/O VAT
+                  category families
+                  {profile === 'xrechnung'
+                    ? ' and the German BR-DE rules on top of the European core'
+                    : '; switch the market above to add a national profile'}
+                  . Both syntaxes are auto-detected: UBL 2.1 and CII (the XML inside ZUGFeRD /
+                  Factur-X). Load the broken sample to see it catch a VAT arithmetic error.
                   <span className="mt-2 block">
                     Everything runs in your browser — the XML never leaves your machine.
                   </span>
                 </p>
               )}
               {error && <p className="text-sm text-danger">{error}</p>}
-              {result && (
+              {shown && (
                 <>
-                  <ViolationList result={result} />
-                  {aiEnabled && result.violations.length > 0 && (
+                  {mismatch && (
+                    <DetectionNotice
+                      declared={mismatch}
+                      market={market}
+                      onSwitch={() => changeMarket(mismatch === 'xrechnung' ? 'germany' : 'eu')}
+                    />
+                  )}
+                  <ViolationList result={shown} market={market} />
+                  {aiEnabled && shown.violations.length > 0 && (
                     <>
                       <button
                         onClick={runExplain}
@@ -606,10 +770,15 @@ export function Playground() {
                       dangerouslySetInnerHTML={{ __html: renderMarkdownish(explanation) }}
                     />
                   )}
-                  {result.violations.length > 0 && (
-                    <FixPanel xml={xml} fileName={fileName} onUseFixed={applyFixed} />
+                  {shown.violations.length > 0 && (
+                    <FixPanel
+                      xml={xml}
+                      fileName={fileName}
+                      profile={profile}
+                      onUseFixed={applyFixed}
+                    />
                   )}
-                  <SharePanel result={result} fileName={fileName} />
+                  <SharePanel result={shown} fileName={fileName} />
                   <RegressPanel xml={xml} fileName={fileName} />
                 </>
               )}
@@ -636,7 +805,9 @@ export function Playground() {
               disabled={busy !== null}
               className="mt-3 rounded-lg bg-accent px-5 py-2 text-sm font-medium text-white transition hover:bg-accent-hi disabled:opacity-40"
             >
-              {busy === 'generate' ? 'Generating…' : 'Generate XRechnung'}
+              {busy === 'generate'
+                ? 'Generating…'
+                : `Generate ${profile === 'xrechnung' ? 'XRechnung' : 'EN 16931'} UBL`}
             </button>
           </div>
           <div>
@@ -657,6 +828,12 @@ export function Playground() {
                   Send lines with quantities, prices and VAT categories — Stampbench computes the
                   totals (BT-106…BT-115) and the VAT breakdown so the BR-CO arithmetic rules pass by
                   construction.
+                  <span className="mt-2 block">
+                    The specification identifier (BT-24) follows your market:{' '}
+                    <span className="font-mono text-[11px] text-muted">{SPEC_IDS[profile]}</span>.
+                    Legally significant fields — VAT ids, addresses, buyer references — are only
+                    ever taken from your input, never invented.
+                  </span>
                 </p>
               )}
               {error && <p className="text-sm text-danger">{error}</p>}

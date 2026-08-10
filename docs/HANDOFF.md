@@ -1,6 +1,6 @@
 # Session handoff — read this first
 
-**Last updated:** 2026-08-05 · **Repo:** `C:\Users\harvey\Downloads\invoicegate` (git, clean) ·
+**Last updated:** 2026-08-10 · **Repo:** `C:\Users\harvey\Downloads\invoicegate` (git, clean) ·
 **LIVE:** `stampbench@0.1.0` + `@stampbench/core@0.1.1` on npm; https://stampbench.com on
 Cloudflare Pages (wrangler is authed: `npx wrangler pages deploy out --project-name=stampbench`
 from `apps/web` after `node scripts/build-static.mjs`).
@@ -13,6 +13,52 @@ JSON-LD `@graph` + `author`/`creator` meta on stampbench.com (deployed, verified
 (versions already bumped, tests green) so npm shows the author field — blocked on npm's
 browser OTP, which only Harvey can complete:
 `npm publish -w @stampbench/core --access public && npm publish -w stampbench --access public`
+
+---
+
+## MARKET-AWARE UX (2026-08-10) — Stampbench is no longer "the German validator"
+
+The product read as Germany-only to anyone who was not German, which cost us every
+UK/US visitor at first glance. The fix was information architecture, not paint.
+
+**The one idea:** the engine has always had two profiles — `en16931` (**40** rules,
+the European core) and `xrechnung` (**56** = those plus 16 BR-DE rules) — and the UI
+hard-coded `xrechnung` everywhere. Markets are now the user-facing name for that
+choice, so "is this for my business?" has a real answer instead of a guess.
+
+- **`apps/web/lib/markets.ts` is the single source of truth**: five markets, the
+  profile each maps to, and an honest capability matrix including what is *not*
+  implemented (no UK/US ruleset, no tax-rate determination, no Peppol transmission —
+  anywhere). Rule counts are duplicated there as constants so the engine does not get
+  bundled into the landing page; **`tests/web.test.ts` asserts them against
+  `rulesForProfile()`**, so the marketing numbers cannot silently drift. A `'context'`
+  status without an explanatory note is a test failure.
+- **Homepage**: English hero is market-neutral ("Make your invoices pass. In whichever
+  market you bill."), followed immediately by a market-picker band. **`/de` is
+  untouched in framing** — it keeps the XRechnung hero, the BR-DE-15 demo and its
+  German SEO, because a reader who arrived in German already answered the market
+  question. The hero demo's two rule ids now come from copy for exactly that reason.
+- **New routes, all additive**: `/markets` (the full comparison matrix, gaps included)
+  and `/markets/{uk,us,eu,germany}`. `/markets/germany` is where XRechnung/ZUGFeRD
+  keywords live in English. Every pre-existing URL still returns 200 — verified.
+- **Playground**: market switcher, profile follows the market, the result states
+  *"Checked against …"* (ruleset, rule count, spec version, ruleset version), and
+  BT-24 detection **offers** a switch when the document declares XRechnung but a
+  non-German market is selected — it never re-rules the document silently. `/playground`
+  defaults to EU, `/de/playground` to Germany; the choice persists in `localStorage`
+  (`sb_market`), no account involved. Generation now sets BT-24 from the market instead
+  of always claiming the German customization id.
+- **Numbers refreshed to measured values**: 192 tests (113 library / 50 CLI / 29 web),
+  growth chart extended to Aug 10 with the same `git grep` method its comment
+  documents. The docs page's stale `rulesRun: 42 / 2026-08.1` example is now 56 / 2026-08.2.
+- **Deliberately NOT done: analytics.** /privacy states plainly that we run no
+  analytics scripts at all. Market-selection events would be genuinely useful, but not
+  at the cost of contradicting a published privacy promise — if Harvey wants them,
+  privacy has to change first, deliberately. Same reasoning as the playground-usage
+  measurement gap.
+- **Deliberately NOT done: an AI invoice assistant.** The dormant AI explainer is
+  unchanged. The generate tab now states which fields are never invented, which is the
+  honest place for it to grow later; nothing markets an AI feature that is switched off.
 
 ---
 

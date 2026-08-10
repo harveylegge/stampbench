@@ -1,25 +1,32 @@
 import Link from 'next/link';
 import { localePath, type Copy } from '@/lib/copy';
 import { HeroDemo } from '@/components/hero-demo';
+import { MarketPicker } from '@/components/market-picker';
 import { StatsBoard } from '@/components/stats-board';
 
 const GITHUB_URL = 'https://github.com/harveylegge/stampbench';
 
+/**
+ * Terminal output, transcribed from real runs — the header line, the rule
+ * ids, the wording of the "keep" reason and the trailing count are all what
+ * the CLI actually prints. `--profile en16931` is shown rather than the
+ * default because the profile flag is the whole point of the market model:
+ * the same file is 40 rules in the European core and 56 in Germany.
+ */
+const VALIDATE_SNIPPET = `$ npx stampbench validate invoice.xml --profile en16931
 
-const VALIDATE_SNIPPET = `$ npx stampbench validate rechnung.xml
+invoice.xml  syntax: UBL | profile: en16931 | ruleset: 2026-08.2
+  ERROR  BR-CO-17  VAT breakdown S @ 7%: tax amount should be
+         22.04 (314.86 × 7%) but is 99.99. (line 78)
+  ERROR  BR-11     Missing buyer country code (BT-55). (~line 39)
+INVALID — 2 errors, 0 warnings (40 rules run)`;
 
-rechnung.xml  syntax: UBL | profile: xrechnung
-  ERROR  BR-CO-17  VAT breakdown S @ 7%: tax amount
-         should be 22.04 (314.86 × 7%) but is 99.99. (line 78)
-  ERROR  BR-DE-15  Missing buyer reference (BT-10)… (~line 2)
-INVALID — 2 errors, 0 warnings (56 rules run)`;
+const FIX_SNIPPET = `$ npx stampbench fix invoice.xml --profile en16931 --write
 
-const FIX_SNIPPET = `$ npx stampbench fix rechnung.xml --write
-
-rechnung.xml
+invoice.xml
   fix   line 78    BR-CO-17, BR-S-09  99.99 → 22.04
-  keep            BR-DE-15  no derivable correct value —
-                            this needs a human decision
+  keep            BR-11  no derivable correct value —
+                         this needs a human decision, not arithmetic
 1 fix applied, 1 error needing a person`;
 
 /**
@@ -32,6 +39,14 @@ rechnung.xml
  * an interactive validate→fix panel as the hero visual; evidence charts with
  * every number linking to /trust; the free/paid split stated plainly; the
  * playground as the single conversion action.
+ *
+ * 2026-08 market pass: the English hero no longer names a jurisdiction. A
+ * visitor's second question is "is this for my business?", so the market band
+ * answers it before any standard is mentioned; the German page keeps its
+ * XRechnung framing because a reader who arrived in German has already
+ * answered that question. Everything below the band is unchanged in shape —
+ * the evidence still sits high, because for a compliance product the evidence
+ * *is* the pitch.
  */
 export function Landing({ copy }: { copy: Copy }) {
   const path = (p: string) => localePath(copy.locale, p);
@@ -59,15 +74,23 @@ export function Landing({ copy }: { copy: Copy }) {
               >
                 {copy.hero.ctaPrimary}
               </Link>
+              {/* An in-page anchor, not a route: the answer to "is this for my
+                  business?" is one scroll away, so sending the visitor to
+                  another page to find it would be friction for nothing. */}
               <a
-                href={GITHUB_URL}
+                href="#markets"
                 className="rounded-lg border border-border bg-surface px-5 py-2.5 font-medium transition hover:border-border-hi"
               >
                 {copy.hero.ctaSecondary}
               </a>
             </div>
-            <div className="mt-8 font-mono text-sm text-faint">
-              {copy.hero.install} <span className="text-accent">@stampbench/core</span>
+            <div className="mt-8 flex flex-wrap items-center gap-x-5 gap-y-2 font-mono text-sm text-faint">
+              <span>
+                {copy.hero.install} <span className="text-accent">@stampbench/core</span>
+              </span>
+              <a href={GITHUB_URL} className="transition hover:text-muted">
+                {copy.nav.github} ↗
+              </a>
             </div>
           </div>
           <HeroDemo copy={copy} />
@@ -82,6 +105,9 @@ export function Landing({ copy }: { copy: Copy }) {
           </div>
         </div>
       </section>
+
+      {/* The market question, asked before any standard is named */}
+      <MarketPicker copy={copy.markets} />
 
       {/* Proof — high on the page: for a compliance product, evidence IS the pitch */}
       <section className="py-20">
@@ -111,7 +137,8 @@ export function Landing({ copy }: { copy: Copy }) {
       <section className="border-t border-border bg-surface/40 py-20">
         <div className="mx-auto max-w-6xl px-4">
           <h2 className="mb-3 text-2xl font-semibold tracking-tight">
-            {copy.problem.headingPre} <span className="font-mono text-danger">[BR-DE-15]</span>
+            {copy.problem.headingPre}{' '}
+            <span className="font-mono text-danger">[{copy.problem.rule}]</span>
             {copy.problem.headingPost}
           </h2>
           <p className="mb-10 max-w-2xl leading-relaxed text-muted">{copy.problem.body}</p>
@@ -197,6 +224,7 @@ export function Landing({ copy }: { copy: Copy }) {
               </pre>
             </div>
           </div>
+          <p className="mt-6 max-w-2xl text-sm leading-relaxed text-faint">{copy.api.note}</p>
         </div>
       </section>
 

@@ -168,12 +168,19 @@ registerRuleset({
       "terms": ["BT-10"]
     }
   ],
-  "meta": { "rulesRun": 42, "rulesetVersion": "2026-08.1" }
+  "meta": { "rulesRun": 56, "rulesetVersion": "2026-08.2" }
 }`}</Code>
         <p className="text-sm leading-relaxed text-muted">
           Query/body parameter <code className="font-mono">profile</code>:{' '}
-          <code className="font-mono">xrechnung</code> (default) or <code className="font-mono">en16931</code>{' '}
-          (core rules only, for non-German EU invoices).
+          <code className="font-mono">xrechnung</code> (default, 56 rules — the European core plus
+          the German BR-DE rules) or <code className="font-mono">en16931</code> (40 rules, the
+          European core alone). <code className="font-mono">meta.rulesRun</code> in the response
+          always states which of the two actually ran, so a verdict is never ambiguous about the
+          ruleset behind it. See{' '}
+          <Link href="/markets" className="text-accent-hi hover:underline">
+            markets
+          </Link>{' '}
+          for which profile applies where.
         </p>
 
         <H2 id="generate">POST /api/v1/generate</H2>

@@ -4,7 +4,7 @@ import Link from 'next/link';
 export const metadata: Metadata = {
   title: 'Trust & test evidence',
   description:
-    'How Stampbench proves correctness: 166 automated tests, 86 official XRechnung test-suite instances, an adversarial security review, and a published KoSIT parity harness — including what we have not yet proven.',
+    'How Stampbench proves correctness: 192 automated tests, 86 official XRechnung test-suite instances, an adversarial security review, and a published KoSIT parity harness — including what we have not yet proven.',
 };
 
 /**
@@ -15,9 +15,9 @@ export const metadata: Metadata = {
  */
 
 const TEST_SUITES = [
-  { name: '@stampbench/core', count: 110, covers: 'Rule engine, UBL + CII parsing, generation, totals arithmetic, repair, rulesets, round-trips' },
+  { name: '@stampbench/core', count: 113, covers: 'Rule engine, UBL + CII parsing, generation, totals arithmetic, repair, rulesets, round-trips' },
   { name: 'stampbench (CLI)', count: 50, covers: 'Validate/fix/generate/regress commands, CI exit codes, JSON/SARIF output, error paths' },
-  { name: 'Web application', count: 6, covers: 'Plan/quota logic, API-key hashing, rate limiting' },
+  { name: 'Web application', count: 29, covers: 'Plan/quota logic, API-key hashing, rate limiting, billing webhooks, and the market coverage claims' },
 ];
 
 const FLAGGED = [
@@ -47,11 +47,21 @@ export default function TrustPage() {
         artefact in our repository, not from an estimate.
       </p>
 
-      <div className="mb-12 grid gap-4 sm:grid-cols-3">
-        <Stat figure="166" label="Automated tests passing" sub="Across the library, CLI and web app" />
+      <div className="mb-6 grid gap-4 sm:grid-cols-3">
+        <Stat figure="192" label="Automated tests passing" sub="Across the library, CLI and web app" />
         <Stat figure="86" label="Official test-suite documents" sub="45 UBL + 41 CII, run through the engine" />
         <Stat figure="56" label="Validation rules active" sub="XRechnung profile; 40 in the EN 16931 core profile" />
       </div>
+
+      <p className="mb-12 max-w-2xl text-sm leading-relaxed text-muted">
+        The same standard applies to what we claim about <em>markets</em>. One national
+        customisation of EN 16931 is implemented — Germany&apos;s — and the coverage matrix says so
+        for every other market rather than implying more.{' '}
+        <Link href="/markets" className="text-accent-hi hover:underline">
+          See what is and is not covered
+        </Link>
+        .
+      </p>
 
       {/* ---------- Automated tests ---------- */}
       <section className="mb-12">

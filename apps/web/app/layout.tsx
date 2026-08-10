@@ -12,21 +12,29 @@ export const metadata: Metadata = {
   title: {
     // The result page already shows the domain above the title, so the brand
     // goes at the end instead of repeating up front.
-    default: 'Validate & fix XRechnung / EN 16931 e-invoices · Stampbench',
+    default: 'Stampbench — validate, repair and create compliant e-invoices',
     template: '%s · Stampbench',
   },
+  /**
+   * The site-wide default is deliberately market-neutral. Jurisdiction terms
+   * are not abandoned — they moved to where they are true and specific:
+   * /markets/germany carries XRechnung and ZUGFeRD in English, /de carries the
+   * German-language terms that already rank. A homepage optimised for
+   * "XRechnung" tells a UK visitor the product is not for them before they
+   * have read a word of it.
+   */
   description:
-    'E-invoicing is becoming law: Germany already requires XRechnung for public-sector invoices, and every business must issue e-invoices from 2027. Stampbench validates, repairs and generates compliant invoices in TypeScript — open source, on your own machine.',
+    'Invoice infrastructure for modern businesses: validate, repair and create structured e-invoices against the standard your market requires. EN 16931 core, the German XRechnung profile, UBL and CII — open source TypeScript that runs on your own machine.',
   keywords: [
-    'xrechnung', 'e-rechnung', 'en 16931', 'e-invoicing api', 'xrechnung validieren',
-    'xrechnung nodejs', 'ubl invoice', 'peppol', 'e-rechnung pflicht 2027',
+    'invoice validation', 'e-invoicing api', 'invoice api', 'invoice compliance',
+    'en 16931', 'ubl invoice', 'cii invoice', 'xrechnung', 'zugferd', 'factur-x',
   ],
   authors: [{ name: 'Harvey Legge', url: 'https://github.com/harveylegge' }],
   creator: 'Harvey Legge',
   openGraph: {
-    title: 'Stampbench — e-invoicing compliance for the mandate era',
+    title: 'Stampbench — invoice validation and compliance infrastructure',
     description:
-      'Germany requires XRechnung today for public-sector invoices and for all businesses from 2027. Validate, repair and generate compliant e-invoices — open source, in TypeScript.',
+      'Validate, repair and create structured e-invoices against the ruleset that applies where you bill: EN 16931 everywhere, the German XRechnung profile in full. Open source, runs locally.',
     siteName: 'Stampbench',
     type: 'website',
   },
@@ -57,9 +65,16 @@ function Footer() {
         <div className="flex flex-wrap gap-12">
           <div className="flex flex-col gap-2">
             <span className="font-medium text-muted">Product</span>
-            <a href="/playground" className="hover:text-muted">Playground</a>
+            <a href="/playground" className="hover:text-muted">Validate an invoice</a>
             <a href="/docs" className="hover:text-muted">Documentation</a>
             <a href="/pricing" className="hover:text-muted">Pricing</a>
+          </div>
+          <div className="flex flex-col gap-2">
+            <span className="font-medium text-muted">Markets</span>
+            <a href="/markets/uk" className="hover:text-muted">United Kingdom</a>
+            <a href="/markets/us" className="hover:text-muted">United States</a>
+            <a href="/markets/eu" className="hover:text-muted">European Union</a>
+            <a href="/markets/germany" className="hover:text-muted">Germany · XRechnung</a>
           </div>
           <div className="flex flex-col gap-2">
             <span className="font-medium text-muted">Open source</span>

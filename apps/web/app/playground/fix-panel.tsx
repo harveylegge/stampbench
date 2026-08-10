@@ -47,25 +47,30 @@ function fixedFilename(original: string | null): string {
 export function FixPanel({
   xml,
   fileName,
+  profile,
   onUseFixed,
 }: {
   xml: string;
   fileName: string | null;
+  /** The market's ruleset — repairing under a different one than the check ran
+   *  under would report fixes for violations the user was never shown. */
+  profile: 'en16931' | 'xrechnung';
   onUseFixed: (fixed: string) => void;
 }) {
   const [fix, setFix] = useState<FixResult | null>(null);
   const [error, setError] = useState<string | null>(null);
 
-  // A fix belongs to the exact text it was computed from — new input, fresh panel.
+  // A fix belongs to the exact text it was computed from, under the ruleset it
+  // was computed against — either changing invalidates the panel.
   useEffect(() => {
     setFix(null);
     setError(null);
-  }, [xml]);
+  }, [xml, profile]);
 
   function runFix() {
     setError(null);
     try {
-      setFix(fixXml(xml, { profile: 'xrechnung' }));
+      setFix(fixXml(xml, { profile }));
     } catch (e) {
       setError((e as Error).message);
     }

@@ -3,12 +3,18 @@ import type { MetadataRoute } from 'next';
 // Required for `output: 'export'`; harmless on the hosted build.
 export const dynamic = 'force-static';
 import { env } from '@/lib/env';
+import { PAGE_MARKETS } from '@/lib/markets';
 
 export default function sitemap(): MetadataRoute.Sitemap {
   const base = env.appUrl;
   return [
     '',
     '/playground',
+    // The German pages exist and rank; they were simply never listed here.
+    '/de',
+    '/de/playground',
+    '/markets',
+    ...PAGE_MARKETS.map((market) => `/markets/${market}`),
     '/docs',
     '/pricing',
     '/trust',

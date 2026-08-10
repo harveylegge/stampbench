@@ -82,6 +82,7 @@ export function SiteNav() {
   // URLs while taking a German label — same rule as the desktop links.
   const menuLinks = [
     { href: localePath(locale, 'playground'), label: copy.nav.playground },
+    { href: '/markets', label: copy.nav.markets },
     { href: '/docs', label: copy.nav.docs },
     { href: '/pricing', label: copy.nav.pricing },
     { href: '/trust', label: copy.nav.trust },

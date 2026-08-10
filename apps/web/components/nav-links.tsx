@@ -8,8 +8,13 @@ import { StampbenchMark } from '@/components/logo';
 /**
  * The header links, localised from the current path. Client-side because the
  * root layout is shared by both languages and only the URL says which one the
- * visitor is reading. Docs and Pricing exist in English only, so they keep
- * their English URLs while taking a German label.
+ * visitor is reading. Markets, Docs and Pricing exist in English only, so they
+ * keep their English URLs while taking a German label.
+ *
+ * The links are named for jobs rather than standards — "Validate", not
+ * "XRechnung". A standard belongs deeper in the tree, on the market page of
+ * the country that mandates it, where a visitor arrives already knowing why
+ * they care.
  */
 export function NavLinks() {
   const pathname = usePathname() ?? '/';
@@ -20,6 +25,9 @@ export function NavLinks() {
     <nav className="hidden items-center gap-6 text-sm text-muted sm:flex">
       <Link href={localePath(locale, 'playground')} className="transition hover:text-text">
         {copy.nav.playground}
+      </Link>
+      <Link href="/markets" className="transition hover:text-text">
+        {copy.nav.markets}
       </Link>
       <Link href="/docs" className="transition hover:text-text">
         {copy.nav.docs}
