@@ -102,8 +102,40 @@ export type {
 export { applyEdits, fixXml, planFixes } from './fix/index.js';
 export type { FixOptions, FixPlan, FixResult, TextEdit, Unfixable } from './fix/index.js';
 
-export { DEFAULT_PROCESS_ID, generateXRechnungUbl, withXRechnungDefaults } from './generate/ubl.js';
-export type { GenerateOptions } from './generate/ubl.js';
+export {
+  DEFAULT_PROCESS_ID,
+  generateUblInvoice,
+  generateXRechnungUbl,
+  PROFILE_SPEC_IDS,
+  withProfileDefaults,
+  withXRechnungDefaults,
+} from './generate/ubl.js';
+export type { GenerateOptions, ProfileGenerateOptions } from './generate/ubl.js';
+
+export {
+  add,
+  compare,
+  currencyScale,
+  equals,
+  formatMoney,
+  fromDecimal,
+  isNegative,
+  isZero,
+  lineNet,
+  money,
+  multiply,
+  negate,
+  parseMoney,
+  percentOf,
+  PRICE_SCALE,
+  rescale,
+  subtract,
+  sum,
+  toDecimal,
+  toFixedString,
+  ZERO,
+} from './money/index.js';
+export type { Money } from './money/index.js';
 
 export { computeTotals, withComputedTotals } from './generate/totals.js';
 export type { ComputeTotalsOptions, ComputedTotals } from './generate/totals.js';

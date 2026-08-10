@@ -526,6 +526,24 @@ export function Playground({ defaultMarket = 'eu' }: { defaultMarket?: MarketId 
 
   const profile: MarketProfile = MARKETS[market].profile;
 
+  /**
+   * Handoff from the invoice generator's "Open in the playground". The XML
+   * travels through sessionStorage rather than the URL: an invoice is
+   * commercial data and has no business in a query string, a history entry or
+   * a referrer header. Consumed once, then removed.
+   */
+  useEffect(() => {
+    try {
+      const handoff = window.sessionStorage.getItem('sb_playground_xml');
+      if (!handoff) return;
+      window.sessionStorage.removeItem('sb_playground_xml');
+      setXml(handoff);
+      setFileName('generated-invoice.xml');
+    } catch {
+      // Storage unavailable — the playground simply opens empty.
+    }
+  }, []);
+
   async function post(path: string, body: unknown) {
     const res = await fetch(path, {
       method: 'POST',

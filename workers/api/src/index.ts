@@ -16,12 +16,13 @@
  */
 
 import {
-  generateXRechnungUbl,
+  generateUblInvoice,
   fixXml,
   validateXml,
   withComputedTotals,
-  withXRechnungDefaults,
+  withProfileDefaults,
   type Invoice,
+  type Profile,
 } from '@stampbench/core';
 import Anthropic from '@anthropic-ai/sdk';
 import {
@@ -369,21 +370,33 @@ async function handleHostedApi(request: Request, env: Env, op: 'validate' | 'gen
   const body = await readJson(request);
   if (!body) return fail(400, 'bad_request', 'Body must be JSON under 1.5 MB.');
 
+  // The profile has always been documented and was never read: every call ran
+  // the German CIUS and every generated document claimed the XRechnung
+  // customization id, whatever the caller asked for. It defaults to
+  // 'xrechnung' so existing integrations are unaffected, and an unrecognised
+  // value is rejected rather than silently falling back — a caller who
+  // mistypes it should not receive a verdict from a different ruleset.
+  const requested = body.profile ?? new URL(request.url).searchParams.get('profile') ?? undefined;
+  if (requested !== undefined && requested !== 'xrechnung' && requested !== 'en16931') {
+    return fail(400, 'bad_request', 'profile must be "xrechnung" or "en16931".');
+  }
+  const profile: Profile = (requested as Profile | undefined) ?? 'xrechnung';
+
   try {
     if (op === 'validate') {
       const xml = String(body.xml ?? '');
       if (!xml.trim()) return fail(400, 'bad_request', 'Provide { "xml": "…" }.');
-      return json({ result: validateXml(xml, { profile: 'xrechnung' }) as unknown as Json });
+      return json({ result: validateXml(xml, { profile }) as unknown as Json });
     }
     if (op === 'fix') {
       const xml = String(body.xml ?? '');
       if (!xml.trim()) return fail(400, 'bad_request', 'Provide { "xml": "…" }.');
-      return json({ result: fixXml(xml) as unknown as Json });
+      return json({ result: fixXml(xml, { profile }) as unknown as Json });
     }
     const invoice = body.invoice;
     if (!invoice || typeof invoice !== 'object') return fail(400, 'bad_request', 'Provide { "invoice": { … } }.');
-    const full = withComputedTotals(withXRechnungDefaults(invoice as Invoice));
-    return json({ xml: generateXRechnungUbl(full) });
+    const full = withComputedTotals(withProfileDefaults(invoice as Invoice, { profile }));
+    return json({ xml: generateUblInvoice(full, { profile }), profile });
   } catch (e) {
     return fail(422, 'unprocessable', (e as Error).message);
   }

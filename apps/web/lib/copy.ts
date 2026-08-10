@@ -47,6 +47,7 @@ export interface MarketsCopy {
 export interface Copy {
   locale: Locale;
   nav: {
+    create: string;
     markets: string;
     playground: string;
     docs: string;
@@ -176,6 +177,7 @@ export interface Copy {
 export const en: Copy = {
   locale: 'en',
   nav: {
+    create: 'Create',
     markets: 'Markets',
     playground: 'Validate',
     docs: 'Docs',
@@ -324,7 +326,7 @@ export const en: Copy = {
     note: 'MIT-licensed engine — run it locally, verify every number yourself.',
   },
   statsBoard: {
-    tests: { label: 'Automated tests passing', sub: '113 library · 50 CLI · 29 web', failing: '0 failing · 0 skipped' },
+    tests: { label: 'Automated tests passing', sub: '132 library · 50 CLI · 55 web', failing: '0 failing · 0 skipped' },
     docs: { label: 'Official test documents run', sub: '0 crashes · 3 divergences, published' },
     rules: { label: 'Validation rules active', families: ['EN 16931 core', 'VAT categories', 'BR-DE profile'] },
     located: {
@@ -399,6 +401,7 @@ export const en: Copy = {
 export const de: Copy = {
   locale: 'de',
   nav: {
+    create: 'Erstellen',
     markets: 'Märkte',
     playground: 'Prüfen',
     docs: 'Dokumentation',
@@ -545,7 +548,7 @@ export const de: Copy = {
     note: 'MIT-lizenzierte Engine — lokal ausführen und jede Zahl selbst überprüfen.',
   },
   statsBoard: {
-    tests: { label: 'Automatisierte Tests bestehen', sub: '113 Bibliothek · 50 CLI · 29 Web', failing: '0 fehlgeschlagen · 0 übersprungen' },
+    tests: { label: 'Automatisierte Tests bestehen', sub: '132 Bibliothek · 50 CLI · 55 Web', failing: '0 fehlgeschlagen · 0 übersprungen' },
     docs: { label: 'Offizielle Testdokumente geprüft', sub: '0 Abbrüche · 3 Abweichungen, veröffentlicht' },
     rules: { label: 'Aktive Prüfregeln', families: ['EN 16931 Kern', 'USt-Kategorien', 'BR-DE-Profil'] },
     located: {

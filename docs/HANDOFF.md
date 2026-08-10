@@ -16,6 +16,64 @@ browser OTP, which only Harvey can complete:
 
 ---
 
+## INVOICE GENERATOR (2026-08-10) — Stampbench now creates as well as checks
+
+`/invoice-generator` (+ `/invoice-generator/{uk,germany,eu,us}`) is a real
+create → validate → repair → export loop, not a PDF form. All client-side, free,
+no account. **237 tests green** (132 library / 50 CLI / 55 web).
+
+- **Exact money, in the engine.** `packages/core/src/money/` does integer
+  minor-unit arithmetic with half-away-from-zero rounding and — importantly —
+  scales by shifting the decimal *string* exponent, because `1.005 * 100` is
+  `100.49999999999999` and rounds a VAT amount a cent low. Prices are held at
+  `PRICE_SCALE` (4dp) so a genuine €0.335 unit price is not flattened to €0.34
+  before multiplying. The builder's on-screen totals and the XML's BT-106 come
+  from this one code path, and a test asserts they agree.
+- **`generateUblInvoice(invoice, { profile })` / `withProfileDefaults`** —
+  BT-24 now follows the profile instead of always claiming the XRechnung
+  customization id. `generateXRechnungUbl` is unchanged and byte-identical
+  (tested), so nothing existing moved.
+- **⚠️ Fixed a documented-but-absent API parameter.** `/api/v1/validate` and
+  `/api/v1/generate` hard-coded `profile: 'xrechnung'` while /docs documented a
+  `profile` parameter. The worker now reads it (body or query), rejects unknown
+  values, and still defaults to `xrechnung` so existing integrations are
+  unaffected. The docs' stale `rulesRun: 42 / 2026-08.1` example is now 56 /
+  2026-08.2.
+- **The honesty surface is the product here.** `lib/invoice/formats.ts` lists
+  ZUGFeRD/Factur-X, Peppol BIS and FatturaPA as **not implemented with the
+  reason** (the engine has a UBL writer and no CII writer) rather than omitting
+  them; `commercial` is a real format with `validationProfile: null` that gets
+  JSON + print and explicitly **no verdict**. US sales tax is typed in, never
+  determined. Tests enforce this: a non-`supported` format without a stated
+  limitation fails, as does a `'context'` capability without a note.
+- **The compliance rail is derived from real rules.** `requirementChecks()`
+  mirrors the VAT-category `-02`/`-10` families and the BR-DE requirements, so
+  each checklist row names the rule that will fire. Selecting reverse charge
+  greys the rate, demands the buyer's VAT id and an exemption reason — all
+  three enforced by the engine, none invented by a designer.
+- **Repair is honest about being idle.** Because the generator computes totals
+  by construction, arithmetic rules cannot fail on a document it built — so the
+  panel says exactly that and points back to the editor, rather than dangling a
+  Fix button that always reports nothing to do.
+- **Six templates, all fictional companies, all validating.** A test generates
+  every one and asserts zero errors under its own ruleset. Writing them found a
+  real property worth knowing: **every VAT category's `-02` rule requires the
+  seller to carry BT-31 or BT-32**, so a genuinely unregistered trader cannot
+  produce a valid EN 16931 invoice without a tax reference — the freelance
+  template uses category O plus a UTR and says so.
+- **PDF is the browser's print-to-PDF** via a print stylesheet in globals.css
+  (A4, everything hidden except `#invoice-preview`). No rendering library was
+  added to be able to claim the feature.
+- **Known gap, deliberate:** the semantic model has no BG-13 delivery
+  information, so the delivery-date field says on its own hint that it prints
+  but is not written into the XML. Add BT-72 to the model to close it.
+- **Not built:** saved invoice history, versioning, bulk CSV, recurring
+  invoices, webhooks. All need D1 schema + authed worker endpoints; drafts are
+  localStorage-only today (and say so). Analytics still deliberately absent —
+  see the privacy note below.
+
+---
+
 ## MARKET-AWARE UX (2026-08-10) — Stampbench is no longer "the German validator"
 
 The product read as Germany-only to anyone who was not German, which cost us every

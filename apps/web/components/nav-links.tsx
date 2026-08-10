@@ -26,6 +26,9 @@ export function NavLinks() {
       <Link href={localePath(locale, 'playground')} className="transition hover:text-text">
         {copy.nav.playground}
       </Link>
+      <Link href="/invoice-generator" className="transition hover:text-text">
+        {copy.nav.create}
+      </Link>
       <Link href="/markets" className="transition hover:text-text">
         {copy.nav.markets}
       </Link>

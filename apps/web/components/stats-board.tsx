@@ -14,9 +14,9 @@ import type { Copy } from '@/lib/copy';
  */
 
 const TESTS = [
-  { label: 'library', n: 113 },
+  { label: 'library', n: 132 },
   { label: 'CLI', n: 50 },
-  { label: 'web', n: 29 },
+  { label: 'web', n: 55 },
 ];
 const TESTS_TOTAL = TESTS.reduce((s, t) => s + t.n, 0);
 
@@ -31,16 +31,16 @@ const RULE_FAMILIES = [32, 8, 16] as const;
 /**
  * Test cases per package, counted from the repository's commit history —
  * `git grep -c "^\s*(it|test)\("` at the last commit of each day. Re-derive
- * with the same command; the final points match today's live run (113 / 50).
+ * with the same command; the final points match today's live run (132 / 50).
  * Counted 2026-08-10.
  */
 const GROWTH = {
   days: ['2', '3', '4', '5', '6', '7', '8', '9', '10'],
   series: [
-    { color: '#5b2bd6', points: [21, 106, 110, 110, 110, 110, 113, 113, 113] },
+    { color: '#5b2bd6', points: [21, 106, 110, 110, 110, 110, 113, 113, 132] },
     { color: '#0d9488', points: [0, 42, 50, 50, 50, 50, 50, 50, 50] },
   ],
-  yMax: 120,
+  yMax: 140,
 };
 
 function Card({ children, href }: { children: React.ReactNode; href: string }) {
@@ -117,7 +117,7 @@ function GrowthChart({ copy }: { copy: Copy }) {
       <div className="mb-1 text-sm font-medium">{g.label}</div>
       <div className="mb-4 text-xs text-faint">{g.sub}</div>
       <svg viewBox={`0 0 ${W} ${H}`} className="w-full" role="img" aria-label={g.label}>
-        {[0, 40, 80, 120].map((v) => (
+        {[0, 35, 70, 105, 140].map((v) => (
           <g key={v}>
             <line x1={PAD.l} x2={W - PAD.r} y1={y(v)} y2={y(v)} stroke="var(--color-border)" strokeWidth="1" />
             <text x={PAD.l - 6} y={y(v) + 3} textAnchor="end" className="fill-faint font-sans text-[9px]">

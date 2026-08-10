@@ -13,6 +13,8 @@ export default function sitemap(): MetadataRoute.Sitemap {
     // The German pages exist and rank; they were simply never listed here.
     '/de',
     '/de/playground',
+    '/invoice-generator',
+    ...PAGE_MARKETS.map((market) => `/invoice-generator/${market}`),
     '/markets',
     ...PAGE_MARKETS.map((market) => `/markets/${market}`),
     '/docs',

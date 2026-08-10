@@ -89,6 +89,50 @@ pre {
   mask-image: radial-gradient(ellipse 70% 60% at 50% 0%, black 30%, transparent 100%);
 }
 
+/* Printing an invoice.
+   "Download PDF" on the generator is the browser's own print-to-PDF driven by
+   these rules — a real, offline, dependency-free PDF, rather than shipping a
+   rendering library to be able to claim the feature. Everything except the
+   invoice itself is removed, and the document is laid out for A4. */
+@media print {
+  @page {
+    size: A4;
+    margin: 14mm;
+  }
+  body {
+    background: #fff;
+  }
+  /* Hide everything, then re-show the invoice and its descendants. Hiding by
+     `visibility` rather than `display` leaves the ancestor boxes in place, so
+     the absolutely-positioned invoice below still has a containing block —
+     the reliable version of "print only this element". */
+  body * {
+    visibility: hidden;
+  }
+  #invoice-preview,
+  #invoice-preview * {
+    visibility: visible;
+  }
+  #invoice-preview {
+    position: absolute;
+    inset: 0 auto auto 0;
+    width: 100%;
+    border: 0 !important;
+    border-radius: 0 !important;
+    padding: 0 !important;
+    box-shadow: none !important;
+    background: #fff !important;
+  }
+  #invoice-preview table {
+    min-width: 0 !important;
+  }
+  /* Keep line rows and the totals block from splitting across pages. */
+  #invoice-preview tr,
+  #invoice-preview article > div {
+    break-inside: avoid;
+  }
+}
+
 /* Prose for AI explanations / docs bodies */
 .prose-ig h1, .prose-ig h2, .prose-ig h3 { color: var(--color-text); font-weight: 600; margin: 1.25em 0 0.5em; }
 .prose-ig p { margin: 0.6em 0; line-height: 1.65; color: var(--color-muted); }

@@ -17,7 +17,8 @@
  * positions from `locate/` to change only the offending value.
  */
 import type { AllowanceCharge, Invoice, Party } from '../model/invoice.js';
-import { XRECHNUNG_30_SPEC_ID } from '../model/codes.js';
+import { EN16931_SPEC_ID, XRECHNUNG_30_SPEC_ID } from '../model/codes.js';
+import type { Profile } from '../validate/rule.js';
 import { round2 } from '../validate/rule.js';
 
 const UBL_NS = 'urn:oasis:names:specification:ubl:schema:xsd:Invoice-2';
@@ -362,4 +363,57 @@ export function generateXRechnungUbl(invoice: Invoice, options?: GenerateOptions
     { xmlns: UBL_NS, 'xmlns:cac': CAC_NS, 'xmlns:cbc': CBC_NS },
   );
   return doc.toString() + '\n';
+}
+
+// ------------------------------------------------------------------ profiles
+
+/**
+ * The BT-24 specification identifier each validation profile expects.
+ *
+ * This is the field that tells a receiving system which ruleset the document
+ * claims to satisfy, so it is not decoration: emitting the XRechnung
+ * customization id on an invoice bound for a French or British buyer is a
+ * compliance claim about a German CIUS that the document was never checked
+ * against. `generateXRechnungUbl` defaults to XRechnung because that is what
+ * it was built for and existing callers depend on it; anything market-aware
+ * should go through `generateUblInvoice` instead and say which profile it
+ * means.
+ */
+export const PROFILE_SPEC_IDS: Record<Profile, string> = {
+  en16931: EN16931_SPEC_ID,
+  xrechnung: XRECHNUNG_30_SPEC_ID,
+};
+
+export interface ProfileGenerateOptions extends GenerateOptions {
+  /** Which ruleset the document should declare. Defaults to 'xrechnung'. */
+  profile?: Profile;
+}
+
+function resolveProfileOptions(options?: ProfileGenerateOptions): GenerateOptions {
+  const profile = options?.profile ?? 'xrechnung';
+  return {
+    specificationIdentifier: options?.specificationIdentifier ?? PROFILE_SPEC_IDS[profile],
+    businessProcessType: options?.businessProcessType,
+  };
+}
+
+/**
+ * Fill the defaults the generator would emit anyway, for a given profile —
+ * the profile-aware counterpart of `withXRechnungDefaults`. Validate the
+ * result and you get the same verdict as validating the produced XML.
+ */
+export function withProfileDefaults(invoice: Invoice, options?: ProfileGenerateOptions): Invoice {
+  return withXRechnungDefaults(invoice, resolveProfileOptions(options));
+}
+
+/**
+ * Generate UBL 2.1 Invoice XML for a named profile.
+ *
+ * Same generator, honest BT-24: `{ profile: 'en16931' }` produces a document
+ * that declares the European core, `{ profile: 'xrechnung' }` the German
+ * CIUS. The caveat on `generateXRechnungUbl` applies unchanged — this is for
+ * authoring new invoices, never for round-tripping someone else's.
+ */
+export function generateUblInvoice(invoice: Invoice, options?: ProfileGenerateOptions): string {
+  return generateXRechnungUbl(invoice, resolveProfileOptions(options));
 }
