@@ -66,6 +66,27 @@ interface ValidationResult {
   invoice?: { specificationIdentifier?: string };
 }
 
+/**
+ * Why a dropped file cannot be used, or null when it is worth reading.
+ *
+ * The case that matters is a ZUGFeRD or Factur-X invoice, because those are
+ * PDFs with the XML embedded inside them — and this site advertises
+ * "CII · ZUGFeRD / Factur-X" on the homepage, so someone will absolutely drop
+ * one here. `File.text()` does not reject on a PDF: it decodes the bytes as
+ * UTF-8 and *resolves* with mojibake, so the catch never fires, the box fills
+ * with binary noise and validation dies on a parse error that reads like the
+ * product is broken. Naming the real situation costs one check.
+ */
+export function describeUnreadableDrop(file: { name: string; type: string }): string | null {
+  if (/\.pdf$/i.test(file.name) || file.type === 'application/pdf') {
+    return 'That is a PDF. If it is a ZUGFeRD or Factur-X invoice, the invoice data is an XML file embedded inside it — export that XML from your billing system and drop it here. Stampbench cannot open the PDF wrapper for you yet.';
+  }
+  if (/\.(zip|docx?|xlsx?|png|jpe?g|heic)$/i.test(file.name)) {
+    return `Stampbench reads invoice XML — UBL or CII. A ${file.name.split('.').pop()?.toUpperCase()} file is not something it can check.`;
+  }
+  return null;
+}
+
 /** Escape HTML then apply minimal markdown (bold, inline code) for AI output. */
 function renderMarkdownish(text: string): string {
   const escaped = text
@@ -703,6 +724,11 @@ export function Playground({ defaultMarket = 'eu' }: { defaultMarket?: MarketId 
                 e.preventDefault();
                 const file = e.dataTransfer.files?.[0];
                 if (!file) return;
+                const problem = describeUnreadableDrop(file);
+                if (problem) {
+                  setError(problem);
+                  return;
+                }
                 file
                   .text()
                   .then((text) => {

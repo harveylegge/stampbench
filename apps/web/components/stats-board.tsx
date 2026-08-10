@@ -16,7 +16,7 @@ import type { Copy } from '@/lib/copy';
 const TESTS = [
   { label: 'library', n: 136 },
   { label: 'CLI', n: 50 },
-  { label: 'web', n: 66 },
+  { label: 'web', n: 70 },
 ];
 const TESTS_TOTAL = TESTS.reduce((s, t) => s + t.n, 0);
 
@@ -26,7 +26,9 @@ const DOCS = [
 ];
 const DOCS_TOTAL = DOCS.reduce((s, d) => s + d.n, 0);
 
-const RULE_FAMILIES = [32, 8, 16] as const;
+/** EN 16931 structure, VAT categories, BR-DE. Asserted to sum to the engine's
+ *  own profile totals by test — the card and the showcase must agree. */
+export const RULE_FAMILIES = [32, 8, 16] as const;
 
 /**
  * Test cases per package, counted from the repository's commit history —
@@ -202,16 +204,27 @@ export function StatsBoard({ copy }: { copy: Copy }) {
           {RULE_FAMILIES.reduce((a, b) => a + b, 0)}
         </div>
         <div className="mt-1 text-sm">{s.rules.label}</div>
+        {/* The three families have to visibly add up. Elsewhere on this page
+            the showcase says "EN 16931 · 40 rules", so a bar here labelled
+            "EN 16931 core: 32" reads as a contradiction on the one page whose
+            entire pitch is that every number is checkable. 32 + 8 = the 40
+            European rules; + 16 German = 56. The subtotal says so. */}
         <div className="my-3 space-y-2.5">
           {RULE_FAMILIES.map((n, i) => (
             <div key={s.rules.families[i]}>
               <div className="mb-1 flex justify-between text-xs text-muted">
                 <span>{s.rules.families[i]}</span>
-                <span className="font-mono">{n} / {n}</span>
+                <span className="font-mono">{n}</span>
               </div>
               <div className="h-1.5 rounded-full bg-accent-dim">
                 <div className="h-1.5 w-full rounded-full bg-accent" />
               </div>
+              {i === 1 && (
+                <div className="mt-2 flex justify-between border-t border-border pt-2 text-xs">
+                  <span className="text-muted">{s.rules.subtotal}</span>
+                  <span className="font-mono text-text">{RULE_FAMILIES[0] + RULE_FAMILIES[1]}</span>
+                </div>
+              )}
             </div>
           ))}
         </div>

@@ -155,10 +155,22 @@ export function InvoiceGenerator({ initialMarket }: { initialMarket?: MarketId }
   const checks = useMemo(() => (draft ? requirementChecks(draft) : []), [draft]);
   const format = draft ? getFormat(draft.formatId) : null;
 
+  /**
+   * Straight from "where do you bill?" to the invoice.
+   *
+   * There used to be a format step in between, asking *"what should Stampbench
+   * produce for Germany?"* and listing options — including deliberately
+   * disabled ones with reasons. That is a compliance-literacy exam standing
+   * between an advert click and the first field, and the honest answer for
+   * almost everyone is the market's default anyway. The choice is not removed:
+   * it is on the build screen as "Change format", where it is an option rather
+   * than a gate, and the full "what we cannot write, and why" list lives on
+   * the market pages where it informs instead of blocking.
+   */
   function chooseMarket(market: MarketId) {
     writeMarket(market);
     setDraft(emptyDraft(market, new Date(), Math.floor(Date.now() / 1000) % 1000000));
-    setPhase('format');
+    setPhase('build');
   }
 
   function generate() {
@@ -1224,7 +1236,7 @@ export function InvoiceGenerator({ initialMarket }: { initialMarket?: MarketId }
         </div>
 
         <div className="rounded-xl border border-border bg-surface p-4">
-          <h2 className="mb-2 text-sm font-medium">Compliance context</h2>
+          <h2 className="mb-2 text-sm font-medium">What gets checked</h2>
           {checks.length === 0 ? (
             <p className="text-sm leading-relaxed text-muted">
               This format has no ruleset, so there is nothing to check.

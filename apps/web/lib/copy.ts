@@ -65,44 +65,59 @@ export interface Copy {
     titleTop: string;
     titleAccent: string;
     lede: string;
+    /** One sentence saying what an e-invoice actually is. */
+    primer: string;
     /** Leads the hero: the generator. */
     ctaCreate: string;
     /** The validator — the older, deeper capability. */
     ctaPrimary: string;
     /** Scrolls to the market band; a text link, not a button. */
     ctaSecondary: string;
-    install: string;
-  };
-  /**
-   * The interactive validate→fix panel beside the hero. The two rules it shows
-   * are copy, not constants: the English page demonstrates the asymmetry with
-   * European core rules (which apply in every market), the German page with
-   * the BR-DE rule its readers actually hit.
-   */
-  heroDemo: {
-    passed: string;
-    errors: string;
-    expected: string;
-    found: string;
-    fixButton: string;
-    fixedBadge: string;
-    keptNote: string;
-    tryYours: string;
-    /** The violation with exactly one derivable answer. */
-    fixableRule: string;
-    fixableTitle: string;
-    /** The violation that needs a person, whatever the market. */
-    keptRule: string;
-    keptTitle: string;
-    /** Ruleset the panel says it ran, e.g. 'EN 16931 core · 40 rules'. */
-    ruleset: string;
-    /** Rules that passed — the ruleset's size minus the two failures shown. */
-    passedCount: number;
+    /** Under the buttons: the three things a first-time visitor worries about. */
+    reassurance: string;
+    /** What pressing the create button actually produces. */
+    ctaCreateSub: string;
   };
   /** The "where does your business operate?" band under the hero. */
   markets: MarketsCopy;
-  /** Format/standard chips under the hero — facts only, no certifications. */
-  trustbar: string[];
+  /**
+   * The tabbed product showcase under the hero. Its four tabs are the product
+   * loop in plain verbs — make it, check it, fix it, automate it — because a
+   * visitor arriving from an advert has to see what the thing does before any
+   * standard is worth naming.
+   */
+  showcase: {
+    label: string;
+    caption: string;
+    captionLink: string;
+    tabs: { id: 'create' | 'check' | 'fix' | 'automate'; label: string }[];
+    create: {
+      title: string;
+      seller: string;
+      sellerCity: string;
+      colItem: string;
+      colQty: string;
+      colAmount: string;
+      lines: { name: string; qty: string; amount: string }[];
+      subtotal: string;
+      vat: string;
+      total: string;
+    };
+    check: {
+      verdict: string;
+      rulesetLine: string;
+      problems: { title: string; rule: string; detail: string }[];
+      footnote: string;
+    };
+    fix: { verdict: string; keptTitle: string; keptDetail: string };
+    automate: { snippet: string; points: { title: string; detail: string }[] };
+  };
+  /**
+   * Format/standard chips under the hero — facts only, no certifications.
+   * Each carries a gloss, because six bare acronyms sit exactly where a
+   * first-time visitor decides whether to keep scrolling.
+   */
+  trustbar: { term: string; gloss: string }[];
   problem: {
     headingPre: string;
     /** The rule id in the heading — a core rule in English, BR-DE in German. */
@@ -140,7 +155,7 @@ export interface Copy {
   statsBoard: {
     tests: { label: string; sub: string; failing: string };
     docs: { label: string; sub: string };
-    rules: { label: string; families: [string, string, string] };
+    rules: { label: string; families: [string, string, string]; subtotal: string };
     located: { label: string; subLead: string; subDetail: string };
     growth: { label: string; sub: string; series: [string, string] };
   };
@@ -191,34 +206,20 @@ export const en: Copy = {
     signIn: 'Sign in',
     account: 'Account',
     menu: 'Menu',
-    cta: 'Get it on npm',
+    cta: 'Validate an invoice',
   },
   hero: {
-    badge: 'MIT-licensed engine · runs on your machine · no account to try it',
+    badge: 'Germany: receiving is already law, issuing from 2027',
     titleTop: 'Make your invoices pass.',
     titleAccent: 'In whichever market you bill.',
     lede:
       'Stampbench validates, repairs and creates structured e-invoices against the standard your customer actually requires — with the exact rule, the exact field and the exact line that failed.',
     ctaCreate: 'Create invoice',
+    primer: 'New to this? An e-invoice is invoice data written in a fixed format, so your customer’s software can read it field by field instead of someone retyping it. EN 16931 is the European standard that says what those fields must contain.',
     ctaPrimary: 'Validate an invoice',
     ctaSecondary: 'Choose your market',
-    install: 'npm install',
-  },
-  heroDemo: {
-    passed: 'rules passed',
-    errors: 'errors found',
-    expected: 'Expected',
-    found: 'Found',
-    fixButton: 'Fix automatically',
-    fixedBadge: '1 fix applied — revalidated',
-    keptNote: 'needs a human decision. Stampbench never guesses business data.',
-    tryYours: 'Try it on your invoice →',
-    fixableRule: 'BR-CO-17',
-    fixableTitle: 'VAT amount is incorrect',
-    keptRule: 'BR-11',
-    keptTitle: 'Missing buyer country code (BT-55)',
-    ruleset: 'EN 16931 core · 40 rules',
-    passedCount: 38,
+    reassurance: 'Free to try · No account needed · Runs in your browser, nothing to install',
+    ctaCreateSub: 'Fill in a form — get the XML file your customer’s system needs, plus a printable copy.',
   },
   markets: {
     eyebrow: 'Choose your market',
@@ -231,15 +232,85 @@ export const en: Copy = {
     selected: 'Your market',
     change: 'What works here',
     cards: [
-      { id: 'uk', name: 'United Kingdom', tagline: 'EN 16931 validation and creation. No UK-specific ruleset yet — said plainly.' },
+      { id: 'uk', name: 'United Kingdom', tagline: 'Checked against the European standard your EU customers ask for. The UK has no separate ruleset of its own — we will say so if that changes.' },
       { id: 'us', name: 'United States', tagline: 'Structured invoicing for billing into Europe. No US tax logic.' },
       { id: 'eu', name: 'European Union', tagline: 'The European core in full, plus Germany’s national profile.' },
       { id: 'multi', name: 'Several markets', tagline: 'See the whole coverage matrix side by side, gaps included.' },
     ],
   },
-  trustbar: ['EN 16931', 'UBL 2.1', 'CII · ZUGFeRD / Factur-X', 'XRechnung 3.0', 'MIT licensed', 'Local-first'],
+  showcase: {
+    label: 'What Stampbench does',
+    caption: 'This is the whole flow.',
+    captionLink: 'Try it free — no account →',
+    tabs: [
+      { id: 'create', label: 'Make an invoice' },
+      { id: 'check', label: 'Check it' },
+      { id: 'fix', label: 'Fix it' },
+      { id: 'automate', label: 'Automate it' },
+    ],
+    create: {
+      title: 'INVOICE',
+      seller: 'Thornbury Design Ltd',
+      sellerCity: 'London, United Kingdom',
+      colItem: 'Item',
+      colQty: 'Qty',
+      colAmount: 'Amount',
+      lines: [
+        { name: 'Brand identity design', qty: '1', amount: '£1,800.00' },
+        { name: 'Consultancy — 8 hrs', qty: '8', amount: '£600.00' },
+        { name: 'Stock photography licence', qty: '1', amount: '£50.00' },
+      ],
+      subtotal: 'Subtotal',
+      vat: 'VAT 20%',
+      total: 'Total',
+    },
+    check: {
+      verdict: '2 problems found',
+      rulesetLine: 'Checked against EN 16931 · 40 rules',
+      problems: [
+        {
+          title: 'The VAT does not add up',
+          rule: 'BR-CO-17',
+          detail: '20% of £2,450.00 is £490.00, but the invoice says £425.00.',
+        },
+        {
+          title: 'Your customer’s country is missing',
+          rule: 'BR-11',
+          detail: 'Without it the tax treatment cannot be checked — and it is not something we will guess.',
+        },
+      ],
+      footnote: 'Every problem names the rule that caught it and the line it is on.',
+    },
+    fix: {
+      verdict: '1 fixed automatically',
+      keptTitle: '1 left for you',
+      keptDetail:
+        'The VAT had exactly one right answer, so it was corrected. Your customer’s country does not — inventing it would turn a broken invoice into a quietly wrong one.',
+    },
+    automate: {
+      snippet: `$ npx stampbench validate invoice.xml
+
+invoice.xml  syntax: UBL | profile: en16931 | ruleset: 2026-08.2
+  ERROR  BR-CO-17  VAT breakdown S @ 20%: tax amount should be
+         490.00 (2450.00 × 20%) but is 425.00. (line 78)
+INVALID — 1 error, 0 warnings (40 rules run)`,
+      points: [
+        { title: 'Run it in CI', detail: 'Fails the build before a bad invoice ever reaches a customer.' },
+        { title: 'Or call the API', detail: 'One request, same answer, from any language.' },
+        { title: 'Free on your machine', detail: 'The engine is an open-source npm package. No account, no upload.' },
+      ],
+    },
+  },
+  trustbar: [
+    { term: 'EN 16931', gloss: 'the European standard' },
+    { term: 'UBL 2.1', gloss: 'one of the two XML formats' },
+    { term: 'CII · ZUGFeRD / Factur-X', gloss: 'the other, used across Germany and France' },
+    { term: 'XRechnung 3.0', gloss: 'Germany’s public-sector profile' },
+    { term: 'MIT licensed', gloss: 'free, and the source is public' },
+    { term: 'Local-first', gloss: 'checking happens in your browser' },
+  ],
   problem: {
-    headingPre: 'Your invoice failed with',
+    headingPre: 'Your customer’s system rejected the invoice with a code like',
     rule: 'BR-CO-17',
     headingPost: '. Now what?',
     body:
@@ -311,7 +382,7 @@ export const en: Copy = {
     },
   ],
   api: {
-    heading: 'Two commands, full compliance',
+    heading: 'Two commands: check it, and fix what is safe to fix',
     body: 'No SDK lock-in, no XML expertise required. Runs locally — your invoices never leave your machine.',
     note:
       'The same file is 40 rules under the European core and 56 under the German profile. --profile chooses, and the header line always names the ruleset that actually ran.',
@@ -331,9 +402,9 @@ export const en: Copy = {
     note: 'MIT-licensed engine — run it locally, verify every number yourself.',
   },
   statsBoard: {
-    tests: { label: 'Automated tests passing', sub: '136 library · 50 CLI · 66 web', failing: '0 failing · 0 skipped' },
+    tests: { label: 'Automated tests passing', sub: '136 library · 50 CLI · 70 web', failing: '0 failing · 0 skipped' },
     docs: { label: 'Official test documents run', sub: '0 crashes · 3 divergences, published' },
-    rules: { label: 'Validation rules active', families: ['EN 16931 core', 'VAT categories', 'BR-DE profile'] },
+    rules: { label: 'Validation rules active', families: ['EN 16931 core structure', 'VAT category rules', 'BR-DE profile (Germany only)'], subtotal: 'European rules, before any national profile' },
     located: {
       label: 'Violations located',
       subLead: '9,983 mutated invoices tested — every violation anchored to a real element.',
@@ -375,7 +446,7 @@ export const en: Copy = {
   },
   footer: {
     blurb:
-      'E-invoicing compliance tooling for developers. Not legal advice — for certification-grade checks also run the official KoSIT validator.',
+      'E-invoicing tools for businesses and the developers who build for them. Not legal advice — for certification-grade checks also run the official KoSIT validator.',
     founded: 'Founded by Harvey Legge.',
     product: 'Product',
     openSource: 'Open source',
@@ -416,7 +487,7 @@ export const de: Copy = {
     signIn: 'Anmelden',
     account: 'Konto',
     menu: 'Menü',
-    cta: 'Auf npm holen',
+    cta: 'Rechnung prüfen',
   },
   hero: {
     badge: 'E-Rechnungspflicht: Empfangen ist bereits Gesetz, Ausstellen ab 2027',
@@ -425,25 +496,11 @@ export const de: Copy = {
     lede:
       'Das Entwickler-Toolkit für XRechnung und EN 16931: jeden Regelverstoß erkennen, genau verstehen, was fehlschlug, und sicher korrigieren, was sich herleiten lässt — vollständig auf Ihrem Rechner.',
     ctaCreate: 'Rechnung erstellen',
+    primer: 'Neu dabei? Eine E-Rechnung ist die Rechnung als strukturierte Daten in einem festen Format, damit die Software Ihres Kunden sie Feld für Feld lesen kann, statt sie abzutippen. EN 16931 ist die europäische Norm dafür, was in diesen Feldern stehen muss.',
     ctaPrimary: 'Rechnung prüfen',
     ctaSecondary: 'Markt wählen',
-    install: 'npm install',
-  },
-  heroDemo: {
-    passed: 'Regeln bestanden',
-    errors: 'Fehler gefunden',
-    expected: 'Erwartet',
-    found: 'Gefunden',
-    fixButton: 'Automatisch korrigieren',
-    fixedBadge: '1 Korrektur angewendet — neu geprüft',
-    keptNote: 'braucht eine menschliche Entscheidung. Stampbench erfindet niemals Geschäftsdaten.',
-    tryYours: 'Mit Ihrer Rechnung ausprobieren →',
-    fixableRule: 'BR-CO-17',
-    fixableTitle: 'USt-Betrag ist falsch',
-    keptRule: 'BR-DE-15',
-    keptTitle: 'Käuferreferenz fehlt (BT-10)',
-    ruleset: 'XRechnung 3.0 · 56 Regeln',
-    passedCount: 54,
+    reassurance: 'Kostenlos testen · Ohne Konto · Läuft im Browser, nichts zu installieren',
+    ctaCreateSub: 'Formular ausfüllen — Sie erhalten die XML-Datei, die das System Ihres Kunden benötigt, plus eine druckbare Fassung.',
   },
   markets: {
     eyebrow: 'Markt wählen',
@@ -462,7 +519,77 @@ export const de: Copy = {
       { id: 'multi', name: 'Mehrere Märkte', tagline: 'Die gesamte Abdeckung im Vergleich — samt Lücken.' },
     ],
   },
-  trustbar: ['XRechnung 3.0', 'EN 16931', 'UBL 2.1', 'CII · ZUGFeRD / Factur-X', 'MIT-lizenziert', 'Local-first'],
+  showcase: {
+    label: 'Was Stampbench macht',
+    caption: 'Das ist der gesamte Ablauf.',
+    captionLink: 'Kostenlos ausprobieren — ohne Konto →',
+    tabs: [
+      { id: 'create', label: 'Rechnung erstellen' },
+      { id: 'check', label: 'Prüfen' },
+      { id: 'fix', label: 'Korrigieren' },
+      { id: 'automate', label: 'Automatisieren' },
+    ],
+    create: {
+      title: 'RECHNUNG',
+      seller: 'Nordlicht Systeme GmbH',
+      sellerCity: 'Berlin, Deutschland',
+      colItem: 'Position',
+      colQty: 'Menge',
+      colAmount: 'Betrag',
+      lines: [
+        { name: 'Entwicklung Schnittstelle', qty: '1', amount: '1.800,00 €' },
+        { name: 'Beratung — 8 Std.', qty: '8', amount: '600,00 €' },
+        { name: 'Wartungspauschale', qty: '1', amount: '50,00 €' },
+      ],
+      subtotal: 'Zwischensumme',
+      vat: 'USt. 19%',
+      total: 'Gesamt',
+    },
+    check: {
+      verdict: '2 Probleme gefunden',
+      rulesetLine: 'Geprüft gegen XRechnung 3.0 · 56 Regeln',
+      problems: [
+        {
+          title: 'Die Umsatzsteuer stimmt nicht',
+          rule: 'BR-CO-17',
+          detail: '19 % von 2.450,00 € sind 465,50 €, die Rechnung nennt aber 425,00 €.',
+        },
+        {
+          title: 'Die Käuferreferenz fehlt',
+          rule: 'BR-DE-15',
+          detail: 'Bei öffentlichen Auftraggebern ist das die Leitweg-ID — erraten wird sie nicht.',
+        },
+      ],
+      footnote: 'Jedes Problem nennt die Regel, die es gefunden hat, und die Zeile.',
+    },
+    fix: {
+      verdict: '1 automatisch korrigiert',
+      keptTitle: '1 bleibt für Sie',
+      keptDetail:
+        'Die Umsatzsteuer hatte genau eine richtige Lösung und wurde korrigiert. Die Käuferreferenz nicht — sie zu erfinden würde aus einer fehlerhaften Rechnung eine still falsche machen.',
+    },
+    automate: {
+      snippet: `$ npx stampbench validate rechnung.xml
+
+rechnung.xml  syntax: UBL | profile: xrechnung | ruleset: 2026-08.2
+  ERROR  BR-CO-17  VAT breakdown S @ 19%: tax amount should be
+         465.50 (2450.00 × 19%) but is 425.00. (line 78)
+INVALID — 1 error, 0 warnings (56 rules run)`,
+      points: [
+        { title: 'In der CI ausführen', detail: 'Bricht den Build, bevor eine fehlerhafte Rechnung beim Kunden landet.' },
+        { title: 'Oder per API', detail: 'Eine Anfrage, dieselbe Antwort, aus jeder Sprache.' },
+        { title: 'Lokal kostenlos', detail: 'Die Engine ist ein Open-Source-npm-Paket. Kein Konto, kein Upload.' },
+      ],
+    },
+  },
+  trustbar: [
+    { term: 'XRechnung 3.0', gloss: 'das deutsche Profil' },
+    { term: 'EN 16931', gloss: 'die europäische Norm' },
+    { term: 'UBL 2.1', gloss: 'eines der beiden XML-Formate' },
+    { term: 'CII · ZUGFeRD / Factur-X', gloss: 'das andere, in Deutschland verbreitet' },
+    { term: 'MIT-lizenziert', gloss: 'kostenlos, Quellcode offen' },
+    { term: 'Local-first', gloss: 'die Prüfung läuft im Browser' },
+  ],
   problem: {
     headingPre: 'Ihre Rechnung scheitert mit',
     rule: 'BR-DE-15',
@@ -534,7 +661,7 @@ export const de: Copy = {
     },
   ],
   api: {
-    heading: 'Zwei Befehle, volle Konformität',
+    heading: 'Zwei Befehle: prüfen und sicher Korrigierbares korrigieren',
     body: 'Keine SDK-Bindung, kein XML-Spezialwissen nötig. Läuft lokal — Ihre Rechnungen verlassen Ihren Rechner nicht.',
     note:
       'Dieselbe Datei: 40 Regeln im europäischen Kern, 56 im deutschen Profil. --profile wählt aus, und die Kopfzeile nennt immer den Regelsatz, der tatsächlich gelaufen ist.',
@@ -554,9 +681,9 @@ export const de: Copy = {
     note: 'MIT-lizenzierte Engine — lokal ausführen und jede Zahl selbst überprüfen.',
   },
   statsBoard: {
-    tests: { label: 'Automatisierte Tests bestehen', sub: '136 Bibliothek · 50 CLI · 66 Web', failing: '0 fehlgeschlagen · 0 übersprungen' },
+    tests: { label: 'Automatisierte Tests bestehen', sub: '136 Bibliothek · 50 CLI · 70 Web', failing: '0 fehlgeschlagen · 0 übersprungen' },
     docs: { label: 'Offizielle Testdokumente geprüft', sub: '0 Abbrüche · 3 Abweichungen, veröffentlicht' },
-    rules: { label: 'Aktive Prüfregeln', families: ['EN 16931 Kern', 'USt-Kategorien', 'BR-DE-Profil'] },
+    rules: { label: 'Aktive Prüfregeln', families: ['EN 16931 Kernstruktur', 'USt-Kategorieregeln', 'BR-DE-Profil (nur Deutschland)'], subtotal: 'Europäische Regeln, ohne nationales Profil' },
     located: {
       label: 'Verstöße lokalisiert',
       subLead: '9.983 mutierte Rechnungen getestet — jeder Verstoß an einem echten Element verankert.',

@@ -8,7 +8,6 @@ import { COPY, localePath, type Locale } from '@/lib/copy';
 import { LanguageSwitcher } from '@/components/language-switcher';
 import { BrandLink, NavLinks } from '@/components/nav-links';
 
-const NPM_URL = 'https://www.npmjs.com/package/stampbench';
 const GITHUB_URL = 'https://github.com/harveylegge/stampbench';
 
 /**
@@ -88,6 +87,7 @@ export function SiteNav() {
     { href: '/pricing', label: copy.nav.pricing },
     { href: '/trust', label: copy.nav.trust },
     { href: GITHUB_URL, label: copy.nav.github, external: true },
+    { href: 'https://www.npmjs.com/package/stampbench', label: 'npm', external: true },
   ];
 
   const bar =
@@ -120,12 +120,18 @@ export function SiteNav() {
                 <Link href="/signin" className="text-muted transition hover:text-text">
                   {copy.nav.signIn}
                 </Link>
-                <a
-                  href={NPM_URL}
+                {/* This slot used to link to npm. On every page, for every
+                    visitor, the most prominent action was a package-registry
+                    link — which is the worst possible target for someone who
+                    arrived from an advert and does not know what npm is. The
+                    developer path is still one click away in the nav and the
+                    footer; it just no longer occupies the primary button. */}
+                <Link
+                  href={localePath(locale, 'playground')}
                   className="rounded-lg bg-accent px-3.5 py-1.5 font-medium text-white transition hover:bg-accent-hi"
                 >
                   {copy.nav.cta}
-                </a>
+                </Link>
               </>
             )}
           </div>

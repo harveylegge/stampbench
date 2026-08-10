@@ -1,7 +1,7 @@
 import Link from 'next/link';
 import { localePath, type Copy } from '@/lib/copy';
-import { HeroDemo } from '@/components/hero-demo';
 import { MarketPicker } from '@/components/market-picker';
+import { ProductShowcase } from '@/components/showcase';
 import { StatsBoard } from '@/components/stats-board';
 
 const GITHUB_URL = 'https://github.com/harveylegge/stampbench';
@@ -53,66 +53,70 @@ export function Landing({ copy }: { copy: Copy }) {
 
   return (
     <div lang={copy.locale}>
-      {/* Hero */}
+      {/* Hero.
+          Centred and marketing-led, because the traffic is about to be paid
+          traffic: a visitor arriving from an advert has given us one screen to
+          say what this is, and a two-column layout spends half of that screen
+          on a panel they have no context for yet. The panel is still there —
+          it moved into the showcase below, where it has tabs and a caption. */}
       <section className="hero-grid relative">
-        <div className="relative mx-auto grid max-w-6xl items-center gap-12 px-4 pb-16 pt-24 lg:grid-cols-2">
-          <div>
-            <div className="mb-5 inline-flex items-center gap-2 rounded-full border border-border bg-surface px-3 py-1 text-xs text-muted">
-              <span className="h-1.5 w-1.5 rounded-full bg-success" />
-              {copy.hero.badge}
-            </div>
-            <h1 className="mb-5 text-4xl font-semibold leading-tight tracking-tight sm:text-5xl">
-              {copy.hero.titleTop}
-              <br />
-              <span className="text-accent">{copy.hero.titleAccent}</span>
-            </h1>
-            <p className="mb-8 max-w-md text-lg leading-relaxed text-text/90">{copy.hero.lede}</p>
-            {/* The two things the product does, as the two buttons.
-                Previously the second slot went to a "choose your market"
-                anchor, which meant the generator had no entry point here at
-                all — and on mobile, where the nav is behind a hamburger, no
-                entry point anywhere on the page. The market band is the very
-                next section, so its link steps down to text without becoming
-                hard to find. Full-width when stacked: two buttons wrapping
-                mid-row on a phone reads as one broken button. */}
-            <div className="flex flex-col gap-3 sm:flex-row sm:flex-wrap sm:items-center sm:gap-4">
-              <Link
-                href="/invoice-generator"
-                className="rounded-lg bg-accent px-5 py-3 text-center font-medium text-white transition hover:bg-accent-hi sm:py-2.5"
-              >
-                {copy.hero.ctaCreate}
-              </Link>
-              <Link
-                href={path('playground')}
-                className="rounded-lg border border-border bg-surface px-5 py-3 text-center font-medium transition hover:border-border-hi sm:py-2.5"
-              >
-                {copy.hero.ctaPrimary}
-              </Link>
-            </div>
-            <div className="mt-6 flex flex-wrap items-center gap-x-5 gap-y-2 text-sm">
-              {/* An in-page anchor, not a route: the answer to "is this for my
-                  business?" is one scroll away. */}
-              <a href="#markets" className="font-medium text-accent-hi hover:underline">
-                {copy.hero.ctaSecondary} ↓
-              </a>
-            </div>
-            <div className="mt-6 flex flex-wrap items-center gap-x-5 gap-y-2 font-mono text-sm text-faint">
-              <span>
-                {copy.hero.install} <span className="text-accent">@stampbench/core</span>
-              </span>
-              <a href={GITHUB_URL} className="transition hover:text-muted">
-                {copy.nav.github} ↗
-              </a>
-            </div>
+        <div className="relative mx-auto max-w-3xl px-4 pb-10 pt-14 text-center sm:pt-20">
+          <Link
+            href="/markets"
+            className="mb-6 inline-flex items-center gap-2 rounded-full border border-border bg-surface px-3.5 py-1.5 text-xs text-muted transition hover:border-border-hi hover:text-text"
+          >
+            <span className="h-1.5 w-1.5 rounded-full bg-success" aria-hidden />
+            {copy.hero.badge}
+            <span aria-hidden>→</span>
+          </Link>
+
+          <h1 className="mb-5 text-[2.1rem] font-semibold leading-[1.12] tracking-tight sm:text-5xl md:text-[3.4rem]">
+            {copy.hero.titleTop} <span className="text-accent">{copy.hero.titleAccent}</span>
+          </h1>
+
+          <p className="mx-auto mb-4 max-w-xl text-lg leading-relaxed text-muted">{copy.hero.lede}</p>
+
+          {/* The page previously assumed the reader knew what an e-invoice
+              was. For paid traffic that is the whole ballgame — say it once,
+              in one sentence, and be careful to claim only that the customer's
+              software *can* read it, never that it will accept it. */}
+          <p className="mx-auto mb-8 max-w-2xl text-sm leading-relaxed text-faint">{copy.hero.primer}</p>
+
+          <div className="flex flex-col items-stretch gap-3 sm:flex-row sm:items-center sm:justify-center sm:gap-4">
+            <Link
+              href="/invoice-generator"
+              className="rounded-lg bg-accent px-6 py-3 text-center font-medium text-white transition hover:bg-accent-hi"
+            >
+              {copy.hero.ctaCreate}
+            </Link>
+            <Link
+              href={path('playground')}
+              className="rounded-lg border border-border bg-surface px-6 py-3 text-center font-medium transition hover:border-border-hi"
+            >
+              {copy.hero.ctaPrimary}
+            </Link>
           </div>
-          <HeroDemo copy={copy} />
+
+          {/* The three objections a first-time visitor has, answered before
+              they are asked: does it cost, must I sign up, where does my
+              invoice go. */}
+          <p className="mt-4 text-sm text-faint">{copy.hero.ctaCreateSub}</p>
+          <p className="mt-2 text-sm text-faint">{copy.hero.reassurance}</p>
         </div>
 
-        {/* Trust bar — formats and licence, not certifications */}
-        <div className="border-t border-border bg-surface/60">
-          <div className="mx-auto flex max-w-6xl flex-wrap items-center justify-center gap-x-8 gap-y-2 px-4 py-4 text-xs font-medium tracking-wide text-faint">
+        <ProductShowcase copy={copy} />
+
+        {/* Trust bar — formats and licence, not certifications. Each acronym
+            carries its gloss: this row sits exactly where a first-time
+            visitor decides whether to keep scrolling, and six bare initialisms
+            is a reason to stop. */}
+        <div className="mt-12 border-t border-border bg-surface/60">
+          <div className="mx-auto flex max-w-6xl flex-wrap items-start justify-center gap-x-8 gap-y-4 px-4 py-5 text-center">
             {copy.trustbar.map((t) => (
-              <span key={t}>{t}</span>
+              <span key={t.term} className="flex flex-col gap-0.5">
+                <span className="text-xs font-medium tracking-wide text-muted">{t.term}</span>
+                <span className="text-[11px] leading-tight text-faint">{t.gloss}</span>
+              </span>
             ))}
           </div>
         </div>
