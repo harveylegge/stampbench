@@ -1,6 +1,6 @@
 # Session handoff — read this first
 
-**Last updated:** 2026-08-10 · **Repo:** `C:\Users\harvey\Downloads\invoicegate` (git, clean) ·
+**Last updated:** 2026-08-11 · **Repo:** `C:\Users\harvey\Downloads\invoicegate` (git, clean) ·
 **LIVE:** `stampbench@0.1.0` + `@stampbench/core@0.1.1` on npm; https://stampbench.com on
 Cloudflare Pages (wrangler is authed: `npx wrangler pages deploy out --project-name=stampbench`
 from `apps/web` after `node scripts/build-static.mjs`).
@@ -112,6 +112,57 @@ no account. **237 tests green** (132 library / 50 CLI / 55 web).
   invoices, webhooks. All need D1 schema + authed worker endpoints; drafts are
   localStorage-only today (and say so). Analytics still deliberately absent —
   see the privacy note below.
+
+---
+
+## PAYPAL (2026-08-11) — link path shipped; Subscriptions is the real answer
+
+Harvey set up PayPal instead of activating Stripe. **The dormant Stripe stack
+(checkout / signed webhook / portal) is Stripe-only and does not work with
+PayPal** — so PayPal is wired into the *manual* upgrade loop instead.
+
+**Shipped and live behind one secret.** Set any of these as Pages secrets on
+the `stampbench` project and PayPal turns on with no redeploy:
+- `PAYPAL_ME` — a PayPal.me handle (`harveylegge`, `@harveylegge` or the full
+  URL all work). The plan price is appended: `.../29GBP`.
+- `PAYPAL_LINK_STARTER` / `_PRO` / `_SCALE` — per-plan payment or subscription
+  links; these win over `PAYPAL_ME` where set.
+
+What it changes: `POST /api/upgrade` now returns `payUrl`, the account page
+shows a **Pay £N with PayPal** button immediately instead of "we'll email
+you", `/api/billing/status` reports `{ enabled, paypal }`, and the operator
+email says *check PayPal first* with both PowerShell and bash activation
+commands. Activation is still a human step — a PayPal.me payment carries no
+reliable buyer reference, so nothing auto-grants a plan. That is deliberate.
+
+**The decision that matters (researched 2026-08-11, 4 agents against PayPal's
+published OpenAPI spec):** of the four PayPal products, **only PayPal
+Subscriptions actually recurs**. Payment links, PayPal.me, Invoicing and
+Standard Checkout are all *manual-repeat* — the customer must consciously pay
+again every month, and none of them emit a usable cancellation signal, so
+churn has to be inferred from absence with a cron job. For a £29/£99 self-serve
+tier that halves LTV versus card-on-file.
+
+If/when we want real MRR through PayPal, the target is:
+`POST /v1/catalogs/products` → `POST /v1/billing/plans` (×3, GBP, one currency
+per plan) → `/activate`; then a Worker route that calls
+`POST /v1/billing/subscriptions` with **`custom_id` = the Stampbench user id**
+(this is the only reliable link from a PayPal event back to an account) and
+302s the browser to the `approve` link. Grant on the webhook, never on
+`return_url`. Events: `BILLING.SUBSCRIPTION.ACTIVATED` (grant),
+`.CANCELLED` / `.SUSPENDED` / `.EXPIRED` (revoke),
+`PAYMENT.SALE.COMPLETED` (renewal — note it is SALE, not CAPTURE; capture is
+Orders v2 and several 2026 blogs get this wrong), `BILLING.SUBSCRIPTION.PAYMENT.FAILED`.
+Signature verification: `POST /v1/notifications/verify-webhook-signature` is
+an outbound call per webhook (fine on Workers, ~200-400ms); the local-crypto
+alternative needs hand-rolled CRC32 + X.509→SPKI parsing because WebCrypto
+`importKey` only takes `spki`. Requires a **Business** account; sandbox and
+live have entirely separate credentials, plan ids and webhook ids.
+
+Fees to model honestly: ~2.9% + £0.30 domestic UK, **plus 1.29% (EEA) or 1.99%
+(rest of world)** — a dev tool sold in GBP takes a lot of US traffic, so budget
+~5%, not 2.9%. Worse than Stripe UK. Not a reason to avoid PayPal, but a reason
+not to assume it is cheap.
 
 ---
 

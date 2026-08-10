@@ -37,7 +37,7 @@ const faqs = [
   },
   {
     q: 'Can I cancel anytime?',
-    a: 'Yes — plans are monthly. There is no billing portal yet: email us and your plan drops to Free at the end of the period. Nothing renews behind your back.',
+    a: 'Yes — plans are monthly. There is no billing portal yet: email us and your plan drops to Free at the end of the period. If you set up a recurring PayPal payment you can also cancel it yourself in PayPal at any time. Nothing renews behind your back.',
   },
   {
     q: 'What about annual billing or EUR pricing?',

@@ -15,6 +15,7 @@ import {
   subscriptionEntitles,
   WEBHOOK_TOLERANCE_SECONDS,
 } from '../../../workers/api/src/stripe';
+import { paypalLink } from '../../../workers/api/src/paypal';
 
 const SECRET = 'whsec_test_0123456789abcdef';
 const BODY = JSON.stringify({ id: 'evt_1', type: 'customer.subscription.updated' });
@@ -117,5 +118,52 @@ describe('subscriptionEntitles', () => {
     for (const status of ['past_due', 'canceled', 'unpaid', 'incomplete', 'incomplete_expired', 'paused', undefined]) {
       expect(subscriptionEntitles(status)).toBe(false);
     }
+  });
+});
+
+/**
+ * The PayPal link is the first thing a paying customer touches, and it is
+ * built from a value a human pastes into a secrets UI. A malformed handle
+ * produces a dead link that fails at the exact moment someone is trying to
+ * give us money, so the normalisation is tested rather than assumed.
+ */
+describe('paypal link', () => {
+  it('appends the plan price to a bare handle', () => {
+    expect(paypalLink({ me: 'harveylegge' }, 'starter')).toBe(
+      'https://www.paypal.me/harveylegge/29GBP',
+    );
+    expect(paypalLink({ me: 'harveylegge' }, 'pro')).toBe('https://www.paypal.me/harveylegge/99GBP');
+    expect(paypalLink({ me: 'harveylegge' }, 'scale')).toBe(
+      'https://www.paypal.me/harveylegge/299GBP',
+    );
+  });
+
+  it('accepts every form someone might paste', () => {
+    const expected = 'https://www.paypal.me/harveylegge/29GBP';
+    for (const me of [
+      'harveylegge',
+      '@harveylegge',
+      'https://paypal.me/harveylegge',
+      'https://www.paypal.me/harveylegge',
+      'https://paypal.me/harveylegge/',
+      '  harveylegge  ',
+    ]) {
+      expect(paypalLink({ me }, 'starter'), me).toBe(expected);
+    }
+  });
+
+  it('prefers an explicit per-plan link over the handle', () => {
+    const config = { me: 'harveylegge', pro: 'https://www.paypal.com/ncp/payment/ABC123' };
+    expect(paypalLink(config, 'pro')).toBe('https://www.paypal.com/ncp/payment/ABC123');
+    // Plans without their own link still fall back to the handle.
+    expect(paypalLink(config, 'starter')).toBe('https://www.paypal.me/harveylegge/29GBP');
+  });
+
+  it('returns null when PayPal is not configured, so the UI keeps the old wording', () => {
+    expect(paypalLink({}, 'pro')).toBeNull();
+    expect(paypalLink({ me: '' }, 'pro')).toBeNull();
+    expect(paypalLink({ me: '@' }, 'pro')).toBeNull();
+    // 'free' has no price and must never produce a payment link.
+    expect(paypalLink({ me: 'harveylegge' }, 'free')).toBeNull();
   });
 });

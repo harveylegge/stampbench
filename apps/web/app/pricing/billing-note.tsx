@@ -15,14 +15,17 @@
 import { useEffect, useState } from 'react';
 
 export function BillingNote() {
-  const [cardsLive, setCardsLive] = useState(false);
+  const [mode, setMode] = useState<'manual' | 'paypal' | 'cards'>('manual');
 
   useEffect(() => {
     let cancelled = false;
     fetch('/api/billing/status')
-      .then((r) => (r.ok ? r.json() : { enabled: false }))
-      .then((s: { enabled?: boolean }) => {
-        if (!cancelled) setCardsLive(!!s.enabled);
+      .then((r) => (r.ok ? r.json() : {}))
+      .then((s: { enabled?: boolean; paypal?: boolean }) => {
+        if (cancelled) return;
+        // Cards win when both exist: instant activation beats a manual check.
+        if (s.enabled) setMode('cards');
+        else if (s.paypal) setMode('paypal');
       })
       .catch(() => {
         /* worker unreachable — keep the conservative wording */
@@ -34,9 +37,11 @@ export function BillingNote() {
 
   return (
     <p className="mt-2 text-center text-xs text-faint">
-      {cardsLive
+      {mode === 'cards'
         ? 'Pay by card after signup — activates instantly, cancel anytime.'
-        : 'No card on the site — we email you to arrange payment and activation.'}
+        : mode === 'paypal'
+          ? 'Pay by PayPal after signup — we switch your plan on once it lands, usually the same day.'
+          : 'No card on the site — we email you to arrange payment and activation.'}
     </p>
   );
 }

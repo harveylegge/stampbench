@@ -83,6 +83,8 @@ export function AccountView() {
   // Upgrade requests
   const [armedPlan, setArmedPlan] = useState<UpgradeId | null>(null);
   const [upgradeError, setUpgradeError] = useState<string | null>(null);
+  /** PayPal link for the plan just requested, when PayPal is configured. */
+  const [payUrl, setPayUrl] = useState<string | null>(null);
 
   // Data controls (GDPR export / erasure)
   const [dataError, setDataError] = useState<string | null>(null);
@@ -205,9 +207,14 @@ export function AccountView() {
     const previous = account;
     setAccount({ ...account, pendingUpgrade: plan });
     try {
-      await requestUpgrade(plan);
+      const { payUrl } = await requestUpgrade(plan);
+      // When PayPal is configured the wait collapses: pay now rather than
+      // waiting for an email. The plan still activates only once a human
+      // confirms the money arrived, which the notice says plainly.
+      setPayUrl(payUrl ?? null);
     } catch (e) {
       setAccount(previous);
+      setPayUrl(null);
       setUpgradeError(apiMessage(e, 'Could not send the request. Try again, or email hello@stampbench.com.'));
     } finally {
       setBusy(null);
@@ -489,9 +496,32 @@ export function AccountView() {
         {upgradeError && <p className="mb-4 text-sm text-danger">{upgradeError}</p>}
 
         {pendingPlan && (
-          <div className="mb-4 rounded-lg border border-accent/40 bg-accent-dim/40 p-4 text-sm text-accent-hi">
-            Upgrade to {pendingPlan.name} requested — we will email you to arrange payment and
-            activation.
+          <div className="mb-4 rounded-lg border border-accent/40 bg-accent-dim/40 p-4 text-sm">
+            {payUrl ? (
+              <>
+                <p className="font-medium text-accent-hi">
+                  Upgrade to {pendingPlan.name} requested — £{pendingPlan.priceGbp}/month.
+                </p>
+                <p className="mt-1 text-muted">
+                  Pay by PayPal and we will switch your plan on as soon as it lands, usually the
+                  same day. Paying does not activate it automatically — a person checks the payment
+                  first, and we will email you the moment it is live.
+                </p>
+                <a
+                  href={payUrl}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="sb-press mt-3 inline-flex items-center gap-2 rounded-lg bg-accent px-4 py-2 font-medium text-white transition hover:bg-accent-hi"
+                >
+                  Pay £{pendingPlan.priceGbp} with PayPal ↗
+                </a>
+              </>
+            ) : (
+              <p className="text-accent-hi">
+                Upgrade to {pendingPlan.name} requested — we will email you to arrange payment and
+                activation.
+              </p>
+            )}
           </div>
         )}
 

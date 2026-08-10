@@ -35,6 +35,7 @@ import {
   type FeatureId,
   type PlanId,
 } from '../../../apps/web/lib/plans';
+import { paypalLink } from './paypal';
 import {
   planFromSubscription,
   stripeSignatureValid,
@@ -71,6 +72,41 @@ export interface Env {
   STRIPE_SECRET_KEY?: string;
   /** Required whenever STRIPE_SECRET_KEY is set — unsigned webhooks are refused. */
   STRIPE_WEBHOOK_SECRET?: string;
+  /**
+   * PayPal, the manual path's payment step.
+   *
+   * Set either a per-plan payment link (PAYPAL_LINK_STARTER / _PRO / _SCALE —
+   * a PayPal payment link or subscription link, which is what you want if the
+   * amount and cadence should be fixed for the buyer), or PAYPAL_ME with a
+   * PayPal.me handle, in which case the amount is appended per plan. Per-plan
+   * links win where both are present.
+   *
+   * These are public URLs, not secrets — they are handed to the browser on
+   * purpose so someone can pay the moment they ask to upgrade instead of
+   * waiting for an email. Unset = the pre-PayPal behaviour, unchanged.
+   */
+  PAYPAL_ME?: string;
+  PAYPAL_LINK_STARTER?: string;
+  PAYPAL_LINK_PRO?: string;
+  PAYPAL_LINK_SCALE?: string;
+}
+
+/** The public PayPal link for a plan, or null when PayPal is not configured. */
+function paypalLinkFor(env: Env, plan: PlanId): string | null {
+  return paypalLink(
+    {
+      me: env.PAYPAL_ME,
+      starter: env.PAYPAL_LINK_STARTER,
+      pro: env.PAYPAL_LINK_PRO,
+      scale: env.PAYPAL_LINK_SCALE,
+    },
+    plan,
+  );
+}
+
+/** True when any PayPal route is configured, for the UI's copy decisions. */
+function paypalConfigured(env: Env): boolean {
+  return Boolean(env.PAYPAL_ME || env.PAYPAL_LINK_STARTER || env.PAYPAL_LINK_PRO || env.PAYPAL_LINK_SCALE);
 }
 
 const MAX_BODY = 1_500_000; // ~1.5 MB — the largest official test invoice is far smaller
@@ -442,11 +478,14 @@ async function handleUpgrade(request: Request, env: Env, user: UserRow): Promise
   // Best-effort notification: the request row above is the durable record.
   // `mailed`/`mailError` in the response exist for observability — the static
   // site has no server logs a human ever reads.
+  const payUrl = paypalLinkFor(env, plan as PlanId);
+
   let mailed = false;
   let mailError: string | null = env.MAILER ? null : 'MAILER binding missing';
   if (env.MAILER) {
     const p = PLANS[plan as PlanId];
     const activate = `$h=@{'X-Admin-Secret'='<ADMIN_SECRET>';'Content-Type'='application/json'}; Invoke-RestMethod -Method Post -Uri https://stampbench.com/api/admin/set-plan -Headers $h -Body '{"email":"${user.email}","plan":"${plan}"}'`;
+    const activateSh = `curl -X POST https://stampbench.com/api/admin/set-plan -H 'X-Admin-Secret: <ADMIN_SECRET>' -H 'Content-Type: application/json' -d '{"email":"${user.email}","plan":"${plan}"}'`;
     try {
       const res = await env.MAILER.fetch('https://mailer.internal/send', {
         method: 'POST',
@@ -455,7 +494,11 @@ async function handleUpgrade(request: Request, env: Env, user: UserRow): Promise
           subject: `Stampbench upgrade request: ${user.email} → ${p.name} (£${p.priceGbp}/mo)`,
           text:
             `${user.email} asked for the ${p.name} plan (£${p.priceGbp}/month).\n\n` +
-            `They have NOT paid yet — arrange payment, then activate with:\n\n${activate}\n\n` +
+            (payUrl
+              ? `They were shown this PayPal link and may have paid already — CHECK PAYPAL FIRST:\n${payUrl}\n\n` +
+                `Look for £${p.priceGbp} from ${user.email} (or a different PayPal address — the payer's email need not match).\n\n`
+              : `PayPal is not configured, so they were told you would email them to arrange payment.\n\n`) +
+            `Once the money is in, activate with either:\n\nPowerShell:\n${activate}\n\nbash:\n${activateSh}\n\n` +
             `(Replace <ADMIN_SECRET>. Requested ${new Date().toISOString()}.)`,
         }),
       });
@@ -466,7 +509,7 @@ async function handleUpgrade(request: Request, env: Env, user: UserRow): Promise
     }
     if (mailError) console.error('upgrade mail failed', mailError);
   }
-  return json({ ok: true, mailed, ...(mailError ? { mailError } : {}) });
+  return json({ ok: true, mailed, ...(payUrl ? { payUrl } : {}), ...(mailError ? { mailError } : {}) });
 }
 
 // ---------------------------------------------------------------- AI explanations
@@ -1013,7 +1056,13 @@ async function handleApi(request: Request, env: Env): Promise<Response> {
   // Lets the pricing page choose between "Pay by card" and "Request upgrade"
   // without shipping a broken button when billing is not configured yet.
   if (path === '/api/billing/status' && method === 'GET') {
-    return json({ enabled: !!(env.STRIPE_SECRET_KEY && env.STRIPE_WEBHOOK_SECRET) });
+    // `enabled` means self-serve card checkout (Stripe) — instant activation.
+    // `paypal` means the manual path can at least be paid immediately. The
+    // two are independent, and the UI words itself differently for each.
+    return json({
+      enabled: !!(env.STRIPE_SECRET_KEY && env.STRIPE_WEBHOOK_SECRET),
+      paypal: paypalConfigured(env),
+    });
   }
 
   // Stripe signs with its own scheme and sends no Origin, so this must sit

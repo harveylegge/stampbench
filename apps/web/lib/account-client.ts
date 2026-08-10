@@ -136,7 +136,17 @@ export function regressCredit(): Promise<{ ok: true; remaining: number }> {
 }
 
 /** Records the request and emails Harvey; the manual path, kept as a fallback. */
-export function requestUpgrade(plan: Exclude<PlanId, 'free'>): Promise<{ ok: true }> {
+/**
+ * The manual upgrade path: records the request and emails the operator.
+ *
+ * Returns `payUrl` when PayPal is configured, so the account page can offer
+ * payment immediately rather than making someone wait for an email. Paying
+ * does not activate the plan on its own — a human still confirms the money
+ * arrived — so the UI must not imply otherwise.
+ */
+export function requestUpgrade(
+  plan: Exclude<PlanId, 'free'>,
+): Promise<{ ok: true; payUrl?: string }> {
   return call('/api/upgrade', { method: 'POST', body: JSON.stringify({ plan }) });
 }
 

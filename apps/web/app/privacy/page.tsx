@@ -71,10 +71,11 @@ export default function PrivacyPage() {
         </p>
         <p>
           <strong className="text-text">Plan and upgrade data</strong> — your current plan and any
-          upgrade request you make. We take no payment details on the site; paid plans are arranged
-          by email, and this policy will be updated before any payment processor is added. Legal
-          basis: performance of a contract and our legal obligation to keep accounting records for
-          invoices we issue.
+          upgrade request you make. <strong className="text-text">We never see or store your
+          payment details.</strong> Paying happens entirely on PayPal&apos;s own site: we link you
+          there, and PayPal tells us only that a payment arrived. We hold the fact of your request
+          and, once paid, what we need for our accounting records. Legal basis: performance of a
+          contract and our legal obligation to keep accounting records for invoices we issue.
         </p>
         <p>
           <strong className="text-text">Technical logs</strong> — our infrastructure provider
@@ -148,6 +149,11 @@ export default function PrivacyPage() {
           <li>
             <strong className="text-text">Anthropic</strong> — the optional AI features (see
             clause 4), applicable only once they are enabled.
+          </li>
+          <li>
+            <strong className="text-text">PayPal</strong> — payment for paid plans. You pay on
+            PayPal&apos;s own site under their privacy policy; we receive confirmation that a
+            payment was made, not your card or bank details.
           </li>
         </ul>
         <p>
