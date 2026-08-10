@@ -16,7 +16,7 @@ import type { Copy } from '@/lib/copy';
 const TESTS = [
   { label: 'library', n: 136 },
   { label: 'CLI', n: 50 },
-  { label: 'web', n: 62 },
+  { label: 'web', n: 66 },
 ];
 const TESTS_TOTAL = TESTS.reduce((s, t) => s + t.n, 0);
 

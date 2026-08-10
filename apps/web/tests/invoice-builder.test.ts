@@ -11,6 +11,7 @@ import {
 import { getCountry, isCrossBorder, tradeRelation } from '../lib/invoice/countries';
 import { formatsForMarket, getFormat, isUsable } from '../lib/invoice/formats';
 import { emptyDraft, newLine, suggestInvoiceNumber, type InvoiceDraft } from '../lib/invoice/draft';
+import { dataUrlBytes, describeSize, logoRejection } from '../lib/invoice/logo';
 import { applyTemplate, TEMPLATES } from '../lib/invoice/templates';
 import { categoriesFor, getVatCategory, requirementsFor, VAT_CATEGORIES } from '../lib/invoice/tax';
 import { MARKET_IDS } from '../lib/markets';
@@ -254,6 +255,44 @@ describe('the builder never invents data', () => {
     const s = invoice.vatBreakdown?.find((b) => b.categoryCode === 'S');
     expect(ae?.exemptionReason).toBe('Reverse charge');
     expect(s?.exemptionReason).toBeUndefined();
+  });
+});
+
+describe('logo handling', () => {
+  it('states sizes the way a person would, never as a raw division', () => {
+    // The bug this replaces printed "390.625 kB" — the storage budget divided
+    // by 1024 and rendered verbatim.
+    expect(describeSize(8_151_000)).toBe('8.2 MB');
+    expect(describeSize(500_000)).toBe('500 kB');
+    expect(describeSize(25_000_000)).toBe('25 MB');
+    expect(describeSize(900)).toBe('900 bytes');
+    for (const size of [1, 999, 1000, 400_000, 8_151_000, 25_000_000]) {
+      expect(describeSize(size), String(size)).not.toMatch(/\.\d{3,}/);
+    }
+  });
+
+  it('accepts the ordinary oversized photo rather than refusing it', () => {
+    // 8 MB is what a phone camera produces. It gets scaled, not rejected —
+    // so nothing about its size stops it at the gate.
+    expect(logoRejection({ type: 'image/jpeg', size: 8_151_000, name: 'logo.jpg' })).toBeNull();
+    expect(logoRejection({ type: 'image/png', size: 400_000, name: 'logo.png' })).toBeNull();
+    expect(logoRejection({ type: 'image/svg+xml', size: 12_000, name: 'logo.svg' })).toBeNull();
+  });
+
+  it('refuses only what it genuinely cannot use, with a usable reason', () => {
+    const notImage = logoRejection({ type: 'application/pdf', size: 1000, name: 'logo.pdf' });
+    expect(notImage).toMatch(/not an image/);
+    const absurd = logoRejection({ type: 'image/png', size: 60_000_000, name: 'huge.png' });
+    expect(absurd).toMatch(/60 MB/);
+    expect(absurd).toMatch(/25 MB/);
+    // A file with no MIME type but an image extension is still worth trying.
+    expect(logoRejection({ type: '', size: 5000, name: 'mark.PNG' })).toBeNull();
+  });
+
+  it('measures a data URL by its payload, not its string length', () => {
+    // "AAAA" of base64 is three bytes, and the data: prefix is not stored.
+    expect(dataUrlBytes('data:image/png;base64,AAAA')).toBe(3);
+    expect(dataUrlBytes('data:image/png;base64,' + 'A'.repeat(4000))).toBe(3000);
   });
 });
 

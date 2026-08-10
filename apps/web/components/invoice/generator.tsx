@@ -34,13 +34,13 @@ import {
 } from '@/lib/invoice/countries';
 import {
   emptyDraft,
-  MAX_LOGO_BYTES,
   newLine,
   PAYMENT_MEANS_OPTIONS,
   TYPE_CODE_OPTIONS,
   type InvoiceDraft,
 } from '@/lib/invoice/draft';
 import { formatsForMarket, getFormat, isUsable, rulesetLabelFor, SUPPORT_LABEL } from '@/lib/invoice/formats';
+import { prepareLogo } from '@/lib/invoice/logo';
 import { applyTemplate, templatesForMarket } from '@/lib/invoice/templates';
 import { categoriesFor, getVatCategory, US_TAX_NOTE, type VatCategoryCode } from '@/lib/invoice/tax';
 import { readMarket, writeMarket } from '@/lib/market-preference';
@@ -129,6 +129,9 @@ export function InvoiceGenerator({ initialMarket }: { initialMarket?: MarketId }
   const [rememberedMarket, setRememberedMarket] = useState<MarketId | null>(null);
   const [pendingMarket, setPendingMarket] = useState<MarketId | null>(null);
   const [errors, setErrors] = useState<string[]>([]);
+  const [logoError, setLogoError] = useState<string | null>(null);
+  const [logoNote, setLogoNote] = useState<string | null>(null);
+  const [logoBusy, setLogoBusy] = useState(false);
 
   // Reading storage and today's date has to happen after mount: this component
   // is prerendered into static HTML, and a date or a random line key generated
@@ -421,14 +424,24 @@ export function InvoiceGenerator({ initialMarket }: { initialMarket?: MarketId }
     });
   }
 
-  function readLogo(file: File) {
-    if (file.size > MAX_LOGO_BYTES) {
-      setErrors([`That logo is ${(file.size / 1024).toFixed(0)} kB — keep it under ${MAX_LOGO_BYTES / 1024} kB.`]);
+  /**
+   * Scale first, complain second. The old version rejected anything over the
+   * storage budget, which meant an ordinary phone photo or an unoptimised
+   * export bounced — and the message landed in the "before creating" list, as
+   * though a logo were stopping the invoice. It never was.
+   */
+  async function readLogo(file: File) {
+    setLogoNote(null);
+    setLogoError(null);
+    setLogoBusy(true);
+    const result = await prepareLogo(file);
+    setLogoBusy(false);
+    if ('error' in result) {
+      setLogoError(result.error);
       return;
     }
-    const reader = new FileReader();
-    reader.onload = () => update({ logo: String(reader.result) });
-    reader.readAsDataURL(file);
+    update({ logo: result.dataUrl });
+    if (result.note) setLogoNote(result.note);
   }
 
   const partyIncomplete = (party: typeof draft.seller, seller: boolean) =>
@@ -456,17 +469,27 @@ export function InvoiceGenerator({ initialMarket }: { initialMarket?: MarketId }
               </div>
             ) : (
               <label className="flex h-24 w-52 cursor-pointer items-center justify-center rounded-lg border border-dashed border-border bg-bg text-sm text-muted transition hover:border-border-hi hover:text-text">
-                + Add your logo
+                {logoBusy ? 'Preparing…' : '+ Add your logo'}
                 <input
                   type="file"
-                  accept="image/png,image/jpeg,image/svg+xml,image/webp"
+                  accept="image/png,image/jpeg,image/svg+xml,image/webp,image/gif,image/avif"
                   className="sr-only"
                   onChange={(e) => {
                     const file = e.target.files?.[0];
-                    if (file) readLogo(file);
+                    // Clear the input so choosing the same file twice still fires.
+                    e.target.value = '';
+                    if (file) void readLogo(file);
                   }}
                 />
               </label>
+            )}
+            {logoError && (
+              <p role="alert" className="mt-1.5 max-w-[15rem] text-[11px] leading-relaxed text-danger">
+                {logoError}
+              </p>
+            )}
+            {logoNote && (
+              <p className="mt-1.5 max-w-[15rem] text-[11px] leading-relaxed text-muted">{logoNote}</p>
             )}
             <p className="mt-1.5 max-w-[13rem] text-[11px] leading-relaxed text-faint">
               Printed only — EN 16931 has no logo field, so it is not written into the XML.

@@ -326,7 +326,7 @@ export const en: Copy = {
     note: 'MIT-licensed engine — run it locally, verify every number yourself.',
   },
   statsBoard: {
-    tests: { label: 'Automated tests passing', sub: '136 library · 50 CLI · 62 web', failing: '0 failing · 0 skipped' },
+    tests: { label: 'Automated tests passing', sub: '136 library · 50 CLI · 66 web', failing: '0 failing · 0 skipped' },
     docs: { label: 'Official test documents run', sub: '0 crashes · 3 divergences, published' },
     rules: { label: 'Validation rules active', families: ['EN 16931 core', 'VAT categories', 'BR-DE profile'] },
     located: {
@@ -548,7 +548,7 @@ export const de: Copy = {
     note: 'MIT-lizenzierte Engine — lokal ausführen und jede Zahl selbst überprüfen.',
   },
   statsBoard: {
-    tests: { label: 'Automatisierte Tests bestehen', sub: '136 Bibliothek · 50 CLI · 62 Web', failing: '0 fehlgeschlagen · 0 übersprungen' },
+    tests: { label: 'Automatisierte Tests bestehen', sub: '136 Bibliothek · 50 CLI · 66 Web', failing: '0 fehlgeschlagen · 0 übersprungen' },
     docs: { label: 'Offizielle Testdokumente geprüft', sub: '0 Abbrüche · 3 Abweichungen, veröffentlicht' },
     rules: { label: 'Aktive Prüfregeln', families: ['EN 16931 Kern', 'USt-Kategorien', 'BR-DE-Profil'] },
     located: {
