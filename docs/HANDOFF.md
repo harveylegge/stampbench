@@ -16,6 +16,49 @@ browser OTP, which only Harvey can complete:
 
 ---
 
+## MEDUSA PLUGIN (2026-08-11)
+
+Context: Harvey emailed Medusa about Stampbench; Nicolas (Medusa support) replied
+"if you are interested in creating a plugin to have it featured in our integrations
+directory, follow these docs" (docs.medusajs.com → Learn → Fundamentals → Plugins).
+Built: **`@stampbench/medusa`** in `integrations/medusa/` — a Medusa v2 plugin that
+turns Medusa orders into validated XRechnung/EN 16931 UBL.
+
+- **Deliberately outside the npm workspaces** (`packages/*`, `apps/*` untouched):
+  its devDeps pull the whole Medusa framework (~1100 packages), which must not tax
+  root `npm install`/CI. It has its own install, tests, and build.
+- **Shape** (per Medusa's plugin docs, verified against `@medusajs/utils`
+  `getResolvedPlugins` — consuming apps read `.medusa/server/src/**`, which is why
+  tsconfig sets `rootDir: "."`):
+  `src/modules/stampbench/` (service + pure `order-to-invoice.ts` mapper),
+  `src/workflows/generate-e-invoice.ts` (`useQueryGraphStep` → generate step),
+  `src/api/admin/orders/[id]/e-invoice/route.ts` (XML download, `?format=json`),
+  `src/api/admin/e-invoices/validate/route.ts`,
+  `src/admin/widgets/e-invoice.tsx` (order-page card: download + compliance badge).
+- **Mapping**: line net = `total − tax_total` (promotions stay in the line), shipping
+  → BG-21 charges, `metadata.vat_id`/`buyer_reference`/`leitweg_id` honored, delivery
+  from shipping address; totals via `withComputedTotals` so BR-CO passes by
+  construction. 11 vitest tests incl. a round trip with **0 rule-engine errors** and
+  a compiled-CJS smoke test.
+- **Core fix that rode along**: `@stampbench/core` exports map only declared
+  `"import"`, so CJS consumers (= every Medusa app) couldn't `require()` it even on
+  Node ≥20.19 (`ERR_PACKAGE_PATH_NOT_EXPORTED`). Added `"default"` condition in
+  `packages/core/package.json` — ships with the already-pending 0.1.2 publish.
+  Plugin engines: `node >=20.19` (first line with `require(esm)`).
+- **Keywords for the integrations directory** are set (`medusa-plugin-integration`,
+  `medusa-v2`, …) per their docs.
+
+**⏳ Publish order (blocked on Harvey's npm OTP, same as before):**
+1. `npm publish -w @stampbench/core --access public` (0.1.2 — the plugin depends on `^0.1.2`)
+2. In `integrations/medusa/`: `npm install && npm run build && npm publish --access public`
+3. Reply to Nicolas with the npm link so it gets featured.
+
+Until core 0.1.2 is on npm, local dev in `integrations/medusa` needs
+`npm pkg set 'dependencies.@stampbench/core=file:../../packages/core'` before
+`npm install` (revert before committing — README "Local development" documents it).
+
+---
+
 ## GENERATOR IS NOW THE DOCUMENT (2026-08-10, second pass)
 
 Harvey asked for the invoice-generator.com shape: type on the invoice, actions in

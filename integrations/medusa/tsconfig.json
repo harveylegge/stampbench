@@ -1,0 +1,22 @@
+{
+  "compilerOptions": {
+    "target": "ES2021",
+    "module": "NodeNext",
+    "moduleResolution": "NodeNext",
+    "lib": ["ES2021"],
+    "declaration": false,
+    "sourceMap": false,
+    "outDir": "./.medusa/server",
+    "rootDir": ".",
+    "esModuleInterop": true,
+    "forceConsistentCasingInFileNames": true,
+    "resolveJsonModule": true,
+    "skipLibCheck": true,
+    "strict": true,
+    "noUncheckedIndexedAccess": true,
+    "jsx": "react-jsx",
+    "checkJs": false
+  },
+  "include": ["src"],
+  "exclude": ["node_modules", ".medusa"]
+}

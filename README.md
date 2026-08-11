@@ -21,6 +21,11 @@ packages/core     @stampbench/core — MIT-licensed library (npm)
                   generation · auto-computed totals (BR-CO passes by construction)
 packages/cli      stampbench — `npx stampbench validate invoice.xml` (CI-friendly
                   exit codes) and `generate` from JSON
+integrations/medusa
+                  @stampbench/medusa — Medusa v2 plugin (npm): XRechnung/EN 16931
+                  e-invoices from Medusa orders · admin widget with download +
+                  compliance badge · admin API · workflow (own install, not part
+                  of the npm workspace — it pulls the Medusa framework)
 tools/parity      KoSIT parity harness — dual-runs our validator against the official
                   reference validator over the public XRechnung test suite
 apps/web          stampbench.com — Next.js 15 SaaS

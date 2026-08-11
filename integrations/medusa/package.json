@@ -1,0 +1,82 @@
+{
+  "name": "@stampbench/medusa",
+  "version": "0.1.0",
+  "description": "E-invoicing for Medusa — generate and validate EN 16931 / XRechnung e-invoices straight from Medusa orders, powered by Stampbench.",
+  "author": "Harvey Legge (https://stampbench.com)",
+  "license": "MIT",
+  "files": [
+    ".medusa/server",
+    "README.md"
+  ],
+  "keywords": [
+    "medusa-plugin-integration",
+    "medusa-v2",
+    "medusa",
+    "medusa-plugin",
+    "e-invoice",
+    "e-invoicing",
+    "e-rechnung",
+    "xrechnung",
+    "en16931",
+    "ubl",
+    "peppol",
+    "zugferd",
+    "compliance",
+    "invoice"
+  ],
+  "exports": {
+    "./package.json": "./package.json",
+    "./workflows": "./.medusa/server/src/workflows/index.js",
+    "./modules/*": "./.medusa/server/src/modules/*/index.js",
+    "./admin": {
+      "import": "./.medusa/server/src/admin/index.mjs",
+      "require": "./.medusa/server/src/admin/index.js",
+      "default": "./.medusa/server/src/admin/index.js"
+    },
+    "./*": "./.medusa/server/src/*.js"
+  },
+  "scripts": {
+    "build": "medusa plugin:build",
+    "dev": "medusa plugin:develop",
+    "publish:local": "medusa plugin:publish",
+    "typecheck": "tsc --noEmit",
+    "test": "vitest run",
+    "test:watch": "vitest",
+    "prepublishOnly": "medusa plugin:build"
+  },
+  "dependencies": {
+    "@stampbench/core": "^0.1.2"
+  },
+  "devDependencies": {
+    "@medusajs/admin-sdk": "^2.5.0",
+    "@medusajs/cli": "^2.5.0",
+    "@medusajs/framework": "^2.5.0",
+    "@medusajs/icons": "^2.5.0",
+    "@medusajs/medusa": "^2.5.0",
+    "@medusajs/ui": "^4.0.4",
+    "@swc/core": "^1.5.7",
+    "@types/react": "^18.3.1",
+    "react": "^18.3.1",
+    "typescript": "^5.8.3",
+    "vitest": "^3.1.4"
+  },
+  "peerDependencies": {
+    "@medusajs/admin-sdk": "^2.5.0",
+    "@medusajs/cli": "^2.5.0",
+    "@medusajs/framework": "^2.5.0",
+    "@medusajs/medusa": "^2.5.0",
+    "@medusajs/ui": "^4.0.3"
+  },
+  "engines": {
+    "node": ">=20.19"
+  },
+  "homepage": "https://stampbench.com",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/harveylegge/stampbench.git",
+    "directory": "integrations/medusa"
+  },
+  "bugs": {
+    "url": "https://github.com/harveylegge/stampbench/issues"
+  }
+}
