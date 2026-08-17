@@ -77,8 +77,21 @@ export const PLANS: Record<PlanId, Plan> = {
   },
 };
 
+/**
+ * Whether `id` names a real plan.
+ *
+ * `id in PLANS` is not this check — `in` walks the prototype chain, so
+ * 'constructor', 'toString' and friends all pass it and then index PLANS to
+ * something from Object.prototype rather than a Plan. Every caller here takes
+ * the plan id from a request body or a database column, so the distinction is
+ * load-bearing rather than theoretical.
+ */
+export function isPlanId(id: unknown): id is PlanId {
+  return typeof id === 'string' && Object.prototype.hasOwnProperty.call(PLANS, id);
+}
+
 export function planFor(id: string | null | undefined): Plan {
-  return PLANS[(id as PlanId) ?? 'free'] ?? PLANS.free;
+  return isPlanId(id) ? PLANS[id] : PLANS.free;
 }
 
 /**

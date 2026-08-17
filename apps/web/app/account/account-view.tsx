@@ -223,7 +223,12 @@ export function AccountView() {
 
   /** Route to whichever upgrade mechanism the server actually has available. */
   function onUpgrade(plan: UpgradeId) {
-    if (account?.billing.enabled) void onCheckout(plan);
+    // Someone already subscribed changes plan on the subscription they have.
+    // Checkout would start a *second* one and bill them for both, so the
+    // server refuses that with 409 — send them to the portal instead of
+    // walking them into the error.
+    if (account?.billing.subscribed) void onManageBilling();
+    else if (account?.billing.enabled) void onCheckout(plan);
     else void onRequestUpgrade(plan);
   }
 
@@ -301,12 +306,16 @@ export function AccountView() {
   const pendingPlan = account.pendingUpgrade ? PLANS[account.pendingUpgrade] : null;
 
   /* Button wording follows the mechanism actually in use: "Subscribe to X"
-     promises a checkout, "Request X" promises an email. Saying the wrong one
-     is a small lie that costs trust at exactly the moment someone is deciding
-     whether to hand over a card. */
-  const cardCopy = account.billing.enabled
-    ? { idle: 'Subscribe to', confirm: 'Continue to payment —', busy: 'Redirecting…' }
-    : { idle: 'Request', confirm: 'Confirm request for', busy: 'Sending…' };
+     promises a checkout, "Request X" promises an email, and an existing
+     subscriber gets neither — their plan change happens on the subscription
+     they already have, in the portal. Saying the wrong one is a small lie
+     that costs trust at exactly the moment someone is deciding whether to
+     hand over a card. */
+  const cardCopy = account.billing.subscribed
+    ? { idle: 'Switch to', confirm: 'Change plan to', busy: 'Opening…' }
+    : account.billing.enabled
+      ? { idle: 'Subscribe to', confirm: 'Continue to payment —', busy: 'Redirecting…' }
+      : { idle: 'Request', confirm: 'Confirm request for', busy: 'Sending…' };
 
   return (
     <div className="mx-auto max-w-4xl px-4 py-16">

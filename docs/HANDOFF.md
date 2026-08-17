@@ -323,6 +323,39 @@ unchecked; `workers/api/build.mjs` now runs `tsc --noEmit` and refuses to bundle
 error. Migration `workers/api/migrations/002_security_and_billing.sql` is **already
 applied to remote D1**.
 
+**Worker bug-fix pass 2026-08-17.** Five defects, all in `workers/api/`:
+
+1. *A malformed session cookie 500'd every authenticated route.* `verifySession`
+   decoded the signature outside its try, and `atob` **throws** on a segment that
+   is not valid base64 — so `sb_session=x.y.z` turned into a 500 on `/api/auth/me`
+   and everything below it. The client only treats 401 as "signed out", so the
+   account page errored instead of offering a sign-in, and the visitor could not
+   recover without clearing cookies by hand. The whole body is guarded now.
+2. *An existing subscriber could be billed twice.* `/api/billing/checkout` had no
+   guard on `stripe_subscription_id`, and Checkout only ever **creates** a
+   subscription — so a subscriber clicking Upgrade got a second concurrent one,
+   with the resulting plan decided by whichever webhook landed last. The endpoint
+   now returns 409 `subscription_exists`, and /account routes subscribers to the
+   portal (whose update flow changes the subscription in place).
+3. *A stale Stripe event could downgrade a paying account.* Stripe promises no
+   delivery order and retries for days, so a `deleted` for a replaced
+   subscription could land after the replacement went live. `subscriptionApplies`
+   (in `stripe.ts`, unit-tested) now confines a non-entitling event to the
+   subscription the account is actually on. Entitling events still always apply,
+   which is what lets a `past_due` → `active` recovery restore the plan.
+4. *`plan in PLANS` accepted inherited keys.* `in` walks the prototype chain, so
+   'constructor'/'toString' passed validation on `/api/upgrade`, `/api/billing/checkout`
+   and `/api/admin/set-plan`. Worst case: a plan of 'constructor' in D1 made
+   `planFor()` return the Object constructor, whose `.id` is undefined, which threw
+   inside `featureLimit()` on **every** metered request for that account. Replaced
+   with an `isPlanId()` own-property guard in `lib/plans.ts`; `planFor` uses it too.
+5. *A malformed hosted-API call spent a monthly quota unit.* `/api/v1/*` metered
+   before parsing the body, so a customer's own 400 cost them a paid API call.
+   Validation now precedes the meter, matching `handleShare`.
+
+Regression tests for 1, 3 and 4 are in `apps/web/tests/worker-billing.test.ts`
+(the existing pure-function seam — no Worker or D1 needed to run them).
+
 Known gaps, deliberate: no email verification, no self-serve password reset (mailto
 support), no per-minute rate limiting on the hosted API (monthly quota only), German
 /de playground shows the three new panels in English, upgrade-email deliverability to

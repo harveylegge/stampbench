@@ -96,3 +96,28 @@ export function subscriptionEntitles(status: unknown): boolean {
   // weeks, and serving the paid tier throughout is unpaid service.
   return status === 'active' || status === 'trialing';
 }
+
+/**
+ * Whether a subscription event may change this account's plan.
+ *
+ * Stripe does not promise delivery order, and it retries for days — so a
+ * `customer.subscription.deleted` for a subscription the customer *replaced*
+ * can land after the replacement is already active. Applying it blindly
+ * downgrades someone who is paying, and nothing re-grants the plan until the
+ * next event on the new subscription, which for a healthy monthly
+ * subscription may be a month away.
+ *
+ * The rule: a non-entitling event only speaks for the subscription the
+ * account is actually on. An entitling one always applies — it is a live
+ * subscription reporting itself, and it becomes the account's current one.
+ */
+export function subscriptionApplies(
+  eventSubscriptionId: string,
+  entitled: boolean,
+  currentSubscriptionId: string | null | undefined,
+): boolean {
+  if (entitled) return true;
+  // Nothing recorded yet: there is no newer subscription to protect.
+  if (!currentSubscriptionId) return true;
+  return eventSubscriptionId === currentSubscriptionId;
+}

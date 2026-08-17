@@ -31,6 +31,7 @@ import {
   PLANS,
   currentPeriodKey,
   featureLimit,
+  isPlanId,
   planFor,
   type FeatureId,
   type PlanId,
@@ -39,6 +40,7 @@ import { paypalLink } from './paypal';
 import {
   planFromSubscription,
   stripeSignatureValid,
+  subscriptionApplies,
   subscriptionEntitles,
 } from './stripe';
 import {
@@ -399,10 +401,6 @@ async function handleHostedApi(request: Request, env: Env, op: 'validate' | 'gen
   if (!user) {
     return fail(401, 'unauthenticated', 'Pass an API key: Authorization: Bearer sb_live_… (create one at stampbench.com/account).');
   }
-  const spent = await meter(env, user.id, user.plan, 'api');
-  if (spent === null) {
-    return fail(402, 'quota', `Monthly quota reached (${featureLimit(user.plan, 'api')} calls on the ${planFor(user.plan).name} plan). Upgrade at stampbench.com/account.`);
-  }
   const body = await readJson(request);
   if (!body) return fail(400, 'bad_request', 'Body must be JSON under 1.5 MB.');
 
@@ -418,19 +416,25 @@ async function handleHostedApi(request: Request, env: Env, op: 'validate' | 'gen
   }
   const profile: Profile = (requested as Profile | undefined) ?? 'xrechnung';
 
+  const xml = String(body.xml ?? '');
+  const invoice = body.invoice;
+  if (op !== 'generate' && !xml.trim()) return fail(400, 'bad_request', 'Provide { "xml": "…" }.');
+  if (op === 'generate' && (!invoice || typeof invoice !== 'object')) {
+    return fail(400, 'bad_request', 'Provide { "invoice": { … } }.');
+  }
+
+  // Charged only once the request is known to be well-formed. The meter is a
+  // billing counter, not an abuse control, and a malformed call is not work we
+  // did — spending someone's monthly quota on their own 400 is a support email
+  // at best and a refund at worst. (handleShare already meters this way.)
+  const spent = await meter(env, user.id, user.plan, 'api');
+  if (spent === null) {
+    return fail(402, 'quota', `Monthly quota reached (${featureLimit(user.plan, 'api')} calls on the ${planFor(user.plan).name} plan). Upgrade at stampbench.com/account.`);
+  }
+
   try {
-    if (op === 'validate') {
-      const xml = String(body.xml ?? '');
-      if (!xml.trim()) return fail(400, 'bad_request', 'Provide { "xml": "…" }.');
-      return json({ result: validateXml(xml, { profile }) as unknown as Json });
-    }
-    if (op === 'fix') {
-      const xml = String(body.xml ?? '');
-      if (!xml.trim()) return fail(400, 'bad_request', 'Provide { "xml": "…" }.');
-      return json({ result: fixXml(xml, { profile }) as unknown as Json });
-    }
-    const invoice = body.invoice;
-    if (!invoice || typeof invoice !== 'object') return fail(400, 'bad_request', 'Provide { "invoice": { … } }.');
+    if (op === 'validate') return json({ result: validateXml(xml, { profile }) as unknown as Json });
+    if (op === 'fix') return json({ result: fixXml(xml, { profile }) as unknown as Json });
     const full = withComputedTotals(withProfileDefaults(invoice as Invoice, { profile }));
     return json({ xml: generateUblInvoice(full, { profile }), profile });
   } catch (e) {
@@ -457,7 +461,7 @@ async function handleShare(request: Request, env: Env, user: UserRow, origin: st
 async function handleUpgrade(request: Request, env: Env, user: UserRow): Promise<Response> {
   const body = await readJson(request);
   const plan = String(body?.plan ?? '');
-  if (!(plan in PLANS) || plan === 'free') return fail(400, 'bad_request', 'Unknown plan.');
+  if (!isPlanId(plan) || plan === 'free') return fail(400, 'bad_request', 'Unknown plan.');
 
   // Throttle. This was the one mutating authenticated endpoint with no rate
   // limit, and it both writes a row and emails the operator — so a logged-in
@@ -478,12 +482,12 @@ async function handleUpgrade(request: Request, env: Env, user: UserRow): Promise
   // Best-effort notification: the request row above is the durable record.
   // `mailed`/`mailError` in the response exist for observability — the static
   // site has no server logs a human ever reads.
-  const payUrl = paypalLinkFor(env, plan as PlanId);
+  const payUrl = paypalLinkFor(env, plan);
 
   let mailed = false;
   let mailError: string | null = env.MAILER ? null : 'MAILER binding missing';
   if (env.MAILER) {
-    const p = PLANS[plan as PlanId];
+    const p = PLANS[plan];
     const activate = `$h=@{'X-Admin-Secret'='<ADMIN_SECRET>';'Content-Type'='application/json'}; Invoke-RestMethod -Method Post -Uri https://stampbench.com/api/admin/set-plan -Headers $h -Body '{"email":"${user.email}","plan":"${plan}"}'`;
     const activateSh = `curl -X POST https://stampbench.com/api/admin/set-plan -H 'X-Admin-Secret: <ADMIN_SECRET>' -H 'Content-Type: application/json' -d '{"email":"${user.email}","plan":"${plan}"}'`;
     try {
@@ -774,6 +778,15 @@ async function syncSubscription(env: Env, subscription: Json): Promise<void> {
   }
 
   const entitled = subscriptionEntitles(status);
+
+  // A cancellation for a subscription this account already replaced must not
+  // downgrade the replacement. Stripe retries deliveries for days and does not
+  // order them, so the stale event is a real arrival, not a hypothetical.
+  if (!subscriptionApplies(subscriptionId, entitled, user.stripe_subscription_id)) {
+    console.log('stripe: ignoring stale event for superseded subscription', subscriptionId, user.id);
+    return;
+  }
+
   const plan = entitled ? (planFromSubscription(subscription, PLAN_IDS) ?? 'free') : 'free';
 
   await env.DB.prepare(
@@ -825,10 +838,24 @@ async function handleCheckout(request: Request, env: Env, user: UserRow, origin:
 
   const body = await readJson(request);
   const plan = String(body?.plan ?? '');
-  if (!(plan in PLANS) || plan === 'free') return fail(400, 'bad_request', 'Unknown plan.');
+  if (!isPlanId(plan) || plan === 'free') return fail(400, 'bad_request', 'Unknown plan.');
   if (user.plan === plan) return fail(400, 'already_on_plan', `You are already on ${planFor(plan).name}.`);
 
-  const price = await priceForPlan(env, plan as PlanId);
+  // Checkout only ever *creates* a subscription — it has no notion of
+  // replacing one. Sending an existing subscriber through it leaves them
+  // holding two concurrent subscriptions and paying for both, while the plan
+  // they end up on is decided by whichever webhook lands last. A plan change
+  // belongs on the subscription that already exists, which is what the
+  // portal's update flow does, so route them there instead.
+  if (user.stripe_subscription_id) {
+    return fail(
+      409,
+      'subscription_exists',
+      'You already have an active subscription — change your plan under Manage billing, so you are not charged for two.',
+    );
+  }
+
+  const price = await priceForPlan(env, plan);
   if (!price) {
     return fail(503, 'price_missing', 'That plan has no active price configured yet — email hello@stampbench.com.');
   }
@@ -1031,7 +1058,7 @@ async function handleAdminSetPlan(request: Request, env: Env): Promise<Response>
   const body = await readJson(request);
   const email = String(body?.email ?? '').trim().toLowerCase();
   const plan = String(body?.plan ?? '');
-  if (!(plan in PLANS)) return fail(400, 'bad_request', 'Unknown plan.');
+  if (!isPlanId(plan)) return fail(400, 'bad_request', 'Unknown plan.');
   const result = await env.DB.prepare('UPDATE users SET plan = ? WHERE email = ?').bind(plan, email).run();
   if (!result.meta.changes) return fail(404, 'not_found', 'No user with that email.');
   await env.DB.prepare(

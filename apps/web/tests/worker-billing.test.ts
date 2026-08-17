@@ -7,15 +7,17 @@
  * get subtly wrong in a way that manual testing never surfaces — a broken
  * signature check still works perfectly for genuine Stripe traffic.
  */
-import { describe, expect, it } from 'vitest';
-import { hmacSha256Hex } from '../../../workers/api/src/auth';
+import { describe, expect, it, vi } from 'vitest';
+import { hmacSha256Hex, signSession, verifySession } from '../../../workers/api/src/auth';
 import {
   planFromSubscription,
   stripeSignatureValid,
+  subscriptionApplies,
   subscriptionEntitles,
   WEBHOOK_TOLERANCE_SECONDS,
 } from '../../../workers/api/src/stripe';
 import { paypalLink } from '../../../workers/api/src/paypal';
+import { isPlanId, planFor, PLANS as PLAN_TABLE } from '../lib/plans';
 
 const SECRET = 'whsec_test_0123456789abcdef';
 const BODY = JSON.stringify({ id: 'evt_1', type: 'customer.subscription.updated' });
@@ -117,6 +119,122 @@ describe('subscriptionEntitles', () => {
     // the paid tier throughout would be unpaid service.
     for (const status of ['past_due', 'canceled', 'unpaid', 'incomplete', 'incomplete_expired', 'paused', undefined]) {
       expect(subscriptionEntitles(status)).toBe(false);
+    }
+  });
+});
+
+describe('subscriptionApplies', () => {
+  it('always applies an entitling subscription', () => {
+    // A live subscription reporting itself becomes the account's current one,
+    // whatever was recorded before.
+    expect(subscriptionApplies('sub_new', true, 'sub_old')).toBe(true);
+    expect(subscriptionApplies('sub_new', true, null)).toBe(true);
+  });
+
+  it('applies a cancellation for the subscription the account is actually on', () => {
+    expect(subscriptionApplies('sub_a', false, 'sub_a')).toBe(true);
+  });
+
+  it('ignores a cancellation for a subscription the account already replaced', () => {
+    // Stripe retries deliveries for days and promises no ordering, so a
+    // `deleted` for the old subscription can land after the replacement is
+    // live. Applying it downgrades someone who is paying, and nothing
+    // re-grants the plan until the new subscription's next event — a month
+    // away for a healthy monthly plan.
+    expect(subscriptionApplies('sub_old', false, 'sub_new')).toBe(false);
+  });
+
+  it('applies when there is no recorded subscription to protect', () => {
+    expect(subscriptionApplies('sub_a', false, null)).toBe(true);
+    expect(subscriptionApplies('sub_a', false, undefined)).toBe(true);
+  });
+});
+
+/**
+ * Plan ids arrive from request bodies and database columns, and index a plain
+ * object literal — so the membership test has to be an own-property check.
+ */
+describe('plan id validation', () => {
+  it('accepts exactly the real plans', () => {
+    for (const id of ['free', 'starter', 'pro', 'scale']) expect(isPlanId(id), id).toBe(true);
+  });
+
+  it('rejects inherited Object.prototype keys', () => {
+    // `id in PLANS` walks the prototype chain, so every one of these passed
+    // the old check and then indexed PLANS to something that is not a Plan:
+    // planFor('constructor') returned the Object constructor, whose `.id` is
+    // undefined, which made featureLimit() throw on every metered request.
+    for (const id of ['constructor', 'toString', 'hasOwnProperty', 'valueOf', '__proto__']) {
+      expect(isPlanId(id), id).toBe(false);
+      expect(planFor(id), id).toBe(PLAN_TABLE.free);
+    }
+  });
+
+  it('falls back to free for unknown, empty and nullish ids', () => {
+    for (const id of ['enterprise', '', null, undefined]) {
+      expect(planFor(id), String(id)).toBe(PLAN_TABLE.free);
+    }
+  });
+});
+
+/**
+ * The session cookie is attacker-supplied and can also simply be truncated by
+ * a client, so verifySession must answer null for anything it cannot verify —
+ * never throw. Throwing surfaces as a 500 on every authenticated route, and
+ * /api/auth/me answering 500 instead of 401 strands the browser: the client
+ * treats only 401 as "signed out", so the account page errors instead of
+ * offering a sign-in.
+ */
+describe('verifySession', () => {
+  const SESSION_SECRET = 'session_secret_for_tests';
+
+  it('round-trips a session it signed', async () => {
+    const token = await signSession('user_1', 'a@b.com', SESSION_SECRET);
+    expect(await verifySession(token, SESSION_SECRET)).toEqual({ sub: 'user_1', email: 'a@b.com' });
+  });
+
+  it('rejects a token signed with a different secret', async () => {
+    const token = await signSession('user_1', 'a@b.com', SESSION_SECRET);
+    expect(await verifySession(token, 'someone_elses_secret')).toBeNull();
+  });
+
+  it('rejects a tampered payload under an otherwise well-formed token', async () => {
+    const token = await signSession('user_1', 'a@b.com', SESSION_SECRET);
+    const [header, , sig] = token.split('.');
+    const forged = btoa(JSON.stringify({ sub: 'admin', email: 'a@b.com', exp: 4_102_444_800 }))
+      .replace(/\+/g, '-')
+      .replace(/\//g, '_')
+      .replace(/=+$/, '');
+    expect(await verifySession(`${header}.${forged}.${sig}`, SESSION_SECRET)).toBeNull();
+  });
+
+  it('returns null rather than throwing on a malformed cookie', async () => {
+    const [header, payload] = (await signSession('user_1', 'a@b.com', SESSION_SECRET)).split('.');
+    for (const token of [
+      'x.y.z', //                      signature length ≡ 1 mod 4 — atob throws
+      `${header}.${payload}.!!!!`, //  characters outside the base64 alphabet
+      `${header}.${payload}.`, //      empty signature
+      `${header}.@@@@@@@@.${'A'.repeat(43)}`, // undecodable payload, valid shape
+      '..',
+      'not-a-token',
+      '',
+    ]) {
+      await expect(verifySession(token, SESSION_SECRET), token).resolves.toBeNull();
+    }
+  });
+
+  it('rejects a session past its expiry', async () => {
+    // Only Date is faked: the crypto calls below are real promises and must
+    // still settle.
+    vi.useFakeTimers({ toFake: ['Date'] });
+    try {
+      vi.setSystemTime(new Date('2026-01-01T00:00:00Z'));
+      const token = await signSession('user_1', 'a@b.com', SESSION_SECRET);
+      expect(await verifySession(token, SESSION_SECRET)).not.toBeNull();
+      vi.setSystemTime(new Date('2026-03-01T00:00:00Z')); // 30-day life, long gone
+      expect(await verifySession(token, SESSION_SECRET)).toBeNull();
+    } finally {
+      vi.useRealTimers();
     }
   });
 });

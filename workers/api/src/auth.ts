@@ -132,17 +132,28 @@ export interface Session {
   email: string;
 }
 
+/**
+ * Returns the session a token carries, or null for anything else.
+ *
+ * The whole body is guarded, not just the JSON parse: `fromB64url` calls
+ * `atob`, which *throws* on a segment that is not valid base64 (a stray
+ * character, or a length ≡ 1 mod 4). A cookie is attacker-supplied and can
+ * also just be truncated, so an unguarded decode turned a bad cookie into a
+ * 500 on every authenticated route — and /api/auth/me answering 500 instead
+ * of 401 leaves the browser stuck: the client only treats 401 as "signed
+ * out", so the account page errors rather than offering a sign-in.
+ */
 export async function verifySession(token: string, secret: string): Promise<Session | null> {
   const parts = token.split('.');
   if (parts.length !== 3) return null;
-  const ok = await crypto.subtle.verify(
-    'HMAC',
-    await hmacKey(secret),
-    fromB64url(parts[2]) as BufferSource,
-    enc.encode(`${parts[0]}.${parts[1]}`),
-  );
-  if (!ok) return null;
   try {
+    const ok = await crypto.subtle.verify(
+      'HMAC',
+      await hmacKey(secret),
+      fromB64url(parts[2]) as BufferSource,
+      enc.encode(`${parts[0]}.${parts[1]}`),
+    );
+    if (!ok) return null;
     const payload = JSON.parse(new TextDecoder().decode(fromB64url(parts[1])));
     if (typeof payload.exp !== 'number' || payload.exp < Date.now() / 1000) return null;
     if (typeof payload.sub !== 'string' || typeof payload.email !== 'string') return null;
