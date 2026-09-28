@@ -32,11 +32,11 @@ const MEASURES = [
   {
     area: 'Credentials & sessions',
     items: [
-      'Passwords are hashed with bcrypt at cost factor 12. Plaintext passwords are never stored or logged.',
-      'API keys are generated from 24 bytes of cryptographic randomness, stored only as a SHA-256 hash, and displayed exactly once at creation. We cannot recover a lost key — you rotate it.',
+      'Passwords are hashed with PBKDF2-HMAC-SHA256 at 100,000 iterations (WebCrypto), each with its own random 16-byte salt. Plaintext passwords are never stored or logged.',
+      'API keys are generated from 20 bytes of cryptographic randomness, stored only as a SHA-256 hash, and displayed exactly once at creation. We cannot recover a lost key — you rotate it.',
       'Revoking a key takes effect immediately: revoked or unrecognised credentials return 401 and are never silently downgraded to anonymous access.',
-      'Sessions are server-side records referenced by an HttpOnly, SameSite=Lax, Secure cookie; the session token is stored hashed with a server-side pepper, so database contents alone cannot be replayed as a login.',
-      'Login and registration are rate-limited per IP, and authentication runs a constant-time comparison whether or not the account exists, so response timing does not reveal which emails are registered.',
+      'Sessions are stateless HS256 JWTs carried in an HttpOnly, SameSite=Lax, Secure cookie and signed with a server-side secret, so a session cookie cannot be forged or altered without it. A separate readable, non-secret flag lets the site skip a server round-trip for signed-out visitors and carries no session token.',
+      'Login and registration are rate-limited per IP, and authentication runs a constant-time comparison against a dummy credential even when the account does not exist, so response timing does not reveal which emails are registered.',
     ],
   },
   {
@@ -44,16 +44,17 @@ const MEASURES = [
     items: [
       'HTTPS everywhere, enforced by the hosting platform.',
       'Security headers on every response: a Content-Security-Policy restricting script and connection sources, X-Frame-Options: DENY, X-Content-Type-Options: nosniff, a strict Referrer-Policy, and a Permissions-Policy disabling camera, microphone and geolocation.',
-      'Database access goes exclusively through a parameterised query layer (Prisma); no string-concatenated SQL exists in the codebase.',
+      'Database access goes exclusively through parameterised prepared statements (Cloudflare D1); no string-concatenated SQL exists in the codebase.',
       'Per-key and per-IP rate limiting plus monthly quotas, so a leaked key has a bounded blast radius.',
-      'Stripe webhooks are verified by cryptographic signature; unsigned or mis-signed payloads are rejected before any account state changes.',
+      'Billing webhooks are verified by cryptographic signature — PayPal subscription events today, and Stripe if card billing is enabled — and unsigned or mis-signed payloads are rejected before any account state changes.',
+      'The optional inbound payment webhook (auto-invoicing) is authenticated by a secret URL you can rotate, is rate-limited, and can only create draft invoices or mark your own invoices paid — never move money or read data back. Auto-created invoices are held in their own archive so they can never displace the invoices you saved yourself.',
       'Structured JSON logging that records outcomes and never request bodies, credentials or invoice contents.',
     ],
   },
   {
     area: 'Development practice',
     items: [
-      '57 automated tests run on every change, including regression tests for the specific validation bugs we have previously fixed.',
+      '394 automated tests run across the library, CLI and web app, including regression tests for the specific validation bugs we have previously fixed.',
       'The codebase passed a multi-agent adversarial security review in which every finding had to survive a second reviewer attempting to refute it; all high-severity findings were remediated before launch.',
       'Dependencies are deliberately few. The rule engine has two runtime dependencies.',
     ],
@@ -111,15 +112,18 @@ export default function SecurityPage() {
       ))}
 
       <section className="mb-8">
-        <h2 className="mb-3 text-lg font-semibold tracking-tight">AI-generated explanations</h2>
+        <h2 className="mb-3 text-lg font-semibold tracking-tight">AI features</h2>
         <p className="text-sm leading-relaxed text-muted">
-          The optional &ldquo;explain this error&rdquo; feature sends the{' '}
-          <strong className="text-text">validation findings</strong> — rule identifiers, business
-          terms and our own message text — to Anthropic&apos;s API to produce a plain-language fix
-          list. It is opt-in per request, the prompt is size-capped, and the feature degrades to a
-          deterministic non-AI explanation if it is unavailable. If your data-processing policy does
-          not permit a sub-processor, simply do not call that endpoint; validation and generation are
-          entirely unaffected.
+          Three optional features send data to Anthropic&apos;s API, and only when you use them.{' '}
+          <strong className="text-text">Explain this error</strong> sends the validation findings —
+          rule identifiers, business terms and our own message text.{' '}
+          <strong className="text-text">AI assist</strong> in the invoice builder sends only the
+          free-text description you type into that box. The{' '}
+          <strong className="text-text">assistant</strong> (paid plans) sends the messages you type
+          into the chat. None of them is ever sent your full invoice, a VAT identifier or a payment
+          detail unless you type it yourself. Each is opt-in, size-capped and metered; validation
+          and generation never call Anthropic at all. If your data-processing policy does not permit
+          a sub-processor, simply do not use these features.
         </p>
       </section>
 

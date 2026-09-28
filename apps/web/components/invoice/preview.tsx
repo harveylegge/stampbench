@@ -83,6 +83,10 @@ export function InvoicePreview({ draft, totals }: { draft: InvoiceDraft; totals:
     >
       <header className="mb-8 flex flex-wrap items-start justify-between gap-4">
         <div>
+          {draft.logo && (
+            // eslint-disable-next-line @next/next/no-img-element -- a data URL from the user's own disk; next/image cannot optimise it and would not try
+            <img src={draft.logo} alt="" className="mb-2 max-h-16 max-w-[11rem] object-contain object-left" />
+          )}
           <div className="text-lg font-semibold tracking-tight">
             {draft.seller.name || <span className="text-faint">Your company</span>}
           </div>

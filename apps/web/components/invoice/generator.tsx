@@ -16,6 +16,7 @@ import {
   TextField,
 } from '@/components/invoice/fields';
  import { AiAssist } from '@/components/invoice/ai-assist';
+import { HoursImport } from '@/components/invoice/hours-import';
 import { InvoicePreview } from '@/components/invoice/preview';
 import { GenerationResult } from '@/components/invoice/result';
 import {
@@ -39,7 +40,14 @@ import {
   TYPE_CODE_OPTIONS,
   type InvoiceDraft,
 } from '@/lib/invoice/draft';
+import { backupActive, pushInvoice } from '@/lib/invoice/account-backup';
+import { findService, knownCustomers, knownServices, type KnownCustomer, type KnownService } from '@/lib/invoice/book';
 import { formatsForMarket, getFormat, isUsable, rulesetLabelFor, SUPPORT_LABEL } from '@/lib/invoice/formats';
+import { consumeResumeFlag, listInvoices, saveInvoice } from '@/lib/invoice/history';
+import { countInvoiceOnce, invoicesUsedThisMonth } from '@/lib/invoice/quota';
+import { entitlementsFor, mayCreateInvoice, PAID_BUSINESS_FEATURES } from '@/lib/entitlements';
+import { currentPlan } from '@/lib/account-client';
+import type { PlanId } from '@/lib/plans';
 import { prepareLogo } from '@/lib/invoice/logo';
 import { applyTemplate, templatesForMarket } from '@/lib/invoice/templates';
 import { categoriesFor, getVatCategory, US_TAX_NOTE, type VatCategoryCode } from '@/lib/invoice/tax';
@@ -128,6 +136,11 @@ function saveDraft(draft: InvoiceDraft | null): void {
   }
 }
 
+// Module-level so the gated-off case is a stable reference rather than a new
+// array each render, which would defeat memoisation downstream.
+const EMPTY_CUSTOMERS: KnownCustomer[] = [];
+const EMPTY_SERVICES: KnownService[] = [];
+
 // ------------------------------------------------------------------- generator
 
 export function InvoiceGenerator({ initialMarket }: { initialMarket?: MarketId }) {
@@ -138,15 +151,72 @@ export function InvoiceGenerator({ initialMarket }: { initialMarket?: MarketId }
   const [rememberedMarket, setRememberedMarket] = useState<MarketId | null>(null);
   const [pendingMarket, setPendingMarket] = useState<MarketId | null>(null);
   const [errors, setErrors] = useState<string[]>([]);
+  /** Reveals the rule id behind each checklist item. Off for the majority. */
+  const [showRules, setShowRules] = useState(false);
+  /**
+   * The book: customers and services this browser has already invoiced,
+   * derived from the history on mount. Not state that changes mid-edit — the
+   * invoice being built now joins the book on its *next* visit.
+   */
+  const [allCustomers, setAllCustomers] = useState<KnownCustomer[]>([]);
+  const [allServices, setAllServices] = useState<KnownService[]>([]);
   const [logoError, setLogoError] = useState<string | null>(null);
   const [logoNote, setLogoNote] = useState<string | null>(null);
   const [logoBusy, setLogoBusy] = useState(false);
+  /**
+   * The monthly invoice allowance. `plan` is null until the account check
+   * resolves, which resolves to Free — an unknown plan must never hand out the
+   * paid experience, the same rule the PDF branding follows.
+   */
+  const [plan, setPlan] = useState<PlanId | null>(null);
+  const [used, setUsed] = useState(0);
+  /** Set when Create was pressed with the month's allowance already spent. */
+  const [capReached, setCapReached] = useState(false);
+
+  /**
+   * The customer book is a paid tool, so the autofill lists are empty on Free.
+   * Gated at the point of *use* rather than by skipping the read: the history
+   * is the user's own data and stays theirs, and a downgrade must not look
+   * like Stampbench deleted their customers.
+   */
+  const book = entitlementsFor(plan).customerBook;
+  const customers = book ? allCustomers : EMPTY_CUSTOMERS;
+  const services = book ? allServices : EMPTY_SERVICES;
 
   // Reading storage and today's date has to happen after mount: this component
   // is prerendered into static HTML, and a date or a random line key generated
   // on the server would not match the one generated in the browser.
+  // The allowance, read once on mount. Both halves are advisory until Create
+  // is pressed, where `generate` re-reads the count from storage's own view.
   useEffect(() => {
-    setSavedDraft(loadDraft());
+    let cancelled = false;
+    setUsed(invoicesUsedThisMonth());
+    currentPlan().then((current) => {
+      if (!cancelled) setPlan(current);
+    });
+    return () => {
+      cancelled = true;
+    };
+  }, []);
+
+  useEffect(() => {
+    const stored = loadDraft();
+    // The book reads the same history in every path through this effect —
+    // a resumed invoice deserves its saved customers as much as a new one.
+    const saved = listInvoices();
+    setAllCustomers(knownCustomers(saved));
+    setAllServices(knownServices(saved));
+    // Arriving from /my-invoices: the draft was staged and flagged, so skip
+    // the market step and the "you have a saved draft" banner — the visitor
+    // just said which invoice they want. The flag is consumed even when the
+    // staged draft failed to load, so it cannot linger and hijack a later,
+    // unrelated visit.
+    if (consumeResumeFlag() && stored) {
+      setDraft(stored);
+      setPhase('build');
+      return;
+    }
+    setSavedDraft(stored);
     setRememberedMarket(readMarket());
   }, []);
 
@@ -187,7 +257,22 @@ export function InvoiceGenerator({ initialMarket }: { initialMarket?: MarketId }
     const problems = preflight(draft);
     setErrors(problems);
     if (problems.length > 0) return;
+    // The allowance is checked *after* preflight so a capped user still gets
+    // their invoice validated and their mistakes pointed out — the wall is on
+    // creating documents, not on being told the truth about one.
+    if (!mayCreateInvoice(plan, used)) {
+      setCapReached(true);
+      window.scrollTo({ top: 0, behavior: 'smooth' });
+      return;
+    }
     setGenerated(generateDocument(draft));
+    // Every created invoice lands on /my-invoices. In this browser always;
+    // in the account too when the visitor switched backup on there.
+    const entry = saveInvoice(draft);
+    // Counted by entry id, so re-creating the same invoice after an edit does
+    // not spend a second slot from the month's allowance.
+    if (countInvoiceOnce(entry.id)) setUsed(invoicesUsedThisMonth());
+    if (backupActive()) void pushInvoice(entry);
     setPhase('result');
     window.scrollTo({ top: 0, behavior: 'smooth' });
   }
@@ -228,70 +313,83 @@ export function InvoiceGenerator({ initialMarket }: { initialMarket?: MarketId }
         )}
 
         <div>
-          <h2 className="mb-2 text-2xl font-semibold tracking-tight">Where is this invoice for?</h2>
-          <p className="mb-6 max-w-2xl leading-relaxed text-muted">
-            The market decides which ruleset validates the document, which fields the forms ask for, and
-            which VAT categories apply. You can change it later.
+          <p className="mb-3 text-[10px] font-semibold tracking-[0.18em] text-accent-hi">
+            ONE QUICK STEP
           </p>
-          <div className="grid gap-3 sm:grid-cols-2">
-            {PAGE_MARKETS.map((id) => {
+          <h2 className="mb-2 text-2xl font-semibold tracking-tight">Where is your business based?</h2>
+          {/* The very first thing anyone reads on the business path. It used to
+              answer in rulesets, formats and VAT categories — three terms
+              deep before the first click, to explain a choice that only needs
+              one sentence. What Stampbench does with the answer has not
+              changed; only who the sentence is written for. */}
+          <p className="mb-6 max-w-xl leading-relaxed text-muted">
+            Pick your location and we will set up the invoice for you. You can change it later.
+          </p>
+          <div className="workbench-market-grid">
+            {PAGE_MARKETS.map((id, index) => {
               const market = MARKETS[id];
-              const usable = formatsForMarket(id).filter(isUsable);
               return (
                 <button
                   key={id}
                   onClick={() => chooseMarket(id)}
-                  className={`sb-lift group rounded-xl border bg-surface p-5 text-left transition hover:border-border-hi hover:shadow-sm ${
-                    startMarket === id ? 'border-accent/50 ring-1 ring-accent/20' : 'border-border'
-                  }`}
+                  className={`workbench-market-card group ${startMarket === id ? 'is-current' : ''}`}
                 >
-                  <span className="mb-3 block text-muted">
-                    <Flag code={market.flag} size={28} />
+                  <span className="workbench-market-meta">
+                    <span>0{index + 1}</span>
+                    <span>SELECT ↗</span>
                   </span>
-                  <span className="flex flex-wrap items-center gap-2">
-                    <span className="font-medium tracking-tight">{market.name}</span>
+                  <span className="workbench-market-name">
+                    <span className="workbench-market-flag"><Flag code={market.flag} size={26} /></span>
+                    <span>{market.name}</span>
                     {startMarket === id && (
-                      <span className="rounded-full bg-accent-dim px-2 py-0.5 text-[11px] font-medium text-accent-hi">
-                        Your market
-                      </span>
+                      <small>YOUR MARKET</small>
                     )}
                   </span>
-                  <span className="mt-1 block text-sm leading-relaxed text-muted">
-                    {usable.map((f) => f.name).join(' · ')}
-                  </span>
+                  <span className="workbench-market-note">Use this invoice setup</span>
+                  <i aria-hidden />
                 </button>
               );
             })}
           </div>
+          <p className="mt-3 text-xs leading-relaxed text-faint">
+            Somewhere else?{' '}
+            <Link href="/markets" className="text-accent-hi hover:underline">
+              See supported locations
+            </Link>
+            .
+          </p>
         </div>
 
-        <div>
-          <h2 className="mb-2 text-xl font-semibold tracking-tight">Or start from an example</h2>
-          <p className="mb-4 max-w-2xl text-sm leading-relaxed text-muted">
-            Realistic data for fictional companies — nothing here belongs to a real business. Every example
-            is a working invoice you can generate and validate straight away.
-          </p>
-          <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-3">
-            {templatesForMarket(startMarket ?? 'eu').map((template) => (
-              <button
-                key={template.id}
-                onClick={() => {
-                  const next = applyTemplate(template, new Date(), Math.floor(Date.now() / 1000) % 1000000);
-                  writeMarket(next.market);
-                  setDraft(next);
-                  setPhase('build');
-                }}
-                className="sb-lift rounded-xl border border-border bg-surface p-4 text-left transition hover:border-border-hi"
-              >
-                <span className="mb-2 flex items-center gap-2">
-                  <Flag code={MARKETS[template.market].flag} size={20} />
-                  <span className="text-sm font-medium tracking-tight">{template.name}</span>
-                </span>
-                <span className="block text-sm leading-relaxed text-muted">{template.description}</span>
-              </button>
-            ))}
+        <details className="workbench-example-drawer">
+          <summary>Want to see an example first? <span>OPEN +</span></summary>
+          <div className="workbench-example-content">
+            <p>
+              Pick one to open a completed sample in the editor. Every name and figure is fictional.
+            </p>
+            <div className="workbench-example-grid">
+              {templatesForMarket(startMarket ?? 'eu').map((template, index) => (
+                <button
+                  key={template.id}
+                  onClick={() => {
+                    const next = applyTemplate(template, new Date(), Math.floor(Date.now() / 1000) % 1000000);
+                    writeMarket(next.market);
+                    setDraft(next);
+                    setPhase('build');
+                  }}
+                  className="workbench-example-card"
+                >
+                  <span className="workbench-example-number">SAMPLE 0{index + 1}</span>
+                  <span className="workbench-example-title">
+                    <Flag code={MARKETS[template.market].flag} size={20} />
+                    <strong>{template.name}</strong>
+                  </span>
+                  <span className="workbench-example-description">{template.description}</span>
+                  <span className="workbench-example-action">USE THIS EXAMPLE <b>↗</b></span>
+                </button>
+              ))}
+            </div>
           </div>
-        </div>
+        </details>
       </div>
     );
   }
@@ -691,6 +789,27 @@ export function InvoiceGenerator({ initialMarket }: { initialMarket?: MarketId }
           <div>
             <div className="mb-1.5 text-xs font-medium uppercase tracking-[0.12em] text-faint">Bill to</div>
             <div className="grid gap-2">
+              {/* Everyone this browser has invoiced before, one click to
+                  reuse. Value pinned to '' so it reads as an action, not a
+                  state — the state is the fields it fills in below. */}
+              {customers.length > 0 && (
+                <select
+                  value=""
+                  aria-label="Copy a previous customer"
+                  onChange={(e) => {
+                    const customer = customers.find((c) => c.name === e.target.value);
+                    if (customer) update({ buyer: { ...customer.party } });
+                  }}
+                  className="w-full cursor-pointer rounded-lg border border-dashed border-border bg-surface-2/60 px-3 py-1.5 text-xs text-muted outline-none transition hover:border-border-hi focus:border-accent"
+                >
+                  <option value="">Previous customers…</option>
+                  {customers.map((customer) => (
+                    <option key={customer.name} value={customer.name}>
+                      {customer.name}
+                    </option>
+                  ))}
+                </select>
+              )}
               <DocField
                 label="Customer name"
                 placeholder="Who is this to?"
@@ -859,7 +978,26 @@ export function InvoiceGenerator({ initialMarket }: { initialMarket?: MarketId }
                       label={`Line ${index + 1} description`}
                       placeholder="Description of item or service…"
                       value={line.description}
-                      onChange={(description) => setLine(index, { description })}
+                      list={services.length > 0 ? 'sb-known-services' : undefined}
+                      onChange={(description) => {
+                        // Picking a known service fills the whole line — but
+                        // only on an exact match with the price still empty,
+                        // so typing a prefix of one can never overwrite
+                        // figures someone already entered.
+                        const service = findService(services, description);
+                        if (service && !line.unitPrice.trim()) {
+                          setLine(index, {
+                            description,
+                            unitPrice: service.unitPrice,
+                            unitCode: service.unitCode,
+                            vatCategory: service.vatCategory,
+                            vatRate: service.vatRate,
+                            sku: service.sku,
+                          });
+                        } else {
+                          setLine(index, { description });
+                        }
+                      }}
                     />
                   </div>
                   <div className="mb-2 grid grid-cols-2 gap-2 sm:mb-0 sm:contents">
@@ -931,6 +1069,16 @@ export function InvoiceGenerator({ initialMarket }: { initialMarket?: MarketId }
           >
             + Line item
           </button>
+          {/* Everything this browser has billed before, offered as
+              completions on every description field above. One datalist
+              serves all lines. */}
+          {services.length > 0 && (
+            <datalist id="sb-known-services">
+              {services.map((service) => (
+                <option key={service.description} value={service.description} />
+              ))}
+            </datalist>
+          )}
         </div>
 
         {/* Notes, terms and the totals */}
@@ -1098,12 +1246,16 @@ export function InvoiceGenerator({ initialMarket }: { initialMarket?: MarketId }
               </div>
             )}
 
+            {/* -mx-2 keeps the row optically aligned with the totals above
+                while the padding gives each control a 24px+ touch target —
+                these are thumb targets in the middle of the mobile invoice
+                flow, not desktop text links. */}
             {(!draft.discount.enabled || !draft.shipping.enabled) && (
-              <div className="flex flex-wrap gap-4 py-1 text-sm">
+              <div className="-mx-2 flex flex-wrap gap-2 text-sm">
                 {!draft.discount.enabled && (
                   <button
                     onClick={() => update({ discount: { ...draft.discount, enabled: true } })}
-                    className="font-medium text-accent-hi hover:underline"
+                    className="rounded-lg px-2 py-1.5 font-medium text-accent-hi transition hover:bg-accent-dim/50 hover:underline"
                   >
                     + Discount
                   </button>
@@ -1111,7 +1263,7 @@ export function InvoiceGenerator({ initialMarket }: { initialMarket?: MarketId }
                 {!draft.shipping.enabled && (
                   <button
                     onClick={() => update({ shipping: { ...draft.shipping, enabled: true } })}
-                    className="font-medium text-accent-hi hover:underline"
+                    className="rounded-lg px-2 py-1.5 font-medium text-accent-hi transition hover:bg-accent-dim/50 hover:underline"
                   >
                     + Shipping
                   </button>
@@ -1186,9 +1338,42 @@ export function InvoiceGenerator({ initialMarket }: { initialMarket?: MarketId }
           </div>
         )}
 
-        <button onClick={generate} className={`${BUTTON_PRIMARY} w-full`}>
+        {/* The allowance wall. Deliberately placed above Create rather than
+            replacing it: the draft is untouched and still exportable, so this
+            is a wall in front of one more document, not a lockout. */}
+        {capReached && (
+          <div role="alert" className="rounded-xl border border-accent/40 bg-accent-dim/40 p-4 text-sm">
+            <p className="mb-1 font-medium tracking-tight">
+              That is your {entitlementsFor(plan).monthlyInvoices} free invoices this month
+            </p>
+            <p className="mb-3 leading-relaxed text-muted">
+              Your draft is safe and every invoice you already made stays open and exportable. A paid
+              plan lifts the limit from £29/month:
+            </p>
+            <ul className="mb-3 list-disc pl-4 leading-relaxed text-muted">
+              {PAID_BUSINESS_FEATURES.map((feature) => (
+                <li key={feature}>{feature}</li>
+              ))}
+            </ul>
+            <Link href="/pricing" className={`${BUTTON_PRIMARY} w-full justify-center`}>
+              See plans
+            </Link>
+          </div>
+        )}
+
+        <button
+          onClick={generate}
+          disabled={capReached}
+          className={`${BUTTON_PRIMARY} w-full disabled:cursor-not-allowed disabled:opacity-50`}
+        >
           Create invoice
         </button>
+        {!capReached && entitlementsFor(plan).monthlyInvoices > 0 && (
+          <p className="text-center text-xs text-muted">
+            {Math.max(0, entitlementsFor(plan).monthlyInvoices - used)} of{' '}
+            {entitlementsFor(plan).monthlyInvoices} free invoices left this month
+          </p>
+        )}
 
         <AiAssist
           currency={currency}
@@ -1204,6 +1389,30 @@ export function InvoiceGenerator({ initialMarket }: { initialMarket?: MarketId }
                 }),
               ),
               document: note ? { ...draft.document, note } : draft.document,
+            })
+          }
+        />
+
+        <HoursImport
+          onApply={(groups, hourlyRate) =>
+            update({
+              // "Insert" means insert: imported lines join what is already
+              // there. Only the untouched starter line gets dropped — a fresh
+              // draft should not keep an empty row above the real work.
+              lines: [
+                ...draft.lines.filter(
+                  (line) => line.description.trim() !== '' || line.unitPrice.trim() !== '',
+                ),
+                ...groups.map((group) =>
+                  ({
+                    ...newLine(draft.lines[0]?.vatCategory ?? 'S', draft.tax.rate),
+                    description: group.description,
+                    quantity: String(group.hours),
+                    unitCode: 'HUR',
+                    unitPrice: hourlyRate,
+                  }),
+                ),
+              ],
             })
           }
         />
@@ -1244,30 +1453,49 @@ export function InvoiceGenerator({ initialMarket }: { initialMarket?: MarketId }
           </details>
         </div>
 
+        {/* The live checklist. Written as things a person still has to supply,
+            not as rules they have failed — the rule codes that enforce each
+            item are real and stay available, but they are a second question
+            ("why is this needed?") and they sit behind their own control. */}
         <div className="rounded-xl border border-border bg-surface p-4">
-          <h2 className="mb-2 text-sm font-medium">What gets checked</h2>
+          <h2 className="mb-2 text-sm font-medium">Before you create it</h2>
           {checks.length === 0 ? (
             <p className="text-sm leading-relaxed text-muted">
-              This format has no ruleset, so there is nothing to check.
+              This format has no rulebook behind it, so there is nothing to check.
             </p>
           ) : (
-            <ul className="flex flex-col gap-2">
-              {checks.map((check) => (
-                <li key={`${check.rule}-${check.label}`} className="flex items-start gap-2 text-xs">
-                  <span aria-hidden className={`mt-0.5 font-mono ${check.met ? 'text-success' : 'text-warning'}`}>
-                    {check.met ? '✓' : '○'}
-                  </span>
-                  <span>
-                    <span className={check.met ? 'text-muted' : 'text-text'}>{check.label}</span>
-                    <span className="ml-1 font-mono text-[10px] text-faint">{check.rule}</span>
-                    <span className="sr-only">{check.met ? ' — provided' : ' — still needed'}</span>
-                  </span>
-                </li>
-              ))}
-            </ul>
+            <>
+              <ul className="flex flex-col gap-2">
+                {checks.map((check) => (
+                  <li key={`${check.rule}-${check.label}`} className="flex items-start gap-2 text-xs">
+                    <span
+                      aria-hidden
+                      className={`mt-0.5 font-mono ${check.met ? 'text-success' : 'text-warning'}`}
+                    >
+                      {check.met ? '✓' : '○'}
+                    </span>
+                    <span>
+                      <span className={check.met ? 'text-muted' : 'text-text'}>{check.label}</span>
+                      {showRules && (
+                        <span className="ml-1 font-mono text-[10px] text-faint">{check.rule}</span>
+                      )}
+                      <span className="sr-only">{check.met ? ' — provided' : ' — still needed'}</span>
+                    </span>
+                  </li>
+                ))}
+              </ul>
+              <button
+                type="button"
+                aria-pressed={showRules}
+                onClick={() => setShowRules((on) => !on)}
+                className="mt-3 border-t border-border pt-3 text-[11px] text-faint transition hover:text-muted"
+              >
+                {showRules ? 'Hide rule codes' : 'Show the rule behind each item'}
+              </button>
+            </>
           )}
-          <p className="mt-3 border-t border-border pt-3 text-[11px] leading-relaxed text-faint">
-            Each item names the rule that enforces it. Validation decides — this is a preview of it.
+          <p className="mt-3 text-[11px] leading-relaxed text-faint">
+            Stampbench runs the full check when you create the invoice — this is a preview of it.
           </p>
         </div>
 

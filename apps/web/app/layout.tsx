@@ -2,6 +2,7 @@ import type { Metadata } from 'next';
 import { Inter, JetBrains_Mono } from 'next/font/google';
 import { ScrollReveal } from '@/components/scroll-reveal';
 import { SiteNav } from '@/components/site-nav';
+import { AssistantWidget } from '@/components/assistant-widget';
 import './globals.css';
 
 const inter = Inter({ subsets: ['latin'], variable: '--font-inter' });
@@ -12,19 +13,20 @@ export const metadata: Metadata = {
   title: {
     // The result page already shows the domain above the title, so the brand
     // goes at the end instead of repeating up front.
-    default: 'Stampbench — validate, repair and create compliant e-invoices',
+    default: 'Stampbench — e-invoicing, without the complexity',
     template: '%s · Stampbench',
   },
   /**
-   * The site-wide default is deliberately market-neutral. Jurisdiction terms
-   * are not abandoned — they moved to where they are true and specific:
+   * The site-wide default is deliberately market-neutral, and now
+   * audience-neutral too: it names both products in one sentence, because the
+   * homepage's job is to route rather than to sell one of them. Jurisdiction
+   * terms are not abandoned — they live where they are true and specific:
    * /markets/germany carries XRechnung and ZUGFeRD in English, /de carries the
-   * German-language terms that already rank. A homepage optimised for
-   * "XRechnung" tells a UK visitor the product is not for them before they
-   * have read a word of it.
+   * German-language terms that already rank, and /developers carries the
+   * standards vocabulary in full.
    */
   description:
-    'Invoice infrastructure for modern businesses: validate, repair and create structured e-invoices against the standard your market requires. EN 16931 core, the German XRechnung profile, UBL and CII — open source TypeScript that runs on your own machine.',
+    'Create compliant invoices without learning e-invoicing standards, or build e-invoicing into your software with a TypeScript engine, CLI and hosted API. EN 16931, the German XRechnung profile, UBL and CII — open source, runs on your own machine.',
   keywords: [
     'invoice validation', 'e-invoicing api', 'invoice api', 'invoice compliance',
     'en 16931', 'ubl invoice', 'cii invoice', 'xrechnung', 'zugferd', 'factur-x',
@@ -50,54 +52,14 @@ function Nav() {
 
 function Footer() {
   return (
-    <footer className="border-t border-border py-10 text-sm text-faint">
-      <div className="mx-auto flex max-w-6xl flex-col gap-6 px-4 sm:flex-row sm:items-start sm:justify-between">
-        <div>
-          <div className="mb-2 font-semibold text-muted">Stampbench</div>
-          <p className="max-w-xs leading-relaxed">
-            E-invoicing compliance tooling for developers. Not legal advice — for
-            certification-grade checks also run the official KoSIT validator.
-          </p>
-          <p className="mt-3 text-xs">
-            Founded by <a href="/harvey" className="hover:text-muted">Harvey Legge</a>.
-          </p>
-        </div>
-        <div className="flex flex-wrap gap-12">
-          <div className="flex flex-col gap-2">
-            <span className="font-medium text-muted">Product</span>
-            <a href="/playground" className="hover:text-muted">Validate an invoice</a>
-            <a href="/docs" className="hover:text-muted">Documentation</a>
-            <a href="/pricing" className="hover:text-muted">Pricing</a>
-          </div>
-          <div className="flex flex-col gap-2">
-            <span className="font-medium text-muted">Markets</span>
-            <a href="/markets/uk" className="hover:text-muted">United Kingdom</a>
-            <a href="/markets/us" className="hover:text-muted">United States</a>
-            <a href="/markets/eu" className="hover:text-muted">European Union</a>
-            <a href="/markets/germany" className="hover:text-muted">Germany · XRechnung</a>
-          </div>
-          <div className="flex flex-col gap-2">
-            <span className="font-medium text-muted">Open source</span>
-            <a href="/docs#library" className="hover:text-muted">@stampbench/core</a>
-            <a href="/docs#rules" className="hover:text-muted">Rules coverage</a>
-            <a href="https://github.com/harveylegge/stampbench" className="hover:text-muted">GitHub</a>
-          </div>
-          <div className="flex flex-col gap-2">
-            <span className="font-medium text-muted">Trust</span>
-            <a href="/trust" className="hover:text-muted">Test evidence</a>
-            <a href="/security" className="hover:text-muted">Security</a>
-          </div>
-          <div className="flex flex-col gap-2">
-            <span className="font-medium text-muted">Legal</span>
-            <a href="/terms" className="hover:text-muted">Terms</a>
-            <a href="/privacy" className="hover:text-muted">Privacy</a>
-            <a href="/impressum" className="hover:text-muted">Impressum</a>
-          </div>
-        </div>
+    <footer className="cream-footer border-t border-border py-9 text-sm text-faint">
+      <div className="mx-auto flex max-w-[1180px] flex-col justify-between gap-7 px-6 md:flex-row md:items-end">
+        <div><div className="mb-2 font-semibold text-text">Stampbench</div><p>Good work. Properly invoiced.<br />Founded by <a href="/harvey">Harvey Legge</a>.</p></div>
+        <nav className="flex flex-wrap gap-x-6 gap-y-3" aria-label="Footer navigation">
+          <a href="/invoice-generator">The workbench</a><a href="/developers">For developers</a><a href="/pricing">Pricing</a><a href="/trust">Standards</a><a href="/docs">Docs</a><a href="/security">Security</a><a href="/privacy">Privacy</a><a href="/cookies">Cookies</a><a href="/terms">Terms</a><a href="/refunds">Refunds</a><a href="/impressum">Business details</a>
+        </nav>
       </div>
-      <div className="mx-auto mt-8 max-w-6xl px-4">
-        © {new Date().getFullYear()} Stampbench. All rights reserved.
-      </div>
+      <div className="mx-auto mt-7 max-w-[1180px] px-6 text-xs">© {new Date().getFullYear()} Harvey Legge trading as Stampbench · United Kingdom · <a href="mailto:hello@stampbench.com">hello@stampbench.com</a></div>
     </footer>
   );
 }
@@ -106,6 +68,7 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
   return (
     <html lang="en" className={`${inter.variable} ${jbMono.variable}`}>
       <body className="flex min-h-screen flex-col font-sans">
+        <a href="#main-content" className="skip-link">Skip to main content</a>
         <script
           type="application/ld+json"
           dangerouslySetInnerHTML={{
@@ -156,8 +119,9 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
         />
         <Nav />
         <ScrollReveal />
-        <main className="flex-1">{children}</main>
+        <main id="main-content" tabIndex={-1} className="flex-1">{children}</main>
         <Footer />
+        <AssistantWidget />
       </body>
     </html>
   );

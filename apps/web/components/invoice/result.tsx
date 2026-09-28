@@ -1,7 +1,7 @@
 'use client';
 
 import Link from 'next/link';
-import { useMemo, useState } from 'react';
+import { useEffect, useMemo, useState } from 'react';
 import {
   fixXml,
   validateInvoice,
@@ -11,19 +11,30 @@ import {
 } from '@stampbench/core';
 
 import { BUTTON_PRIMARY, BUTTON_QUIET, BUTTON_SECONDARY } from '@/components/invoice/fields';
+import { currentPlan } from '@/lib/account-client';
 import type { GeneratedDocument } from '@/lib/invoice/build';
 import { getFormat } from '@/lib/invoice/formats';
 import type { InvoiceDraft } from '@/lib/invoice/draft';
+import { JSON_FILE, PDF_FILE, XML_FILE, fileSlug, saveFile } from '@/lib/invoice/save-file';
 import { RULESETS } from '@/lib/markets';
 
 /**
  * What happened after Generate: the verdict, the violations, the deterministic
  * repair, and the ways out of the product.
  *
- * The whole screen is built around one rule — a verdict is meaningless without
- * the ruleset that produced it. "Valid" here always appears next to which of
- * the two rulesets ran and how many rules it contains, and a format with no
- * ruleset says *that* instead of showing a green tick it has not earned.
+ * Two rules shape this screen, and they pull in opposite directions.
+ *
+ * **A verdict is meaningless without the ruleset that produced it.** "Valid"
+ * must always be checkable: which ruleset ran, how many rules, which spec
+ * version. A format with no ruleset says *that* instead of showing a green
+ * tick it has not earned.
+ *
+ * **But the person reading it usually just made their first invoice.** They
+ * did not ask what EN 16931 is, and answering in rule ids and spec versions
+ * teaches them only that this software is not for them. So the plain-English
+ * verdict leads, the downloads come next, and every technical fact stays one
+ * click away behind a single page-level toggle rather than being deleted. A
+ * developer flips it once and sees everything the old screen showed.
  *
  * Validation and repair both run in the browser, on the document that was just
  * built in the browser. Nothing is uploaded.
@@ -38,25 +49,21 @@ function handoffToPlayground(xml: string): void {
   }
 }
 
-function download(filename: string, content: string, type: string): void {
-  const url = URL.createObjectURL(new Blob([content], { type }));
-  const a = document.createElement('a');
-  a.href = url;
-  a.download = filename;
-  a.click();
-  URL.revokeObjectURL(url);
-}
-
-function slug(value: string): string {
-  return (value || 'invoice').replace(/[^A-Za-z0-9._-]+/g, '-').replace(/^-+|-+$/g, '') || 'invoice';
-}
-
-function Verdict({ result }: { result: ValidationResult }) {
+/**
+ * The verdict, said the way a person would say it.
+ *
+ * `tech` is the page-level toggle: off, the card is one sentence and a
+ * reassurance; on, it also carries the ruleset, the rule count and the spec
+ * version — the evidence that makes "valid" a checkable claim rather than a
+ * green tick. Nothing is computed differently between the two.
+ */
+function Verdict({ result, tech }: { result: ValidationResult; tech: boolean }) {
   const ok = result.valid;
   const german = result.profile === 'xrechnung';
   // The spec version has to follow the profile: reporting "EN 16931-1:2017"
   // under a verdict produced by the German CIUS would understate what ran.
   const specVersion = german ? result.meta.specVersions.xrechnung : result.meta.specVersions.en16931;
+  const errors = result.errorCount;
   return (
     <div
       className={`rounded-xl border p-5 ${
@@ -64,28 +71,44 @@ function Verdict({ result }: { result: ValidationResult }) {
       }`}
     >
       <div className={`text-lg font-semibold tracking-tight ${ok ? 'text-success' : 'text-danger'}`}>
-        {ok ? '✓ Invoice valid' : `✕ ${result.errorCount} error${result.errorCount === 1 ? '' : 's'} found`}
+        {ok
+          ? '✓ Your invoice looks good'
+          : `${errors} thing${errors === 1 ? '' : 's'} still need${errors === 1 ? 's' : ''} your attention`}
       </div>
-      <div className="mt-2 text-[11px] uppercase tracking-[0.12em] text-faint">Checked against</div>
-      <div className="mt-1 flex flex-wrap items-center gap-x-2 gap-y-1 font-mono text-xs text-muted">
-        <span className="text-accent-hi">{RULESETS[result.profile].label}</span>
-        <span className="text-faint">·</span>
-        <span>{result.meta.rulesRun} rules run</span>
-        <span className="text-faint">·</span>
-        <span>{specVersion}</span>
-        <span className="text-faint">·</span>
-        <span className="text-faint">ruleset {result.meta.rulesetVersion}</span>
-      </div>
+      <p className="mt-2 max-w-2xl text-sm leading-relaxed text-muted">
+        {ok
+          ? 'Stampbench checked it against the e-invoicing requirements that apply where you bill, before you download it.'
+          : 'Stampbench checked your invoice and found details a customer’s system would reject. They are listed below.'}
+      </p>
+
       {result.warningCount > 0 && (
         <p className="mt-3 text-sm text-warning">
-          {result.warningCount} warning{result.warningCount === 1 ? '' : 's'} — not blocking, but worth reading.
+          {result.warningCount} warning{result.warningCount === 1 ? '' : 's'} — these will not stop the
+          invoice, but they are worth reading.
         </p>
+      )}
+
+      {tech && (
+        <>
+          <div className="mt-4 text-[11px] uppercase tracking-[0.12em] text-faint">
+            Checked against
+          </div>
+          <div className="mt-1 flex flex-wrap items-center gap-x-2 gap-y-1 font-mono text-xs text-muted">
+            <span className="text-accent-hi">{RULESETS[result.profile].label}</span>
+            <span className="text-faint">·</span>
+            <span>{result.meta.rulesRun} rules run</span>
+            <span className="text-faint">·</span>
+            <span>{specVersion}</span>
+            <span className="text-faint">·</span>
+            <span className="text-faint">ruleset {result.meta.rulesetVersion}</span>
+          </div>
+        </>
       )}
     </div>
   );
 }
 
-function Violations({ result }: { result: ValidationResult }) {
+function Violations({ result, tech }: { result: ValidationResult; tech: boolean }) {
   if (result.violations.length === 0) return null;
   return (
     <ul className="flex flex-col gap-2">
@@ -93,17 +116,25 @@ function Violations({ result }: { result: ValidationResult }) {
         <li key={`${violation.ruleId}-${index}`} className="rounded-lg border border-border bg-surface p-3">
           <div className="mb-1 flex flex-wrap items-center gap-2">
             <span
-              className={`rounded px-1.5 py-0.5 font-mono text-[11px] font-medium ${
+              className={`rounded px-1.5 py-0.5 text-[11px] font-medium ${
                 violation.severity === 'error'
                   ? 'bg-danger/15 text-danger'
                   : 'bg-warning/15 text-warning'
               }`}
             >
-              {violation.severity === 'error' ? 'ERROR' : 'WARN'}
+              {violation.severity === 'error' ? 'Must fix' : 'Worth checking'}
             </span>
-            <span className="font-mono text-xs text-accent-hi">{violation.ruleId}</span>
-            {violation.terms && violation.terms.length > 0 && (
-              <span className="font-mono text-xs text-faint">{violation.terms.join(', ')}</span>
+            {/* The rule id is what you quote to a customer's IT department or
+                to support, so it is never far away — but it is a code, and a
+                code above the sentence explaining the problem buries the
+                sentence. */}
+            {tech && (
+              <>
+                <span className="font-mono text-xs text-accent-hi">{violation.ruleId}</span>
+                {violation.terms && violation.terms.length > 0 && (
+                  <span className="font-mono text-xs text-faint">{violation.terms.join(', ')}</span>
+                )}
+              </>
             )}
           </div>
           <p className="text-sm leading-relaxed text-muted">{violation.message}</p>
@@ -317,6 +348,22 @@ export function GenerationResult({
   const format = getFormat(draft.formatId);
   const [xml, setXml] = useState(generated.xml);
   const [copied, setCopied] = useState<string | null>(null);
+  const [pdfBusy, setPdfBusy] = useState(false);
+  const [pdfError, setPdfError] = useState<string | null>(null);
+  /** The page-level "speak to me as a developer" switch. Off by default. */
+  const [tech, setTech] = useState(false);
+  /** null while unknown; drives the PDF footer and the plans nudge. */
+  const [paidPlan, setPaidPlan] = useState<boolean | null>(null);
+
+  useEffect(() => {
+    let cancelled = false;
+    currentPlan().then((plan) => {
+      if (!cancelled) setPaidPlan(plan !== null && plan !== 'free');
+    });
+    return () => {
+      cancelled = true;
+    };
+  }, []);
 
   const validation = useMemo<ValidationResult | null>(() => {
     if (!format.validationProfile) return null;
@@ -325,7 +372,7 @@ export function GenerationResult({
       : validateInvoice(generated.invoice, { profile: format.validationProfile });
   }, [xml, format.validationProfile, generated.invoice]);
 
-  const filename = slug(draft.document.number);
+  const filename = fileSlug(draft.document.number);
 
   function copy(kind: string, content: string) {
     navigator.clipboard.writeText(content).then(() => {
@@ -334,82 +381,168 @@ export function GenerationResult({
     });
   }
 
+  /** jsPDF is loaded on first click, not shipped with the page. */
+  async function onDownloadPdf() {
+    setPdfBusy(true);
+    setPdfError(null);
+    try {
+      const plan = await currentPlan();
+      const { invoicePdf } = await import('@/lib/invoice/pdf');
+      const pdf = await invoicePdf(draft, { branded: plan === null || plan === 'free' });
+      await saveFile(pdf.filename, pdf.blob, PDF_FILE);
+    } catch {
+      setPdfError('Could not build the PDF here — use Print and pick "Save as PDF" as the destination.');
+    } finally {
+      setPdfBusy(false);
+    }
+  }
+
   return (
     <div className="flex flex-col gap-5">
+      {/* One control for the whole screen. A business user never touches it; a
+          developer flips it once and the page becomes the technical readout it
+          used to be by default. */}
+      <div className="flex justify-end">
+        <button
+          type="button"
+          aria-pressed={tech}
+          onClick={() => setTech((on) => !on)}
+          className="rounded-lg border border-border bg-surface px-3 py-1.5 text-xs font-medium text-muted transition hover:border-border-hi hover:text-text"
+        >
+          {tech ? 'Hide technical details' : 'View technical details'}
+        </button>
+      </div>
+
       {validation ? (
-        <Verdict result={validation} />
+        <Verdict result={validation} tech={tech} />
       ) : (
         <div className="rounded-xl border border-border bg-surface p-5">
           <div className="text-lg font-semibold tracking-tight">Invoice created</div>
           <p className="mt-2 max-w-2xl text-sm leading-relaxed text-muted">
-            {format.name} carries no e-invoicing ruleset, so there is no compliance verdict to give — that
-            would be a claim Stampbench cannot support. The totals arithmetic was computed exactly and the
-            structured JSON is below. To get a verdict, switch the format to{' '}
-            <span className="font-medium text-text">{RULESETS.en16931.label}</span> and generate again.
+            There is no e-invoicing rulebook behind {format.name}, so Stampbench has nothing to check
+            your invoice against and will not show a tick it has not earned. The totals were computed
+            exactly and the invoice is ready to download. If you need a compliance check, go back and
+            change the format to{' '}
+            <span className="font-medium text-text">{RULESETS.en16931.label}</span>, then create it
+            again.
           </p>
         </div>
       )}
 
-      {validation && validation.violations.length > 0 && <Violations result={validation} />}
+      {validation && validation.violations.length > 0 && (
+        <Violations result={validation} tech={tech} />
+      )}
 
       {xml && validation && !validation.valid && format.validationProfile && (
         <RepairPanel xml={xml} profile={format.validationProfile} onUseRepaired={setXml} />
       )}
 
+      {/* Downloads. Two buttons, both named for what the person receives: the
+          copy they will recognise, and the file their customer's system reads.
+          "XML", "UBL" and "JSON" are formats, not outcomes — they live under
+          the fold with the rest of the machinery. */}
       <div className="rounded-xl border border-border bg-surface p-5">
-        <h3 className="mb-1 font-medium tracking-tight">Export</h3>
-        <p className="mb-4 text-sm leading-relaxed text-muted">
-          The structured document is the deliverable; the printable version is a view of it. Everything is
-          produced in your browser — nothing was uploaded.
+        <h3 className="mb-1 font-medium tracking-tight">Download your invoice</h3>
+        <p className="mb-4 max-w-2xl text-sm leading-relaxed text-muted">
+          Send both to your customer if you are not sure which they need. Everything is produced here
+          in your browser — nothing was uploaded.
         </p>
         <div className="flex flex-wrap gap-2">
-          {xml && (
-            <>
-              <button
-                onClick={() => download(`${filename}.xml`, xml, 'application/xml')}
-                className={BUTTON_PRIMARY}
-              >
-                Download XML
-              </button>
-              <button onClick={() => copy('xml', xml)} className={BUTTON_SECONDARY}>
-                {copied === 'xml' ? 'Copied' : 'Copy XML'}
-              </button>
-            </>
-          )}
-          <button
-            onClick={() => download(`${filename}.json`, generated.json, 'application/json')}
-            className={BUTTON_SECONDARY}
-          >
-            Download JSON
-          </button>
-          <button onClick={() => copy('json', generated.json)} className={BUTTON_SECONDARY}>
-            {copied === 'json' ? 'Copied' : 'Copy JSON'}
-          </button>
-          <button onClick={() => window.print()} className={BUTTON_SECONDARY}>
-            Print / Save as PDF
+          <button onClick={() => void onDownloadPdf()} disabled={pdfBusy} className={BUTTON_PRIMARY}>
+            {pdfBusy ? 'Building PDF…' : 'Download PDF'}
           </button>
           {xml && (
-            <Link
-              href="/playground"
-              onClick={() => handoffToPlayground(xml)}
+            <button
+              onClick={() => void saveFile(`${filename}.xml`, xml, XML_FILE)}
               className={BUTTON_SECONDARY}
             >
-              Open in the playground
-            </Link>
+              Download e-invoice file
+            </button>
           )}
+          <button onClick={() => window.print()} className={BUTTON_SECONDARY}>
+            Print
+          </button>
         </div>
+        <p className="mt-3 text-xs leading-relaxed text-faint">
+          The PDF is the readable copy. The e-invoice file is the structured version your customer’s
+          accounting software reads field by field
+          {xml ? ' — it is what the compliance check above was run on.' : '.'}
+        </p>
+        {pdfError && <p className="mt-3 text-sm text-danger">{pdfError}</p>}
+        {paidPlan === false && (
+          <p className="mt-3 text-xs leading-relaxed text-faint">
+            The PDF carries a small &quot;Made with stampbench.com&quot; line.{' '}
+            <Link href="/pricing" className="text-accent-hi hover:underline">
+              Paid plans
+            </Link>{' '}
+            remove it — and back up every invoice you ever create.
+          </p>
+        )}
+
+        {/* Everything a developer would want from this screen, in one place,
+            revealed by the same switch as the rule ids above. */}
+        {tech && (
+          <div className="mt-5 border-t border-border pt-4">
+            <h4 className="mb-3 text-sm font-medium">Other formats</h4>
+            <div className="flex flex-wrap gap-2">
+              {xml && (
+                <button onClick={() => copy('xml', xml)} className={BUTTON_SECONDARY}>
+                  {copied === 'xml' ? 'Copied' : 'Copy UBL XML'}
+                </button>
+              )}
+              <button
+                onClick={() => void saveFile(`${filename}.json`, generated.json, JSON_FILE)}
+                className={BUTTON_SECONDARY}
+              >
+                Download JSON
+              </button>
+              <button onClick={() => copy('json', generated.json)} className={BUTTON_SECONDARY}>
+                {copied === 'json' ? 'Copied' : 'Copy JSON'}
+              </button>
+              {xml && (
+                <Link
+                  href="/playground"
+                  onClick={() => handoffToPlayground(xml)}
+                  className={BUTTON_SECONDARY}
+                >
+                  Open in the playground
+                </Link>
+              )}
+            </div>
+          </div>
+        )}
       </div>
 
-      {xml && format.validationProfile && <ApiPanel xml={xml} profile={format.validationProfile} />}
+      {tech && xml && format.validationProfile && (
+        <ApiPanel xml={xml} profile={format.validationProfile} />
+      )}
 
-      <div className="flex flex-wrap gap-3">
-        <button onClick={onBack} className={BUTTON_SECONDARY}>
-          ← Back to the editor
-        </button>
-        <button onClick={onStartAnother} className={BUTTON_QUIET}>
+      <div className="flex flex-wrap items-center gap-3">
+        <button onClick={onStartAnother} className={BUTTON_SECONDARY}>
           Create another invoice
         </button>
+        <button onClick={onBack} className={BUTTON_QUIET}>
+          ← Back to the editor
+        </button>
+        <Link href="/my-invoices" className="text-sm text-muted transition hover:text-text">
+          Saved to <span className="font-medium text-accent-hi">My invoices</span> — in this browser
+          only
+        </Link>
       </div>
+
+      {/* The one bridge from the business experience to the developer one.
+          Quiet, factual, and only shown while the technical view is off — a
+          developer who has already flipped the switch is looking at the API
+          panel instead. */}
+      {!tech && xml && format.validationProfile && (
+        <p className="text-xs leading-relaxed text-faint">
+          Creating a lot of these?{' '}
+          <Link href="/developers" className="text-accent-hi hover:underline">
+            Stampbench has an API
+          </Link>{' '}
+          your software can call to produce the same invoice automatically.
+        </p>
+      )}
     </div>
   );
 }

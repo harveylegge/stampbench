@@ -23,7 +23,7 @@ export default function PlaygroundPage() {
   return (
     <div className="mx-auto max-w-5xl px-4 py-10">
       <h1 className="mb-1 text-2xl font-semibold tracking-tight">{en.playground.title}</h1>
-      <p className="mb-8 max-w-2xl text-sm leading-relaxed text-muted">
+      <p className="mb-2 max-w-2xl text-sm leading-relaxed text-muted">
         {IS_STATIC ? (
           en.playground.intro
         ) : (
@@ -36,6 +36,20 @@ export default function PlaygroundPage() {
             for 100 calls a month.
           </>
         )}
+      </p>
+      {/* Both exits from this page, named for the person who needs each. */}
+      <p className="mb-8 text-sm text-faint">
+        <a href="/docs" className="text-accent-hi hover:underline">
+          API and library docs
+        </a>
+        <span className="mx-2">·</span>
+        <a href="/developers" className="text-accent-hi hover:underline">
+          Developer platform
+        </a>
+        <span className="mx-2">·</span>
+        <a href="/invoice-generator" className="text-accent-hi hover:underline">
+          No invoice yet? Create one
+        </a>
       </p>
       <Playground defaultMarket="eu" />
     </div>

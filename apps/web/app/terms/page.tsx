@@ -20,7 +20,7 @@ export default function TermsPage() {
   return (
     <LegalPage
       title="Terms of Service"
-      updated="7 August 2026"
+      updated="28 September 2026"
       intro={
         <p>
           These terms govern your use of the Stampbench website, hosted API and dashboard (the
@@ -93,9 +93,7 @@ export default function TermsPage() {
 
       <Clause n="5." title="Plans, fees and cancellation">
         <p>
-          Paid plans are currently arranged manually: you request a plan from your account page, we
-          contact you by email to agree payment, and we activate the plan once payment is arranged.
-          No payment details are collected on this website. Prices are shown on the{' '}
+          Paid plans renew monthly through the payment method offered at checkout. Card checkout is hosted by Stripe and PayPal checkout is hosted by PayPal; Stampbench does not receive your complete card or bank credentials. Prices are shown on the{' '}
           <Link href="/pricing" className="text-accent-hi hover:underline">
             pricing page
           </Link>{' '}
@@ -110,7 +108,7 @@ export default function TermsPage() {
           </a>{' '}
           and will retain access until the end of the paid period, after which your account drops to
           the Free plan. We do not provide pro-rata refunds for partial months except where required
-          by law or where we have materially failed to provide the Service. We may change prices
+          by law or where we have materially failed to provide the Service. Our <Link href="/refunds" className="text-accent-hi hover:underline">Cancellation and Refund Policy</Link> explains how requests are handled. We may change prices
           with at least 30 days&apos; notice, effective from your next billing period.
         </p>
       </Clause>

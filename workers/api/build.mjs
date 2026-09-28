@@ -1,7 +1,15 @@
 /**
  * Bundle the account worker to apps/web/out/_worker.js (Pages Advanced mode)
- * and write _routes.json so static assets bypass the worker entirely — only
- * /api/* invocations count against the Workers free tier.
+ * and write _routes.json.
+ *
+ * The worker fronts /api/* AND HTML page navigations (the latter so it can
+ * record a privacy-preserving aggregate page-view count — see analytics.ts).
+ * High-volume static assets — the hashed _next bundles, images and icons —
+ * are EXCLUDED so they are served straight from Pages' asset store and never
+ * cost a worker invocation. Page routes have no file extension, so `include:
+ * ['/*']` minus the asset prefixes lands exactly the navigations we want to
+ * count; anything an exclude misses still serves correctly, it just costs one
+ * extra (cheap) worker call.
  *
  * Run AFTER apps/web/scripts/build-static.mjs (which recreates out/):
  *   node workers/api/build.mjs
@@ -51,7 +59,22 @@ await build({
 
 writeFileSync(
   join(outDir, '_routes.json'),
-  JSON.stringify({ version: 1, include: ['/api/*'], exclude: [] }) + '\n',
+  JSON.stringify({
+    version: 1,
+    include: ['/*'],
+    // Static assets that must bypass the worker. Cloudflare caps this at 100
+    // rules; these cover essentially all asset request volume.
+    exclude: [
+      '/_next/*',
+      '/brand/*',
+      '/favicon.ico',
+      '/icon.png',
+      '/icon.svg',
+      '/robots.txt',
+      '/sitemap.xml',
+      '/_headers',
+    ],
+  }) + '\n',
 );
 
-console.log('[worker] bundled to apps/web/out/_worker.js with /api/* routing');
+console.log('[worker] bundled to apps/web/out/_worker.js — worker fronts /api/* and page navigations');

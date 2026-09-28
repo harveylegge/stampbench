@@ -1,14 +1,14 @@
 /**
  * The Stampbench mark: an S built from two interlocking staple shapes, from
- * the 2026-08 brand board. The top staple is always brand purple; the bottom
+ * the 2026-09 cream redesign. The top staple is always brand orange; the bottom
  * one inherits `currentColor`, so the same component works on light surfaces
  * (ink bottom, like the board's light variant) and dark ones (white bottom)
  * with no props. Keep this file the single source of the mark — the favicon
  * (app/icon.svg) and the schema logo PNG are derived from the same geometry.
  */
 
-const PURPLE_FROM = '#7B57F6';
-const PURPLE_TO = '#5B2BD6';
+const PURPLE_FROM = '#F06443';
+const PURPLE_TO = '#DC482A';
 
 export function StampbenchMark({ size = 24, className }: { size?: number; className?: string }) {
   return (

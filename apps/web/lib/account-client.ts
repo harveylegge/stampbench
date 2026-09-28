@@ -37,6 +37,10 @@ export interface Me {
     subscribed: boolean;
     /** Has billing history, so the Stripe portal has something to show. */
     hasCustomer: boolean;
+    /** Self-serve PayPal subscriptions are configured server-side. */
+    paypalSubscriptions: boolean;
+    /** A PayPal subscription is currently entitling this account. */
+    paypalSubscribed: boolean;
   };
 }
 
@@ -89,8 +93,29 @@ export function probablySignedIn(): boolean {
   return typeof document !== 'undefined' && document.cookie.includes('sb_signed_in=1');
 }
 
-export function register(email: string, password: string): Promise<Me> {
-  return call('/api/auth/register', { method: 'POST', body: JSON.stringify({ email, password }) });
+let planPromise: Promise<PlanId | null> | null = null;
+
+/**
+ * The signed-in account's plan, or null when signed out — cached for the page
+ * view so plan-gated touches (PDF branding, backup copy) do not each cost a
+ * worker call. An error is not cached: the next asker retries.
+ */
+export function currentPlan(): Promise<PlanId | null> {
+  if (!probablySignedIn()) return Promise.resolve(null);
+  planPromise ??= me()
+    .then((account) => account?.plan ?? null)
+    .catch(() => {
+      planPromise = null;
+      return null;
+    });
+  return planPromise;
+}
+
+export function register(email: string, password: string, termsAccepted: boolean): Promise<Me> {
+  return call('/api/auth/register', {
+    method: 'POST',
+    body: JSON.stringify({ email, password, termsAccepted, termsVersion: '2026-09-28' }),
+  });
 }
 
 export function login(email: string, password: string): Promise<Me> {
@@ -151,6 +176,15 @@ export function requestUpgrade(
 }
 
 /**
+ * Withdraw a pending manual upgrade request — the escape hatch for requests
+ * made before self-serve billing existed, which would otherwise pin the
+ * account page on "we will email you" forever.
+ */
+export function cancelUpgradeRequest(): Promise<{ ok: true }> {
+  return call('/api/upgrade/cancel', { method: 'POST', body: JSON.stringify({}) });
+}
+
+/**
  * Start Stripe Checkout for an existing signed-in account and get the hosted
  * URL to send the browser to.
  *
@@ -165,6 +199,73 @@ export function startCheckout(plan: Exclude<PlanId, 'free'>): Promise<{ url: str
 /** Stripe's hosted portal: card changes, invoices, and self-serve cancellation. */
 export function billingPortal(): Promise<{ url: string }> {
   return call('/api/billing/portal', { method: 'POST', body: JSON.stringify({}) });
+}
+
+/**
+ * Start a recurring PayPal subscription and get the approval URL to send the
+ * browser to.
+ *
+ * Like Stripe Checkout, the returned URL grants nothing on its own. The plan
+ * changes when PayPal's verified webhook says the subscription activated —
+ * never because the browser came back from the return URL, which anyone could
+ * visit directly. Expect a short gap between approval and activation.
+ */
+export function startPaypalSubscription(plan: Exclude<PlanId, 'free'>): Promise<{ url: string }> {
+  return call('/api/billing/paypal/subscribe', { method: 'POST', body: JSON.stringify({ plan }) });
+}
+
+/**
+ * Cancel the account's PayPal subscription.
+ *
+ * PayPal has no hosted billing portal, so this is the self-serve exit — it has
+ * to live in our own UI rather than being a link into PayPal's account pages.
+ */
+export function cancelPaypalSubscription(): Promise<{ ok: true }> {
+  return call('/api/billing/paypal/cancel', { method: 'POST', body: JSON.stringify({}) });
+}
+
+// ------------------------------------------------------- saved invoices
+// The account copy of "My invoices". Opt-in from /my-invoices; the payload is
+// the builder draft as a JSON string, stored and returned verbatim.
+
+export interface AccountInvoiceSummary {
+  id: string;
+  number: string;
+  customer: string;
+  total: string;
+  currency: string;
+  market: string;
+  status: string;
+  updatedAt: number;
+}
+
+export function listAccountInvoices(): Promise<{ invoices: AccountInvoiceSummary[] }> {
+  return call('/api/invoices');
+}
+
+export function getAccountInvoice(
+  id: string,
+): Promise<{ invoice: { id: string; payload: string; status: string; updatedAt: number } }> {
+  return call(`/api/invoices/${encodeURIComponent(id)}`);
+}
+
+export function saveAccountInvoice(
+  id: string,
+  body: {
+    payload: string;
+    number: string;
+    customer: string;
+    total: string;
+    currency: string;
+    market: string;
+    status: string;
+  },
+): Promise<{ ok: true; id: string }> {
+  return call(`/api/invoices/${encodeURIComponent(id)}`, { method: 'PUT', body: JSON.stringify(body) });
+}
+
+export function deleteAccountInvoice(id: string): Promise<{ ok: true }> {
+  return call(`/api/invoices/${encodeURIComponent(id)}`, { method: 'DELETE' });
 }
 
 /** GDPR Art. 20 — everything held about the account, as JSON. */
@@ -214,4 +315,35 @@ export function aiDraft(
     method: 'POST',
     body: JSON.stringify({ description, currency }),
   });
+}
+
+export interface ChatTurn {
+  role: 'user' | 'assistant';
+  content: string;
+}
+
+/**
+ * One turn of the Stampbench assistant. Paid plans only — the worker refuses
+ * free-plan sessions with code 'plan' (402), which the widget renders as its
+ * locked state rather than an error. Same credit jar as explain/draft.
+ */
+export function aiChat(messages: ChatTurn[]): Promise<{ reply: string }> {
+  return call('/api/ai/chat', { method: 'POST', body: JSON.stringify({ messages }) });
+}
+
+// ------------------------------------------------------- payment hook
+// Auto-invoicing: one secret inbound webhook URL per account. The URL is
+// returned exactly once on creation — it is stored hashed, like an API key.
+
+export function paymentHookStatus(): Promise<{ configured: boolean }> {
+  return call('/api/account/payment-hook');
+}
+
+/** Creates or rotates the hook; the previous URL stops working immediately. */
+export function createPaymentHook(): Promise<{ url: string }> {
+  return call('/api/account/payment-hook', { method: 'POST', body: JSON.stringify({}) });
+}
+
+export function deletePaymentHook(): Promise<{ ok: true }> {
+  return call('/api/account/payment-hook', { method: 'DELETE' });
 }

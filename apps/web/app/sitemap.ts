@@ -13,6 +13,7 @@ export default function sitemap(): MetadataRoute.Sitemap {
     // The German pages exist and rank; they were simply never listed here.
     '/de',
     '/de/playground',
+    '/developers',
     '/invoice-generator',
     ...PAGE_MARKETS.map((market) => `/invoice-generator/${market}`),
     '/markets',
@@ -24,6 +25,8 @@ export default function sitemap(): MetadataRoute.Sitemap {
     '/harvey',
     '/terms',
     '/privacy',
+    '/cookies',
+    '/refunds',
     '/impressum',
     // Auth pages exist only on the hosted deployment.
     ...(process.env.NEXT_PUBLIC_STATIC_EXPORT === '1' ? [] : ['/register', '/login']),

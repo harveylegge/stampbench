@@ -32,6 +32,20 @@ export const TRANSLATED_PATHS = ['', 'playground'] as const;
  * Copy for the homepage market band. Shaped here rather than in the component
  * so both languages are forced to fill it in.
  */
+/** One of the two audience doors on the homepage. */
+export interface PathCopy {
+  /** Rendered as a decorative glyph next to the title. */
+  icon: string;
+  title: string;
+  body: string;
+  cta: string;
+  href: string;
+  /** Who this door is for, in one line. */
+  sub: string;
+  /** Four concrete things behind the door. */
+  bullets: [string, string, string, string];
+}
+
 export interface MarketsCopy {
   eyebrow: string;
   heading: string;
@@ -42,12 +56,44 @@ export interface MarketsCopy {
   selected: string;
   change: string;
   cards: { id: MarketId; name: string; tagline: string }[];
+  /**
+   * The summary beside the map. Only the labels and the market-dependent
+   * phrases live here — every *fact* is read out of lib/markets.ts, so a
+   * translation cannot quietly claim coverage the engine does not have.
+   */
+  panel: {
+    /** Told to someone looking at a map who has not realised it is clickable. */
+    hint: string;
+    /** The one choice with no place on a map. */
+    several: string;
+    /** Link into the market's own page. `{market}` is the market name. */
+    everything: string;
+    /** Stores the choice for the playground and the generator. */
+    remember: string;
+    /** Row labels, in display order. */
+    european: string;
+    syntaxes: string;
+    national: string;
+    germanBuyers: string;
+    taxRate: string;
+    network: string;
+    /** Values for the two rows that differ by market. */
+    nationalGermanyOnly: string;
+    nationalNone: string;
+    germanSwitch: string;
+    /** Values for the two rows that read the same everywhere, because they do. */
+    taxRateValue: string;
+    networkValue: string;
+    /** Pluralised unit for the rule counts, e.g. "40 rules". */
+    rules: string;
+  };
 }
 
 export interface Copy {
   locale: Locale;
   nav: {
     create: string;
+    invoices: string;
     markets: string;
     playground: string;
     docs: string;
@@ -59,6 +105,22 @@ export interface Copy {
     /** Accessible name for the mobile hamburger button. */
     menu: string;
     cta: string;
+    /** Menu group labels — the two audiences, then everything shared. */
+    business: string;
+    developers: string;
+    company: string;
+    /** The developer landing page. */
+    devPlatform: string;
+    /** The free roast page — marketing that lives in the Business menu. */
+    roast: string;
+    roastSub: string;
+    /** One-line descriptions under each grouped link. */
+    createSub: string;
+    invoicesSub: string;
+    devPlatformSub: string;
+    playgroundSub: string;
+    docsSub: string;
+    marketsSub: string;
   };
   hero: {
     badge: string;
@@ -77,6 +139,44 @@ export interface Copy {
     reassurance: string;
     /** What pressing the create button actually produces. */
     ctaCreateSub: string;
+  };
+  /**
+   * The two doors. A visitor's first decision on this page is not "which
+   * feature?" but "which of these two products am I here for?", and the page
+   * answers that before it names a single standard.
+   */
+  paths: {
+    eyebrow: string;
+    business: PathCopy;
+    developer: PathCopy;
+    /** Reassures the undecided; neither door is a commitment. */
+    note: string;
+  };
+  /** One engine under both doors — stated once, then demonstrated. */
+  engine: { eyebrow: string; heading: string; body: string };
+  /**
+   * The convergence animation: two doors handing the same document to one
+   * engine. The checks are the site's standing worked example, and the last
+   * two are load-bearing — an arithmetic error that repairs itself and a
+   * business fact that does not. An animation that resolved everything to a
+   * green tick would contradict the product's central promise.
+   */
+  convergence: {
+    business: string;
+    developer: string;
+    /** Field labels down the business side. */
+    form: [string, string, string, string];
+    engineName: string;
+    ruleset: string;
+    checks: { kind: 'ok' | 'bad' | 'fixed' | 'kept'; label: string; rule: string }[];
+    verdictTitle: string;
+    verdictSub: string;
+    /** Label on the draggable file, and the hint printed beside it. */
+    grab: string;
+    /** Sends the same file through the same rules again. */
+    again: string;
+    /** Screen-reader summary, since the sequence itself is decorative. */
+    summary: string;
   };
   /** The "where does your business operate?" band under the hero. */
   markets: MarketsCopy;
@@ -105,6 +205,8 @@ export interface Copy {
     };
     check: {
       verdict: string;
+      /** The transient state the verdict animates out of, on desktop. */
+      checking: string;
       rulesetLine: string;
       problems: { title: string; rule: string; detail: string }[];
       footnote: string;
@@ -190,6 +292,27 @@ export interface Copy {
     metaTitle: string;
     metaDescription: string;
   };
+  /** The floating site-wide assistant widget (components/assistant-widget.tsx). */
+  assistant: {
+    title: string;
+    open: string;
+    close: string;
+    placeholder: string;
+    send: string;
+    thinking: string;
+    /** The assistant's own first message when a paid user opens a fresh chat. */
+    greeting: string;
+    signedOutBody: string;
+    signIn: string;
+    lockedBody: string;
+    seePricing: string;
+    disabledBody: string;
+    quotaBody: string;
+    poolBody: string;
+    errorBody: string;
+    /** Under the input: what the assistant is and is not. */
+    scope: string;
+  };
   meta: { title: string; description: string };
 }
 
@@ -197,6 +320,7 @@ export const en: Copy = {
   locale: 'en',
   nav: {
     create: 'Create invoice',
+    invoices: 'My invoices',
     markets: 'Markets',
     playground: 'Validate',
     docs: 'Docs',
@@ -206,20 +330,92 @@ export const en: Copy = {
     signIn: 'Sign in',
     account: 'Account',
     menu: 'Menu',
-    cta: 'Validate an invoice',
+    cta: 'Create invoice',
+    business: 'Business',
+    developers: 'Developers',
+    company: 'Company',
+    devPlatform: 'Developer platform',
+    roast: 'Roast my invoice',
+    roastSub: 'A brutally honest, free invoice check',
+    createSub: 'Fill in a form, get a compliant invoice',
+    invoicesSub: 'Your invoices, payment status and repeats',
+    devPlatformSub: 'Engine, API and tooling overview',
+    playgroundSub: 'Validate and generate in the browser',
+    docsSub: 'API reference, library and CLI',
+    marketsSub: 'What is supported, country by country',
   },
   hero: {
     badge: 'Germany: receiving is already law, issuing from 2027',
-    titleTop: 'Make your invoices pass.',
-    titleAccent: 'In whichever market you bill.',
+    titleTop: 'E-invoicing,',
+    titleAccent: 'without the complexity.',
     lede:
-      'Stampbench validates, repairs and creates structured e-invoices against the standard your customer actually requires — with the exact rule, the exact field and the exact line that failed.',
+      'Create compliant invoices as a business, or build e-invoicing directly into your software with Stampbench’s developer platform.',
     ctaCreate: 'Create invoice',
-    primer: 'New to this? An e-invoice is invoice data written in a fixed format, so your customer’s software can read it field by field instead of someone retyping it. EN 16931 is the European standard that says what those fields must contain.',
+    primer: 'New to this? An e-invoice is invoice data written in a fixed format, so your customer’s software can read it field by field instead of someone retyping it. If that sentence is not something you want to think about, take the first door — Stampbench handles it.',
     ctaPrimary: 'Validate an invoice',
     ctaSecondary: 'Choose your market',
     reassurance: 'Free to try · No account needed · Runs in your browser, nothing to install',
     ctaCreateSub: 'Fill in a form — get the XML file your customer’s system needs, plus a printable copy.',
+  },
+  paths: {
+    eyebrow: 'Two ways in',
+    business: {
+      icon: '🧾',
+      title: 'I’m a business',
+      body: 'Create and manage compliant invoices without needing to understand e-invoicing standards.',
+      cta: 'Create an invoice →',
+      href: '/invoice-generator',
+      sub: 'For freelancers, small businesses and teams.',
+      bullets: [
+        'Fill in a form — no file formats to choose',
+        'Checked automatically before you download',
+        'Printable PDF and the file your customer’s system reads',
+        // "Prepared" is the honest verb: recurring v1 readies the invoice and
+        // asks; nothing issues itself unattended. See lib/invoice/recurring.ts.
+        'Tracks who has paid — and repeat invoices come prepared on schedule',
+      ],
+    },
+    developer: {
+      icon: '💻',
+      title: 'I’m a developer',
+      body: 'Validate and generate compliant e-invoices using Stampbench’s TypeScript engine, API and developer tooling.',
+      cta: 'Explore the developer platform →',
+      href: '/developers',
+      sub: 'XRechnung · EN 16931 · UBL · CII · API',
+      bullets: [
+        'Deterministic, rules-based validation with rule ids',
+        'Every violation carries a source location',
+        'Generate as well as validate — totals computed by construction',
+        'Local library, CLI and a hosted REST API',
+      ],
+    },
+    note: 'Same engine behind both. You can switch at any time, and neither door needs an account.',
+  },
+  engine: {
+    eyebrow: 'One engine',
+    heading: 'Both doors open onto the same compliance engine.',
+    body:
+      'A business fills in a form; a developer calls an API. Underneath, the same rules run, the same arithmetic is computed and the same verdict is produced — which is why the simple experience is not a simplified one.',
+  },
+  convergence: {
+    business: 'A business fills in a form',
+    developer: 'A developer calls the API',
+    form: ['Customer', 'Item', 'Net', 'VAT 20%'],
+    engineName: 'Stampbench compliance engine',
+    ruleset: 'EN 16931 · 40 rules',
+    checks: [
+      { kind: 'ok', label: 'Totals add up', rule: 'BR-CO-10' },
+      { kind: 'ok', label: 'Buyer country present', rule: 'BR-11' },
+      { kind: 'bad', label: 'VAT does not match the rate', rule: 'BR-CO-17' },
+      { kind: 'fixed', label: 'Repaired: £425.00 → £490.00', rule: 'derivable' },
+      { kind: 'kept', label: 'Buyer reference missing — left for you', rule: 'BT-10' },
+    ],
+    verdictTitle: 'Same engine, same answer — whichever door you came through',
+    verdictSub: '1 repaired automatically · 1 needs a person · nothing invented',
+    grab: 'Drag the invoice into the engine',
+    again: 'Send it through again',
+    summary:
+      'A business filling in a form and a developer calling the API both produce the same invoice file, which the same Stampbench engine checks: it repairs the VAT arithmetic it can derive and hands back the missing buyer reference for a person to decide.',
   },
   markets: {
     eyebrow: 'Choose your market',
@@ -235,8 +431,30 @@ export const en: Copy = {
       { id: 'uk', name: 'United Kingdom', tagline: 'Checked against the European standard your EU customers ask for. The UK has no separate ruleset of its own — we will say so if that changes.' },
       { id: 'us', name: 'United States', tagline: 'Structured invoicing for billing into Europe. No US tax logic.' },
       { id: 'eu', name: 'European Union', tagline: 'The European core in full, plus Germany’s national profile.' },
+      { id: 'germany', name: 'Germany', tagline: 'The deepest coverage in the product — XRechnung 3.0 and ZUGFeRD, with the failing line pointed at.' },
       { id: 'multi', name: 'Several markets', tagline: 'See the whole coverage matrix side by side, gaps included.' },
     ],
+    panel: {
+      hint: 'Click a region.',
+      several: 'Several markets',
+      // Not "Everything about {market}": the names go in bare, and English
+      // wants an article for three of the five ("about the European Union")
+      // but not for Germany. A trailing phrase sidesteps it entirely.
+      everything: '{market} in detail',
+      remember: 'Remember this choice',
+      european: 'European standard',
+      syntaxes: 'Both XML syntaxes',
+      national: 'National ruleset',
+      germanBuyers: 'German public buyers',
+      taxRate: 'Which tax rate applies',
+      network: 'Sending over a network',
+      nationalGermanyOnly: 'Germany only — the rest use the European core',
+      nationalNone: 'None published for this market',
+      germanSwitch: 'Switch the market to Germany for all {count} rules',
+      taxRateValue: 'Stampbench does not decide this',
+      networkValue: 'No Peppol or exchange delivery',
+      rules: 'rules',
+    },
   },
   showcase: {
     label: 'What Stampbench does',
@@ -266,6 +484,7 @@ export const en: Copy = {
     },
     check: {
       verdict: '2 problems found',
+      checking: 'Checking…',
       rulesetLine: 'Checked against EN 16931 · 40 rules',
       problems: [
         {
@@ -396,18 +615,21 @@ INVALID — 1 error, 0 warnings (40 rules run)`,
   proof: {
     heading: 'Built for compliance, not demos.',
     body:
-      'A compliance tool is only worth using if it is right. Every number below comes from an artefact in the open repository — including the three official documents where we currently disagree with the reference validator, published rather than hidden.',
+      'A compliance tool is only worth using if its evidence can be inspected. The automated checks and parity tooling live in the open repository, including known differences from the reference validator.',
     evidence: 'See the full test evidence →',
     security: 'Security practices →',
     note: 'MIT-licensed engine — run it locally, verify every number yourself.',
   },
   statsBoard: {
-    tests: { label: 'Automated tests passing', sub: '140 library · 50 CLI · 75 web', failing: '0 failing · 0 skipped' },
-    docs: { label: 'Official test documents run', sub: '0 crashes · 3 divergences, published' },
+    tests: { label: 'Automated test suites', sub: 'Core library · CLI · web application', failing: 'Run on every release' },
+    docs: { label: 'Public parity suite', sub: 'Reference differences documented in the repository' },
     rules: { label: 'Validation rules active', families: ['EN 16931 core structure', 'VAT category rules', 'BR-DE profile (Germany only)'], subtotal: 'European rules, before any national profile' },
     located: {
-      label: 'Violations located',
-      subLead: '9,983 mutated invoices tested — every violation anchored to a real element.',
+      // Precisely what was measured. "Violations located" invited the reading
+      // "100% of violations are caught", which is a different and much larger
+      // claim than the one the harness actually supports.
+      label: 'Every detected violation carries a source location',
+      subLead: 'Every reported violation is anchored to a real document element.',
       subDetail: '27.1% land on the exact element; the rest point to the nearest enclosing element and are labelled approximate rather than guessed.',
     },
     growth: {
@@ -467,10 +689,31 @@ INVALID — 1 error, 0 warnings (40 rules run)`,
     metaDescription:
       'Paste or drop a UBL, CII, ZUGFeRD or XRechnung invoice and validate it against EN 16931 — or the German XRechnung profile — instantly, in your browser. Free, no signup, nothing uploaded.',
   },
+  assistant: {
+    title: 'Stampbench assistant',
+    open: 'Open the Stampbench assistant',
+    close: 'Close',
+    placeholder: 'Ask about invoicing…',
+    send: 'Send',
+    thinking: 'Thinking…',
+    greeting:
+      'Hi — I can help with e-invoicing questions (EN 16931, XRechnung, VAT fields) and with anything Stampbench does. What are you working on?',
+    signedOutBody:
+      'The assistant answers invoicing questions and helps you use Stampbench. It comes with paid plans — sign in to get started.',
+    signIn: 'Sign in',
+    lockedBody:
+      'The assistant is part of paid plans. Upgrade and it answers invoicing questions right here, on every page.',
+    seePricing: 'See plans',
+    disabledBody: 'The assistant is built but not switched on yet — check back soon.',
+    quotaBody: 'Your AI credits for this month are used up. They reset next month, or upgrade for more.',
+    poolBody: 'The site-wide AI allowance is used up this month — back next month.',
+    errorBody: 'That did not go through — your credits were not charged. Try again.',
+    scope: 'Answers can be wrong — verify anything important. Not legal or tax advice.',
+  },
   meta: {
-    title: 'Stampbench — validate, repair and create compliant e-invoices',
+    title: 'Stampbench — e-invoicing, without the complexity',
     description:
-      'Invoice infrastructure for modern businesses: validate, repair and create structured e-invoices against the standard your market requires. EN 16931 core, the German XRechnung profile, UBL and CII — open source TypeScript that runs on your own machine.',
+      'Create compliant invoices without learning e-invoicing standards, or build e-invoicing into your software with a TypeScript engine, CLI and hosted API. EN 16931, the German XRechnung profile, UBL and CII — open source, runs on your own machine.',
   },
 };
 
@@ -478,6 +721,7 @@ export const de: Copy = {
   locale: 'de',
   nav: {
     create: 'Rechnung erstellen',
+    invoices: 'Meine Rechnungen',
     markets: 'Märkte',
     playground: 'Prüfen',
     docs: 'Dokumentation',
@@ -487,20 +731,92 @@ export const de: Copy = {
     signIn: 'Anmelden',
     account: 'Konto',
     menu: 'Menü',
-    cta: 'Rechnung prüfen',
+    cta: 'Rechnung erstellen',
+    business: 'Unternehmen',
+    developers: 'Entwickler',
+    company: 'Mehr',
+    devPlatform: 'Entwicklerplattform',
+    roast: 'Rechnungs-Roast',
+    roastSub: 'Ehrliches, kostenloses Rechnungs-Feedback',
+    createSub: 'Formular ausfüllen, konforme Rechnung erhalten',
+    invoicesSub: 'Ihre Rechnungen, Zahlungsstatus und Wiederholungen',
+    devPlatformSub: 'Engine, API und Werkzeuge im Überblick',
+    playgroundSub: 'Prüfen und erzeugen im Browser',
+    docsSub: 'API-Referenz, Bibliothek und CLI',
+    marketsSub: 'Was unterstützt wird — Land für Land',
   },
   hero: {
     badge: 'E-Rechnungspflicht: Empfangen ist bereits Gesetz, Ausstellen ab 2027',
-    titleTop: 'XRechnung bestehen.',
-    titleAccent: 'TypeScript-nativ. Ohne Java.',
+    titleTop: 'E-Rechnung,',
+    titleAccent: 'ohne die Komplexität.',
     lede:
-      'Das Entwickler-Toolkit für XRechnung und EN 16931: jeden Regelverstoß erkennen, genau verstehen, was fehlschlug, und sicher korrigieren, was sich herleiten lässt — vollständig auf Ihrem Rechner.',
+      'Erstellen Sie als Unternehmen konforme Rechnungen — oder bauen Sie E-Rechnungen mit der Entwicklerplattform von Stampbench direkt in Ihre Software ein.',
     ctaCreate: 'Rechnung erstellen',
-    primer: 'Neu dabei? Eine E-Rechnung ist die Rechnung als strukturierte Daten in einem festen Format, damit die Software Ihres Kunden sie Feld für Feld lesen kann, statt sie abzutippen. EN 16931 ist die europäische Norm dafür, was in diesen Feldern stehen muss.',
+    primer: 'Neu dabei? Eine E-Rechnung ist die Rechnung als strukturierte Daten in einem festen Format, damit die Software Ihres Kunden sie Feld für Feld lesen kann, statt sie abzutippen. Wenn Sie sich damit gar nicht befassen möchten: nehmen Sie die erste Tür — Stampbench übernimmt das.',
     ctaPrimary: 'Rechnung prüfen',
     ctaSecondary: 'Markt wählen',
     reassurance: 'Kostenlos testen · Ohne Konto · Läuft im Browser, nichts zu installieren',
     ctaCreateSub: 'Formular ausfüllen — Sie erhalten die XML-Datei, die das System Ihres Kunden benötigt, plus eine druckbare Fassung.',
+  },
+  paths: {
+    eyebrow: 'Zwei Wege hinein',
+    business: {
+      icon: '🧾',
+      title: 'Ich bin ein Unternehmen',
+      body: 'Konforme Rechnungen erstellen und verwalten, ohne E-Rechnungs-Normen verstehen zu müssen.',
+      cta: 'Rechnung erstellen →',
+      href: '/invoice-generator',
+      sub: 'Für Freiberufler, kleine Unternehmen und Teams.',
+      bullets: [
+        'Formular ausfüllen — keine Dateiformate zu wählen',
+        'Wird vor dem Download automatisch geprüft',
+        'Druckbares PDF und die Datei, die das System Ihres Kunden liest',
+        'Zeigt, wer bezahlt hat — wiederkehrende Rechnungen stehen termingerecht bereit',
+      ],
+    },
+    developer: {
+      icon: '💻',
+      title: 'Ich bin Entwickler',
+      body: 'E-Rechnungen prüfen und erzeugen — mit der TypeScript-Engine, der API und den Werkzeugen von Stampbench.',
+      cta: 'Zur Entwicklerplattform →',
+      href: '/developers',
+      sub: 'XRechnung · EN 16931 · UBL · CII · API',
+      bullets: [
+        'Deterministische, regelbasierte Prüfung mit Regel-IDs',
+        'Jeder Verstoß nennt seine Fundstelle',
+        'Erzeugen wie Prüfen — Summen konstruktionsbedingt korrekt',
+        'Lokale Bibliothek, CLI und gehostete REST-API',
+      ],
+    },
+    note: 'Dieselbe Engine hinter beiden. Sie können jederzeit wechseln, und keine der beiden Türen verlangt ein Konto.',
+  },
+  engine: {
+    eyebrow: 'Eine Engine',
+    heading: 'Beide Türen führen zur selben Compliance-Engine.',
+    body:
+      'Ein Unternehmen füllt ein Formular aus, ein Entwickler ruft eine API auf. Darunter laufen dieselben Regeln, dieselbe Arithmetik und dasselbe Urteil — deshalb ist die einfache Variante keine abgespeckte.',
+  },
+  convergence: {
+    business: 'Ein Unternehmen füllt ein Formular aus',
+    developer: 'Ein Entwickler ruft die API auf',
+    form: ['Kunde', 'Position', 'Netto', 'USt. 19%'],
+    engineName: 'Stampbench Compliance-Engine',
+    ruleset: 'XRechnung 3.0 · 56 Regeln',
+    // The German column keeps the German unfixable case: BR-DE-15, the
+    // Leitweg-ID / buyer reference, is the rule this market actually meets.
+    checks: [
+      { kind: 'ok', label: 'Summen stimmen', rule: 'BR-CO-10' },
+      { kind: 'ok', label: 'Länderkennzeichen vorhanden', rule: 'BR-11' },
+      { kind: 'bad', label: 'Die Umsatzsteuer passt nicht zum Satz', rule: 'BR-CO-17' },
+      { kind: 'fixed', label: 'Korrigiert: 425,00 € → 465,50 €', rule: 'herleitbar' },
+      { kind: 'kept', label: 'Käuferreferenz fehlt — bleibt für Sie', rule: 'BR-DE-15' },
+    ],
+    verdictTitle: 'Dieselbe Engine, dieselbe Antwort — egal durch welche Tür',
+    verdictSub: '1 automatisch korrigiert · 1 braucht einen Menschen · nichts erfunden',
+    grab: 'Rechnung in die Engine ziehen',
+    again: 'Nochmal durchlaufen lassen',
+    summary:
+      'Ein Unternehmen, das ein Formular ausfüllt, und ein Entwickler, der die API aufruft, erzeugen dieselbe Rechnungsdatei. Dieselbe Stampbench-Engine prüft sie: Sie korrigiert die herleitbare USt-Arithmetik und gibt die fehlende Käuferreferenz an einen Menschen zurück.',
   },
   markets: {
     eyebrow: 'Markt wählen',
@@ -516,8 +832,31 @@ export const de: Copy = {
       { id: 'uk', name: 'Vereinigtes Königreich', tagline: 'EN 16931 prüfen und erzeugen. Kein UK-eigener Regelsatz — offen gesagt.' },
       { id: 'us', name: 'Vereinigte Staaten', tagline: 'Strukturierte Rechnungen für die Fakturierung nach Europa. Keine US-Steuerlogik.' },
       { id: 'eu', name: 'Europäische Union', tagline: 'Der europäische Kern vollständig, dazu das deutsche Profil.' },
+      { id: 'germany', name: 'Deutschland', tagline: 'Die tiefste Abdeckung im Produkt — XRechnung 3.0 und ZUGFeRD, mit Verweis auf die fehlerhafte Zeile.' },
       { id: 'multi', name: 'Mehrere Märkte', tagline: 'Die gesamte Abdeckung im Vergleich — samt Lücken.' },
     ],
+    panel: {
+      hint: 'Auf eine Region klicken.',
+      several: 'Mehrere Märkte',
+      // "{market} im Detail" rather than a preposition: the market names are
+      // interpolated in the nominative, and "Alles zu/über {market}" would
+      // need a dative or accusative article the template cannot supply
+      // ("Alles zu Europäische Union" is simply wrong).
+      everything: '{market} im Detail',
+      remember: 'Diese Wahl merken',
+      european: 'Europäischer Standard',
+      syntaxes: 'Beide XML-Syntaxen',
+      national: 'Nationaler Regelsatz',
+      germanBuyers: 'Deutsche öffentliche Auftraggeber',
+      taxRate: 'Welcher Steuersatz gilt',
+      network: 'Versand über ein Netzwerk',
+      nationalGermanyOnly: 'Nur Deutschland — der Rest nutzt den europäischen Kern',
+      nationalNone: 'Für diesen Markt ist keiner veröffentlicht',
+      germanSwitch: 'Markt auf Deutschland umstellen — dann alle {count} Regeln',
+      taxRateValue: 'Das entscheidet Stampbench nicht',
+      networkValue: 'Keine Zustellung über Peppol oder ein Exchange',
+      rules: 'Regeln',
+    },
   },
   showcase: {
     label: 'Was Stampbench macht',
@@ -547,6 +886,7 @@ export const de: Copy = {
     },
     check: {
       verdict: '2 Probleme gefunden',
+      checking: 'Wird geprüft…',
       rulesetLine: 'Geprüft gegen XRechnung 3.0 · 56 Regeln',
       problems: [
         {
@@ -681,11 +1021,11 @@ INVALID — 1 error, 0 warnings (56 rules run)`,
     note: 'MIT-lizenzierte Engine — lokal ausführen und jede Zahl selbst überprüfen.',
   },
   statsBoard: {
-    tests: { label: 'Automatisierte Tests bestehen', sub: '140 Bibliothek · 50 CLI · 75 Web', failing: '0 fehlgeschlagen · 0 übersprungen' },
+    tests: { label: 'Automatisierte Tests', sub: 'Kernbibliothek · CLI · Webanwendung', failing: 'Bei jedem Release ausgeführt' },
     docs: { label: 'Offizielle Testdokumente geprüft', sub: '0 Abbrüche · 3 Abweichungen, veröffentlicht' },
     rules: { label: 'Aktive Prüfregeln', families: ['EN 16931 Kernstruktur', 'USt-Kategorieregeln', 'BR-DE-Profil (nur Deutschland)'], subtotal: 'Europäische Regeln, ohne nationales Profil' },
     located: {
-      label: 'Verstöße lokalisiert',
+      label: 'Jeder gefundene Verstoß nennt seine Fundstelle',
       subLead: '9.983 mutierte Rechnungen getestet — jeder Verstoß an einem echten Element verankert.',
       subDetail: '27,1 % treffen das exakte Element; der Rest zeigt auf das nächstliegende übergeordnete Element und ist als ungefähr gekennzeichnet statt geraten.',
     },
@@ -745,6 +1085,27 @@ INVALID — 1 error, 0 warnings (56 rules run)`,
     metaTitle: 'XRechnung online prüfen — Playground',
     metaDescription:
       'XRechnung, UBL oder ZUGFeRD einfügen und sofort gegen EN 16931 und die BR-DE-Regeln prüfen — direkt im Browser. Kostenlos, ohne Anmeldung, kein Upload.',
+  },
+  assistant: {
+    title: 'Stampbench-Assistent',
+    open: 'Stampbench-Assistenten öffnen',
+    close: 'Schließen',
+    placeholder: 'Frage zur Rechnungsstellung…',
+    send: 'Senden',
+    thinking: 'Denkt nach…',
+    greeting:
+      'Hallo — ich helfe bei Fragen zur E-Rechnung (EN 16931, XRechnung, Umsatzsteuer-Felder) und zu allem, was Stampbench kann. Woran arbeiten Sie?',
+    signedOutBody:
+      'Der Assistent beantwortet Fragen zur Rechnungsstellung und hilft bei der Nutzung von Stampbench. Er gehört zu den Bezahl-Tarifen — melden Sie sich an, um loszulegen.',
+    signIn: 'Anmelden',
+    lockedBody:
+      'Der Assistent gehört zu den Bezahl-Tarifen. Nach dem Upgrade beantwortet er Ihre Fragen direkt hier — auf jeder Seite.',
+    seePricing: 'Tarife ansehen',
+    disabledBody: 'Der Assistent ist gebaut, aber noch nicht freigeschaltet — schauen Sie bald wieder vorbei.',
+    quotaBody: 'Ihre KI-Kontingente für diesen Monat sind aufgebraucht. Sie erneuern sich nächsten Monat — oder upgraden Sie für mehr.',
+    poolBody: 'Das seitenweite KI-Kontingent ist diesen Monat aufgebraucht — nächsten Monat geht es weiter.',
+    errorBody: 'Das hat nicht geklappt — Ihr Kontingent wurde nicht belastet. Versuchen Sie es erneut.',
+    scope: 'Antworten können falsch sein — prüfen Sie Wichtiges nach. Keine Rechts- oder Steuerberatung.',
   },
   meta: {
     title: 'XRechnung & EN 16931 prüfen und korrigieren · Stampbench',

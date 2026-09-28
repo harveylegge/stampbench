@@ -1,132 +1,161 @@
 import Link from 'next/link';
-import { localePath, type Copy } from '@/lib/copy';
-import { MarketPicker } from '@/components/market-picker';
+import { localePath, type Copy, type PathCopy } from '@/lib/copy';
+import { Convergence } from '@/components/convergence';
+import { MarketMap } from '@/components/market-map';
 import { ProductShowcase } from '@/components/showcase';
 import { StatsBoard } from '@/components/stats-board';
 
-const GITHUB_URL = 'https://github.com/harveylegge/stampbench';
-
-/**
- * Terminal output, transcribed from real runs — the header line, the rule
- * ids, the wording of the "keep" reason and the trailing count are all what
- * the CLI actually prints. `--profile en16931` is shown rather than the
- * default because the profile flag is the whole point of the market model:
- * the same file is 40 rules in the European core and 56 in Germany.
- */
-const VALIDATE_SNIPPET = `$ npx stampbench validate invoice.xml --profile en16931
-
-invoice.xml  syntax: UBL | profile: en16931 | ruleset: 2026-08.2
-  ERROR  BR-CO-17  VAT breakdown S @ 7%: tax amount should be
-         22.04 (314.86 × 7%) but is 99.99. (line 78)
-  ERROR  BR-11     Missing buyer country code (BT-55). (~line 39)
-INVALID — 2 errors, 0 warnings (40 rules run)`;
-
-const FIX_SNIPPET = `$ npx stampbench fix invoice.xml --profile en16931 --write
-
-invoice.xml
-  fix   line 78    BR-CO-17, BR-S-09  99.99 → 22.04
-  keep            BR-11  no derivable correct value —
-                         this needs a human decision, not arithmetic
-1 fix applied, 1 error needing a person`;
-
 /**
  * The marketing landing page, rendered from a copy dictionary so English and
- * German share one layout. Code samples stay untranslated on purpose: rule
- * ids, CLI flags and field names are the same in every language, and a
- * developer comparing the page to their terminal should see the same strings.
+ * German share one layout.
  *
- * Structure (2026-08 redesign): pain first, mandate as supporting context;
- * an interactive validate→fix panel as the hero visual; evidence charts with
- * every number linking to /trust; the free/paid split stated plainly; the
- * playground as the single conversion action.
+ * Structure (2026-08 audience pass): Stampbench serves two audiences whose
+ * needs are opposite — a freelancer who wants an invoice, and an engineer who
+ * wants e-invoicing infrastructure. The previous page tried to speak to both
+ * at once, which meant naming EN 16931, UBL and CII above the fold and asking
+ * a plumber to care. So the page now asks *which visitor are you* before it
+ * says anything else, and each door leads somewhere written entirely in that
+ * audience's language.
  *
- * 2026-08 market pass: the English hero no longer names a jurisdiction. A
- * visitor's second question is "is this for my business?", so the market band
- * answers it before any standard is mentioned; the German page keeps its
- * XRechnung framing because a reader who arrived in German has already
- * answered that question. Everything below the band is unchanged in shape —
- * the evidence still sits high, because for a compliance product the evidence
- * *is* the pitch.
+ * What is deliberately NOT here any more: the CLI transcripts, the
+ * official-validator comparison, the three engineering pillars and the
+ * local-first pitch. None of it was removed — all of it moved to /developers,
+ * where it is the whole page instead of half a homepage. A business visitor
+ * should never have to scroll past a terminal to reach an invoice.
+ *
+ * What stays: the evidence. For a compliance product the evidence *is* the
+ * pitch, and it is the one section both audiences read.
  */
 export function Landing({ copy }: { copy: Copy }) {
   const path = (p: string) => localePath(copy.locale, p);
 
   return (
     <div lang={copy.locale}>
-      {/* Hero.
-          Centred and marketing-led, because the traffic is about to be paid
-          traffic: a visitor arriving from an advert has given us one screen to
-          say what this is, and a two-column layout spends half of that screen
-          on a panel they have no context for yet. The panel is still there —
-          it moved into the showcase below, where it has tabs and a caption. */}
-      <section className="hero-grid relative">
-        <div className="sb-rise relative mx-auto max-w-3xl px-4 pb-10 pt-14 text-center sm:pt-20">
+      {/* Hero. Deliberately short: its whole job is to say what this is and
+          hand the visitor to the right door. Nothing to read past.
+          The vertical rhythm is measured in vh rather than fixed rems, so the
+          whole stack above the demo compresses on a short laptop and breathes
+          on a big monitor. That is what lets the top of the demo panel sit
+          just under the fold on most screens without anything being resized —
+          the spacing adapts instead of the content. */}
+      <section className="hero-glow relative">
+        <div className="sb-rise relative mx-auto max-w-5xl px-4 pb-[clamp(0.75rem,2vh,2.5rem)] pt-[clamp(1.5rem,5vh,5rem)] text-center">
           <Link
             href="/markets"
-            className="mb-6 inline-flex items-center gap-2 rounded-full border border-border bg-surface px-3.5 py-1.5 text-xs text-muted transition hover:border-border-hi hover:text-text"
+            className="mb-[clamp(0.75rem,2vh,1.5rem)] inline-flex items-center gap-2 rounded-full border border-border bg-surface px-3.5 py-1.5 text-xs text-muted transition hover:border-border-hi hover:text-text"
           >
             <span className="h-1.5 w-1.5 rounded-full bg-success" aria-hidden />
             {copy.hero.badge}
             <span aria-hidden>→</span>
           </Link>
 
-          <h1 className="mb-5 text-[2.1rem] font-semibold leading-[1.12] tracking-tight sm:text-5xl md:text-[3.4rem]">
-            {copy.hero.titleTop} <span className="text-accent">{copy.hero.titleAccent}</span>
+          {/* The desktop size is capped by viewport height as well as width:
+              min() keeps 5rem on anything from a laptop upwards and only
+              steps down on genuinely short windows, where two stacked lines
+              of 80px headline would own half the screen. The stacked spans
+              are deliberate — at this size the accent phrase is a line, not
+              a word, and letting it break mid-phrase reads as an accident. */}
+          <h1 className="mb-[clamp(0.75rem,1.6vh,1.25rem)] text-[2rem] font-[650] leading-[1.05] tracking-[-0.03em] sm:text-6xl md:text-[min(5rem,9vh)]">
+            <span className="block">{copy.hero.titleTop}</span>
+            <span className="block text-accent">{copy.hero.titleAccent}</span>
           </h1>
 
-          <p className="mx-auto mb-4 max-w-xl text-lg leading-relaxed text-muted">{copy.hero.lede}</p>
-
-          {/* The page previously assumed the reader knew what an e-invoice
-              was. For paid traffic that is the whole ballgame — say it once,
-              in one sentence, and be careful to claim only that the customer's
-              software *can* read it, never that it will accept it. */}
-          <p className="mx-auto mb-8 max-w-2xl text-sm leading-relaxed text-faint">{copy.hero.primer}</p>
-
-          <div className="flex flex-col items-stretch gap-3 sm:flex-row sm:items-center sm:justify-center sm:gap-4">
-            <Link
-              href="/invoice-generator"
-              className="sb-press rounded-lg bg-accent px-6 py-3 text-center font-medium text-white transition hover:bg-accent-hi"
-            >
-              {copy.hero.ctaCreate}
-            </Link>
-            <Link
-              href={path('playground')}
-              className="sb-press rounded-lg border border-border bg-surface px-6 py-3 text-center font-medium transition hover:border-border-hi"
-            >
-              {copy.hero.ctaPrimary}
-            </Link>
-          </div>
-
-          {/* The three objections a first-time visitor has, answered before
-              they are asked: does it cost, must I sign up, where does my
-              invoice go. */}
-          <p className="mt-4 text-sm text-faint">{copy.hero.ctaCreateSub}</p>
-          <p className="mt-2 text-sm text-faint">{copy.hero.reassurance}</p>
+          <p className="mx-auto max-w-2xl text-lg leading-relaxed text-muted">{copy.hero.lede}</p>
         </div>
 
-        <ProductShowcase copy={copy} />
-
-        {/* Trust bar — formats and licence, not certifications. Each acronym
-            carries its gloss: this row sits exactly where a first-time
-            visitor decides whether to keep scrolling, and six bare initialisms
-            is a reason to stop. */}
-        <div className="mt-12 border-t border-border bg-surface/60">
-          <div className="mx-auto flex max-w-6xl flex-wrap items-start justify-center gap-x-8 gap-y-4 px-4 py-5 text-center">
-            {copy.trustbar.map((t) => (
-              <span key={t.term} className="flex flex-col gap-0.5">
-                <span className="text-xs font-medium tracking-wide text-muted">{t.term}</span>
-                <span className="text-[11px] leading-tight text-faint">{t.gloss}</span>
-              </span>
-            ))}
+        {/* The two doors. Equal weight, side by side: making one of them the
+            primary button would be the site guessing, and it guesses wrong for
+            half of its visitors. */}
+        <div className="mx-auto max-w-5xl px-4">
+          <h2 className="sr-only">{copy.paths.eyebrow}</h2>
+          <div className="grid gap-4 md:grid-cols-2 md:gap-5">
+            <PathCard path={copy.paths.business} tone="business" />
+            <PathCard path={copy.paths.developer} tone="developer" />
           </div>
         </div>
       </section>
 
-      {/* The market question, asked before any standard is named */}
-      <MarketPicker copy={copy.markets} />
+      {/* One engine, shown rather than asserted. The tabbed demo is the whole
+          product loop — make it, check it, fix it, automate it — and it is the
+          honest answer to "are these two products or one?".
+          It sits directly under the two doors on purpose, with only a single
+          line of framing above it: the page used to make this same point four
+          times over (a note under the cards, an eyebrow, a heading and a
+          paragraph) which cost ~250px and pushed the demo entirely below the
+          fold. The explanation is not lost — it moved underneath the panel,
+          where it reads as a caption to something already seen. */}
+      <section className="pb-16 pt-[clamp(0.75rem,2.5vh,2rem)]">
+        <div className="mx-auto mb-[clamp(0.75rem,2vh,1.5rem)] max-w-6xl px-4">
+          <h2 className="max-w-3xl text-2xl font-semibold tracking-tight">
+            {copy.engine.heading}
+          </h2>
+        </div>
 
-      {/* Proof — high on the page: for a compliance product, evidence IS the pitch */}
-      <section className="py-20">
+
+        {/* The bench. The product demo sits on a photographed stamp bench —
+            oak, papers, purple ink pad — instead of an abstract backdrop. It
+            is the one image on the page and it is literally the brand name. */}
+        <div className="mx-auto max-w-6xl px-4">
+          <div className="relative overflow-hidden rounded-3xl ring-1 ring-border">
+            {/* eslint-disable-next-line @next/next/no-img-element -- decorative cover photo; static export serves it as-is */}
+            <img
+              src="/brand/stampbench-bench.webp"
+              alt=""
+              aria-hidden
+              className="absolute inset-0 h-full w-full object-cover"
+            />
+            <div className="relative px-2 py-8 sm:px-8 sm:py-12">
+              <ProductShowcase copy={copy} />
+            </div>
+          </div>
+        </div>
+
+        {/* The caption: what the panel above just showed, why it is one
+            engine, and the plain-English primer for anyone who still does not
+            know what an e-invoice is. All of it is reading matter, and reading
+            matter belongs after the thing it describes. */}
+        <div className="mx-auto mt-6 grid max-w-6xl gap-x-10 gap-y-3 px-4 lg:grid-cols-2">
+          <p className="leading-relaxed text-muted">{copy.engine.body}</p>
+          <div className="flex flex-col gap-2">
+            <p className="text-sm leading-relaxed text-faint">{copy.hero.primer}</p>
+            <p className="text-sm leading-relaxed text-faint">{copy.paths.note}</p>
+          </div>
+        </div>
+
+        {/* The proof of the heading at the top of this section.
+            It sits *below* the demo rather than above it for two reasons: the
+            bench panel earns the fold, and this sequence plays on arrival — a
+            visitor scrolling to it should meet it whole, not find a half-empty
+            frame peeking over the fold waiting for a threshold to trip. */}
+        <div className="mt-14">
+          <Convergence copy={copy} />
+        </div>
+      </section>
+
+      {/* Trust bar — formats and licence, not certifications. Each acronym
+          carries its gloss: an initialism with no gloss is a wall to the
+          audience that most needs reassuring. It now sits below the demo
+          rather than above it, where it also does the job of separating the
+          product from the market question that follows. */}
+      <div className="border-y border-border bg-surface/60">
+        <div className="mx-auto flex max-w-6xl flex-wrap items-start justify-center gap-x-8 gap-y-4 px-4 py-5 text-center">
+          {copy.trustbar.map((t) => (
+            <span key={t.term} className="flex flex-col gap-0.5">
+              <span className="text-xs font-medium tracking-wide text-muted">{t.term}</span>
+              <span className="text-[11px] leading-tight text-faint">{t.gloss}</span>
+            </span>
+          ))}
+        </div>
+      </div>
+
+      {/* The market question. Both audiences ask it, and the honest answer
+          ("here is where we have nothing for you") belongs high, not buried —
+          which is why it is now answered on the page rather than behind a
+          click through to a market page. */}
+      <MarketMap copy={copy.markets} />
+
+      {/* Proof — for a compliance product, evidence IS the pitch */}
+      <section className="border-t border-border bg-surface/40 py-20">
         <div className="mx-auto max-w-6xl px-4">
           <h2 className="mb-3 text-2xl font-semibold tracking-tight">{copy.proof.heading}</h2>
           <p className="mb-10 max-w-2xl leading-relaxed text-muted">{copy.proof.body}</p>
@@ -149,168 +178,12 @@ export function Landing({ copy }: { copy: Copy }) {
         </div>
       </section>
 
-      {/* The problem: official error vs ours */}
-      <section className="border-t border-border bg-surface/40 py-20">
-        <div className="mx-auto max-w-6xl px-4">
-          <h2 className="mb-3 text-2xl font-semibold tracking-tight">
-            {copy.problem.headingPre}{' '}
-            <span className="font-mono text-danger">[{copy.problem.rule}]</span>
-            {copy.problem.headingPost}
-          </h2>
-          <p className="mb-10 max-w-2xl leading-relaxed text-muted">{copy.problem.body}</p>
-
-          <div className="mb-14 grid gap-6 lg:grid-cols-2">
-            <div className="rounded-xl border border-border bg-surface">
-              <div className="border-b border-border px-5 py-3 text-xs font-medium text-faint">
-                {copy.compare.officialTitle}
-              </div>
-              <pre className="overflow-x-auto whitespace-pre-wrap p-5 font-mono text-xs leading-relaxed text-muted">
-                {copy.compare.officialBody}
-              </pre>
-            </div>
-            <div className="rounded-xl border border-accent/40 bg-surface">
-              <div className="border-b border-border px-5 py-3 text-xs font-medium text-accent-hi">
-                {copy.compare.oursTitle}
-              </div>
-              <div className="space-y-3 p-5 text-sm leading-relaxed">
-                <p className="text-text">{copy.compare.oursExplain}</p>
-                <p className="text-xs text-muted">{copy.compare.oursFix}</p>
-              </div>
-            </div>
-          </div>
-
-          {/* The product principle, elevated from a footnote to a statement */}
-          <figure className="mb-14 rounded-xl border border-accent/30 bg-accent-dim/30 px-6 py-8 text-center">
-            <blockquote className="mx-auto max-w-2xl">
-              <p className="mb-2 text-xl font-semibold tracking-tight text-accent-hi">
-                {copy.principle.title}
-              </p>
-              <p className="text-sm leading-relaxed text-muted">{copy.principle.body}</p>
-            </blockquote>
-          </figure>
-
-          {/* Three pillars; the six original detail cards live inside native
-              <details>, so the depth is still there for whoever wants it. */}
-          <div className="grid gap-6 lg:grid-cols-3">
-            {copy.pillars.map((p) => (
-              <div key={p.num} className="rounded-xl border border-border bg-surface p-6">
-                <div className="mb-3 font-mono text-sm text-accent">{p.num}</div>
-                <h3 className="mb-2 text-xl font-semibold tracking-tight">{p.title}</h3>
-                <p className="mb-4 text-sm leading-relaxed text-muted">{p.tagline}</p>
-                <details className="group">
-                  <summary className="cursor-pointer list-none text-sm font-medium text-accent-hi transition hover:underline">
-                    <span className="group-open:hidden">{p.details} +</span>
-                    <span className="hidden group-open:inline">{p.details} −</span>
-                  </summary>
-                  <div className="mt-4 space-y-4 border-t border-border pt-4">
-                    {p.items.map((item) => (
-                      <div key={item.title}>
-                        <h4 className="mb-1 text-sm font-medium">{item.title}</h4>
-                        <p className="text-sm leading-relaxed text-muted">{item.body}</p>
-                      </div>
-                    ))}
-                  </div>
-                </details>
-              </div>
-            ))}
-          </div>
-        </div>
-      </section>
-
-      {/* CLI demo */}
-      <section className="py-20">
-        <div className="mx-auto max-w-6xl px-4">
-          <h2 className="mb-3 text-2xl font-semibold tracking-tight">{copy.api.heading}</h2>
-          <p className="mb-10 max-w-2xl text-muted">{copy.api.body}</p>
-          <div className="grid gap-6 lg:grid-cols-2">
-            <div className="rounded-xl border border-border bg-surface">
-              <div className="border-b border-border px-5 py-3 font-mono text-xs text-muted">
-                stampbench validate
-              </div>
-              <pre className="overflow-x-auto p-5 font-mono text-xs leading-relaxed text-muted">
-                {VALIDATE_SNIPPET}
-              </pre>
-            </div>
-            <div className="rounded-xl border border-border bg-surface">
-              <div className="border-b border-border px-5 py-3 font-mono text-xs text-muted">
-                stampbench fix
-              </div>
-              <pre className="overflow-x-auto p-5 font-mono text-xs leading-relaxed text-muted">
-                {FIX_SNIPPET}
-              </pre>
-            </div>
-          </div>
-          <p className="mt-6 max-w-2xl text-sm leading-relaxed text-faint">{copy.api.note}</p>
-        </div>
-      </section>
-
-      {/* Local-first */}
-      <section className="border-t border-border bg-surface/40 py-16">
-        <div className="mx-auto max-w-6xl px-4 text-center">
-          <h2 className="mb-3 text-2xl font-semibold tracking-tight">{copy.local.heading}</h2>
-          <p className="mx-auto mb-8 max-w-2xl leading-relaxed text-muted">{copy.local.body}</p>
-          <div className="mx-auto flex max-w-3xl flex-col items-center justify-center gap-3 sm:flex-row">
-            {copy.local.steps.map((step, i) => (
-              <div key={step} className="flex items-center gap-3">
-                <span
-                  className={`rounded-lg border px-4 py-2 text-sm font-medium ${
-                    i === 1
-                      ? 'border-accent/40 bg-accent-dim/40 font-mono text-accent-hi'
-                      : 'border-border bg-surface text-muted'
-                  }`}
-                >
-                  {step}
-                </span>
-                {i < 2 && <span className="hidden text-faint sm:block">→</span>}
-              </div>
-            ))}
-          </div>
-        </div>
-      </section>
-
-      {/* Free / paid */}
-      <section className="border-t border-border bg-surface/40 py-20">
-        <div className="mx-auto max-w-6xl px-4">
-          <h2 className="mb-10 text-2xl font-semibold tracking-tight">{copy.model.heading}</h2>
-          <div className="grid gap-6 lg:grid-cols-2">
-            <div className="rounded-xl border border-border bg-surface p-6">
-              <div className="mb-1 font-medium text-success">{copy.model.freeTitle}</div>
-              <p className="mb-4 text-sm text-muted">{copy.model.freeBody}</p>
-              <ul className="space-y-2 text-sm text-muted">
-                {copy.model.freeItems.map((item) => (
-                  <li key={item} className="flex gap-2">
-                    <span className="text-success" aria-hidden>✓</span>
-                    {item}
-                  </li>
-                ))}
-              </ul>
-            </div>
-            <div className="rounded-xl border border-accent/40 bg-surface p-6">
-              <div className="mb-1 font-medium text-accent-hi">{copy.model.paidTitle}</div>
-              <p className="mb-4 text-sm text-muted">{copy.model.paidBody}</p>
-              <ul className="mb-4 space-y-2 text-sm text-muted">
-                {copy.model.paidItems.map((item) => (
-                  <li key={item} className="flex gap-2">
-                    <span className="text-accent" aria-hidden>✓</span>
-                    {item}
-                  </li>
-                ))}
-              </ul>
-              <Link href="/pricing" className="text-sm font-medium text-accent-hi hover:underline">
-                {copy.model.pricing}
-              </Link>
-            </div>
-          </div>
-        </div>
-      </section>
-
-      {/* CTA */}
+      {/* Both doors again at the foot: a visitor who read the whole page
+          should not have to scroll back up to act. */}
       <section className="border-t border-border py-20">
         <div className="mx-auto max-w-6xl px-4 text-center">
           <h2 className="mb-3 text-3xl font-semibold tracking-tight">{copy.cta.heading}</h2>
           <p className="mx-auto mb-8 max-w-md text-muted">{copy.cta.body}</p>
-          {/* Both doors again at the foot of the page — a visitor who read the
-              whole thing should not have to scroll back up to act. */}
           <div className="mx-auto flex max-w-sm flex-col gap-3 sm:max-w-none sm:flex-row sm:justify-center sm:gap-4">
             <Link
               href="/invoice-generator"
@@ -319,17 +192,64 @@ export function Landing({ copy }: { copy: Copy }) {
               {copy.hero.ctaCreate}
             </Link>
             <Link
-              href={path('playground')}
+              href="/developers"
               className="sb-press rounded-lg border border-border bg-surface px-6 py-3 font-medium transition hover:border-border-hi"
             >
-              {copy.cta.button}
+              {copy.nav.devPlatform}
             </Link>
           </div>
-          <div className="mt-5 font-mono text-sm text-faint">
-            {copy.cta.install} <span className="text-accent">@stampbench/core</span>
-          </div>
+          <p className="mt-5 text-sm text-faint">
+            <Link href={path('playground')} className="text-accent-hi hover:underline">
+              {copy.cta.button}
+            </Link>
+          </p>
         </div>
       </section>
     </div>
+  );
+}
+
+/**
+ * One audience door.
+ *
+ * The whole card is the link rather than a card containing a button: on a
+ * touch screen the button is a 44px target inside a 300px card, and every
+ * mis-tap lands on dead space. The inner span still *looks* like the action so
+ * the affordance is not lost.
+ */
+function PathCard({ path, tone }: { path: PathCopy; tone: 'business' | 'developer' }) {
+  const accent = tone === 'business' ? 'hover:border-accent/50' : 'hover:border-border-hi';
+  return (
+    <Link
+      href={path.href}
+      className={`sb-press group flex flex-col rounded-2xl border border-border bg-surface p-[clamp(1.15rem,2.6vh,1.75rem)] text-left transition hover:bg-surface-2 ${accent}`}
+    >
+      <div className="mb-[clamp(0.5rem,1.4vh,0.75rem)] flex items-center gap-2.5">
+        <span aria-hidden className="text-2xl leading-none">
+          {path.icon}
+        </span>
+        <h3 className="text-xl font-semibold tracking-tight">{path.title}</h3>
+      </div>
+
+      <p className="mb-[clamp(0.75rem,2vh,1.25rem)] leading-relaxed text-muted">{path.body}</p>
+
+      <ul className="mb-[clamp(0.85rem,2.2vh,1.5rem)] flex flex-col gap-[clamp(0.35rem,1vh,0.5rem)] text-sm text-muted">
+        {path.bullets.map((bullet) => (
+          <li key={bullet} className="flex gap-2.5">
+            <span aria-hidden className="mt-[0.15rem] text-accent">
+              ✓
+            </span>
+            <span className="leading-relaxed">{bullet}</span>
+          </li>
+        ))}
+      </ul>
+
+      <div className="mt-auto">
+        <span className="inline-block font-medium text-accent-hi transition group-hover:underline">
+          {path.cta}
+        </span>
+        <p className="mt-2 text-xs leading-relaxed text-faint">{path.sub}</p>
+      </div>
+    </Link>
   );
 }

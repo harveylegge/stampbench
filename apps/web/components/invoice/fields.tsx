@@ -187,6 +187,7 @@ export function DocField({
   align = 'left',
   inputMode,
   bold,
+  list,
 }: {
   label: string;
   value: string;
@@ -197,6 +198,8 @@ export function DocField({
   align?: 'left' | 'right';
   inputMode?: 'text' | 'decimal' | 'numeric' | 'email' | 'tel';
   bold?: boolean;
+  /** id of a <datalist> offering completions — the line editor's services. */
+  list?: string;
 }) {
   return (
     <input
@@ -205,6 +208,7 @@ export function DocField({
       aria-label={label}
       placeholder={placeholder ?? label}
       inputMode={inputMode}
+      list={list}
       onChange={(e) => onChange(e.target.value)}
       className={`w-full rounded-lg border border-border bg-surface px-3 py-2 text-sm outline-none transition placeholder:text-faint focus:border-accent ${
         align === 'right' ? 'text-right' : ''

@@ -1,5 +1,5 @@
 import type { Metadata } from 'next';
-import { Landing } from '@/components/landing';
+import { EditorialHero } from '@/components/editorial-hero';
 import { de } from '@/lib/copy';
 
 export const metadata: Metadata = {
@@ -15,5 +15,5 @@ export const metadata: Metadata = {
 };
 
 export default function GermanLandingPage() {
-  return <Landing copy={de} />;
+  return <EditorialHero copy={de} />;
 }

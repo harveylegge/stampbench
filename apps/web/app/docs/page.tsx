@@ -1,5 +1,8 @@
 import type { Metadata } from 'next';
 import Link from 'next/link';
+
+import { LangTabs } from './lang-tabs';
+
 const IS_STATIC = process.env.NEXT_PUBLIC_STATIC_EXPORT === '1';
 
 
@@ -35,6 +38,7 @@ export default function DocsPage() {
     ['validate', 'POST /api/v1/validate'],
     ['generate', 'POST /api/v1/generate'],
     ['explain', 'POST /api/ai/explain'],
+    ['payment-webhook', 'Payment webhook'],
     ['limits', 'Rate limits & quotas'],
     ['errors', 'Error format'],
     ['library', 'The open-source library'],
@@ -59,17 +63,107 @@ export default function DocsPage() {
           Everything you need to validate and generate compliant e-invoices. Base URL:{' '}
           <code className="font-mono text-sm text-accent-hi">https://stampbench.com</code>
         </p>
+        <p className="mt-3 text-sm text-muted">
+          New here? Start on the{' '}
+          <Link href="/developers" className="text-accent-hi hover:underline">
+            developer platform overview
+          </Link>{' '}
+          or try it without installing anything in the{' '}
+          <Link href="/playground" className="text-accent-hi hover:underline">
+            playground
+          </Link>
+          .
+        </p>
+        {/* The one line that saves a small-business visitor from reading an
+            API reference to find out it was never for them. */}
+        <p className="mt-4 rounded-xl border border-border bg-surface p-4 text-sm leading-relaxed text-muted">
+          Just need to send an invoice? You do not need any of this —{' '}
+          <Link href="/invoice-generator" className="font-medium text-accent-hi hover:underline">
+            create one with the invoice builder
+          </Link>{' '}
+          instead. It uses the same engine documented on this page, with none of the setup.
+        </p>
 
         <H2 id="quickstart">Quickstart</H2>
         <p className="text-sm leading-relaxed text-muted">
-          Validate a document straight away — anonymous calls are allowed (10/hour per IP):
+          <strong className="text-text">1. Install the library.</strong> Validation, generation and
+          repair run locally — no key, no account, no network:
         </p>
-        <Code>{`curl -s https://stampbench.com/api/v1/validate \\
-  -H "Content-Type: application/xml" \\
-  --data-binary @invoice.xml`}</Code>
+        <Code>{`npm install @stampbench/core`}</Code>
+        <Code>{`import { validateXml } from '@stampbench/core';
+
+const result = validateXml(xml, { profile: 'xrechnung' });
+
+result.valid;                       // boolean
+result.meta.rulesRun;               // how many rules produced that verdict
+for (const v of result.violations) {
+  console.error(v.ruleId, v.severity, v.message, v.line);
+}`}</Code>
         <p className="text-sm leading-relaxed text-muted">
+          <strong className="text-text">2. Or call the hosted API.</strong> Anonymous calls are
+          allowed (10/hour per IP), so you can try it before signing up:
+        </p>
+        <LangTabs
+          samples={[
+            {
+              id: 'curl',
+              label: 'cURL',
+              code: `curl -s https://stampbench.com/api/v1/validate \\
+  -H "Content-Type: application/xml" \\
+  --data-binary @invoice.xml`,
+            },
+            {
+              id: 'ts',
+              label: 'TypeScript',
+              code: `const res = await fetch('https://stampbench.com/api/v1/validate', {
+  method: 'POST',
+  headers: {
+    Authorization: \`Bearer \${process.env.STAMPBENCH_API_KEY}\`,
+    'Content-Type': 'application/json',
+  },
+  body: JSON.stringify({ xml, profile: 'xrechnung' }),
+});
+const { valid, violations } = await res.json();`,
+            },
+            {
+              id: 'python',
+              label: 'Python',
+              code: `import os, requests
+
+res = requests.post(
+    "https://stampbench.com/api/v1/validate",
+    headers={"Authorization": f"Bearer {os.environ['STAMPBENCH_API_KEY']}"},
+    json={"xml": xml, "profile": "xrechnung"},
+)
+result = res.json()
+for v in result["violations"]:
+    print(v["ruleId"], v["message"])`,
+            },
+            {
+              id: 'php',
+              label: 'PHP',
+              code: `$ch = curl_init('https://stampbench.com/api/v1/validate');
+curl_setopt_array($ch, [
+  CURLOPT_POST => true,
+  CURLOPT_RETURNTRANSFER => true,
+  CURLOPT_HTTPHEADER => [
+    'Authorization: Bearer ' . getenv('STAMPBENCH_API_KEY'),
+    'Content-Type: application/json',
+  ],
+  CURLOPT_POSTFIELDS => json_encode(['xml' => $xml, 'profile' => 'xrechnung']),
+]);
+$result = json_decode(curl_exec($ch), true);`,
+            },
+          ]}
+        />
+        <p className="text-sm leading-relaxed text-faint">
+          These are plain HTTPS calls, not SDKs — the only published package is{' '}
+          <code className="font-mono">@stampbench/core</code> for JavaScript and TypeScript. Any
+          language that can post JSON can use the API.
+        </p>
+        <p className="mt-3 text-sm leading-relaxed text-muted">
           {IS_STATIC ? (
-            <>The hosted API is in early access — email <a href="mailto:hello@stampbench.com" className="text-accent-hi hover:underline">hello@stampbench.com</a> for a key. The library and CLI need no account at all.</>
+            <>Keys are issued from your <Link href="/account" className="text-accent-hi hover:underline">account page</Link>; if the hosted API is not yet switched on for you, email <a href="mailto:hello@stampbench.com" className="text-accent-hi hover:underline">hello@stampbench.com</a>. The library and CLI need no account at all.</>
           ) : (
             <>For real usage, <Link href="/register" className="text-accent-hi hover:underline">create a free account</Link>, generate an API key in the dashboard, and send it as a Bearer token.</>
           )}
@@ -221,6 +315,54 @@ registerRuleset({
 
 // Response
 { "explanation": "Found 2 blocking errors…\\n1. **BR-DE-15** …", "source": "claude" }`}</Code>
+
+        <H2 id="payment-webhook">Payment webhook</H2>
+        <p className="text-sm leading-relaxed text-muted">
+          Auto-invoicing, for paid plans: generate a secret webhook URL on your{' '}
+          <Link href="/account" className="text-accent-hi hover:underline">
+            account page
+          </Link>{' '}
+          and point your payment provider — or anything that can POST JSON — at it. A payment that
+          names one of your invoice numbers marks that invoice paid; anything else becomes a draft
+          invoice in your saved list, ready to complete. The URL is the authentication: treat it
+          like a password, and rotate it from the account page if it leaks.
+        </p>
+        <Code>{`POST https://stampbench.com/api/hooks/payment/sbwh_…your-token…`}</Code>
+        <p className="text-sm leading-relaxed text-muted">
+          Native <strong className="text-text">Stripe</strong> events (
+          <code className="font-mono text-xs">checkout.session.completed</code>,{' '}
+          <code className="font-mono text-xs">payment_intent.succeeded</code>,{' '}
+          <code className="font-mono text-xs">invoice.paid</code>) and{' '}
+          <strong className="text-text">PayPal</strong> events (
+          <code className="font-mono text-xs">PAYMENT.CAPTURE.COMPLETED</code>,{' '}
+          <code className="font-mono text-xs">PAYMENT.SALE.COMPLETED</code>) are understood as-is —
+          add the URL as a webhook endpoint in their dashboards. From anywhere else, send the
+          generic shape; only <code className="font-mono text-xs">amount</code> and{' '}
+          <code className="font-mono text-xs">currency</code> are required:
+        </p>
+        <Code>{`{
+  "amount": "149.50",          // major units; number or string
+  "currency": "GBP",           // ISO 4217
+  "invoiceNumber": "INV-2026-000042",  // optional — matches & marks paid
+  "payerName": "Acme GmbH",    // optional
+  "payerEmail": "ap@acme.de",  // optional
+  "description": "August retainer",    // optional — becomes the line item
+  "id": "pay_8f3k2",           // optional — makes retries idempotent
+  "date": "2026-08-25"         // optional
+}
+
+// Response
+{ "ok": true, "action": "created" }     // or "marked_paid", "already_paid",
+                                        // "duplicate", "ignored"`}</Code>
+        <p className="text-sm leading-relaxed text-muted">
+          Deliveries are idempotent — a retried event with the same id lands as{' '}
+          <code className="font-mono text-xs">duplicate</code> rather than a second invoice.
+          Unrecognised event types answer <code className="font-mono text-xs">200</code> with{' '}
+          <code className="font-mono text-xs">{'"action": "ignored"'}</code> so providers do not
+          retry them forever. Auto-created invoices arrive marked paid, with the payment amount as
+          a single zero-VAT line and a note saying where they came from — review the details and
+          VAT before sending one to a customer.
+        </p>
 
         <H2 id="limits">Rate limits &amp; quotas</H2>
         <div className="my-4 overflow-hidden rounded-xl border border-border">

@@ -29,6 +29,18 @@ import { FixPanel } from './fix-panel';
 import { SAMPLE_GENERATE_JSON, SAMPLE_XML } from './samples';
 
 /**
+ * The compliant sample, broken in two deliberately different ways: a VAT rate
+ * that no longer matches the tax amount (arithmetic — exactly one right answer,
+ * so `fix` can repair it) and a missing buyer reference (a business fact, so it
+ * cannot). One document therefore demonstrates both halves of the product
+ * principle, which is the whole point of the demo.
+ */
+const BROKEN_SAMPLE_XML = SAMPLE_XML.replace(
+  / *<cbc:BuyerReference>.*<\/cbc:BuyerReference>\n/,
+  '',
+).replace('<cbc:Percent>19</cbc:Percent>', '<cbc:Percent>16</cbc:Percent>');
+
+/**
  * Validation and generation run entirely in the browser — the engine is pure
  * TypeScript, so the playground IS the product claim: your invoice never
  * leaves your machine. Only the optional AI explanation calls the server; its
@@ -576,18 +588,35 @@ export function Playground({ defaultMarket = 'eu' }: { defaultMarket?: MarketId 
     return data;
   }
 
-  function runValidate(against: MarketProfile = profile) {
+  /**
+   * `source` defaults to whatever is in the box, but the demo needs to check
+   * a document it has only just written into state — and state is not readable
+   * in the same tick, so the caller can pass the XML directly.
+   */
+  function runValidate(against: MarketProfile = profile, source: string = xml) {
     setBusy('validate');
     setError(null);
     setExplanation(null);
     setResult(null);
     try {
-      setResult(validateXml(xml, { profile: against }));
-      setResultXml(xml);
+      setResult(validateXml(source, { profile: against }));
+      setResultXml(source);
     } catch (e) {
       setError((e as Error).message);
     } finally {
       setBusy(null);
+    }
+  }
+
+  /** Put a sample in the box, optionally checking it in the same click. */
+  function loadSample(sample: string, validateNow = false) {
+    setXml(sample);
+    setFileName(null);
+    setError(null);
+    if (validateNow) runValidate(profile, sample);
+    else {
+      setResult(null);
+      setResultXml(null);
     }
   }
 
@@ -681,6 +710,31 @@ export function Playground({ defaultMarket = 'eu' }: { defaultMarket?: MarketId 
         <MarketSwitcher value={market} onChange={changeMarket} />
       </div>
 
+      {/* The 30-second demonstration.
+          Someone arriving here without an invoice to hand has nothing to do,
+          and "paste your XML" is not an offer they can accept. One button
+          loads a document with a repairable VAT error and an unrepairable
+          missing field, checks it, and leaves the repair one further click
+          away — the whole product argument, without them supplying anything. */}
+      {tab === 'validate' && (
+        <div className="mb-6 flex flex-col gap-3 rounded-xl border border-accent/30 bg-accent-dim/20 p-4 sm:flex-row sm:items-center sm:justify-between">
+          <div>
+            <h2 className="text-sm font-medium">Nothing to hand? See how it works</h2>
+            <p className="mt-1 max-w-xl text-sm leading-relaxed text-muted">
+              Loads a real invoice with two problems — one Stampbench can fix on its own, one it
+              refuses to guess — and checks it straight away.
+            </p>
+          </div>
+          <button
+            onClick={() => loadSample(BROKEN_SAMPLE_XML, true)}
+            disabled={busy !== null}
+            className="sb-press shrink-0 rounded-lg bg-accent px-4 py-2 text-sm font-medium text-white transition hover:bg-accent-hi disabled:opacity-40"
+          >
+            Load a broken invoice →
+          </button>
+        </div>
+      )}
+
       <div className="mb-6 flex gap-1 rounded-xl border border-border bg-surface p-1 w-fit">
         <button className={tabClass('validate')} onClick={() => setTab('validate')}>
           Validate XML
@@ -697,19 +751,13 @@ export function Playground({ defaultMarket = 'eu' }: { defaultMarket?: MarketId 
               <span className="text-sm text-muted">UBL Invoice XML</span>
               <div className="flex gap-3 text-sm">
                 <button
-                  onClick={() => {
-                    setXml(SAMPLE_XML);
-                    setFileName(null);
-                  }}
+                  onClick={() => loadSample(SAMPLE_XML)}
                   className="text-accent-hi hover:underline"
                 >
                   Load valid sample
                 </button>
                 <button
-                  onClick={() => {
-                    setXml(SAMPLE_XML.replace(/ *<cbc:BuyerReference>.*<\/cbc:BuyerReference>\n/, '').replace('<cbc:Percent>19</cbc:Percent>', '<cbc:Percent>16</cbc:Percent>'));
-                    setFileName(null);
-                  }}
+                  onClick={() => loadSample(BROKEN_SAMPLE_XML)}
                   className="text-accent-hi hover:underline"
                 >
                   Load broken sample

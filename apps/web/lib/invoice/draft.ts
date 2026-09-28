@@ -284,6 +284,64 @@ export function emptyDraft(market: MarketId, now: Date, sequence = 1): InvoiceDr
   };
 }
 
+/**
+ * The next number in whatever series this one belongs to.
+ *
+ * Increments the last run of digits and keeps its padding, so INV-2026-000421
+ * becomes INV-2026-000422 rather than INV-2026-000421-copy — a duplicate is
+ * the next invoice in the series, not a labelled photocopy. A number with no
+ * digits gets "-2". `taken` lets the caller skip past numbers that already
+ * exist in their history.
+ */
+export function bumpInvoiceNumber(number: string, taken: ReadonlySet<string> = new Set()): string {
+  const bumpOnce = (value: string): string => {
+    const match = /^(.*?)(\d+)(\D*)$/.exec(value);
+    if (!match) return `${value}-2`;
+    const [, head, digits, tail] = match;
+    const next = String(BigInt(digits!) + 1n).padStart(digits!.length, '0');
+    return `${head}${next}${tail}`;
+  };
+  let candidate = bumpOnce(number);
+  // The loop terminates because a finite history cannot occupy an unbounded
+  // ascending series; the cap is sheer paranoia against a pathological set.
+  for (let i = 0; taken.has(candidate) && i < 10_000; i++) candidate = bumpOnce(candidate);
+  return candidate;
+}
+
+/**
+ * A fresh invoice built from an existing one: next number in the series,
+ * today's dates with the original's payment window preserved, and the "already
+ * paid" amount cleared — the new invoice has not been paid, whatever happened
+ * to the old one. Everything else (parties, lines, bank details, tax setup)
+ * carries over, because that is the entire point of duplicating.
+ */
+export function duplicateDraft(
+  draft: InvoiceDraft,
+  now: Date,
+  taken: ReadonlySet<string> = new Set(),
+): InvoiceDraft {
+  const issued = Date.parse(draft.document.issueDate);
+  const due = Date.parse(draft.document.dueDate);
+  const windowDays =
+    Number.isFinite(issued) && Number.isFinite(due) && due >= issued
+      ? Math.round((due - issued) / 86_400_000)
+      : 30;
+  return {
+    ...draft,
+    document: {
+      ...draft.document,
+      number: bumpInvoiceNumber(draft.document.number, taken),
+      issueDate: isoToday(now),
+      dueDate: isoPlusDays(now, windowDays),
+      deliveryDate: '',
+    },
+    amountPaid: '',
+    // Fresh keys: two invoices sharing line keys would cross-wire the editor
+    // if both ever met the same React tree.
+    lines: draft.lines.map((line) => ({ ...line, key: newLine().key })),
+  };
+}
+
 /** The country a market's forms should start on. */
 export function defaultCountryFor(market: MarketId): string {
   switch (market) {

@@ -6,10 +6,11 @@
  * signed-out visitors to /signin, and render usage, API keys, billing and the
  * data controls.
  *
- * Upgrades take one of two paths depending on what the server reports in
- * `billing.enabled`: Stripe Checkout when card payment is configured, and the
- * original email-us request when it is not. The copy follows the path actually
- * available, so the page never promises a checkout that would 503.
+ * Upgrades take one of three paths depending on what the server reports under
+ * `billing`: Stripe Checkout when card payment is configured, a PayPal
+ * subscription when that is, and the original email-us request when neither
+ * is. The copy follows the path actually available, so the page never promises
+ * a checkout that would 503.
  */
 
 import { useEffect, useRef, useState } from 'react';
@@ -18,18 +19,25 @@ import { useRouter, useSearchParams } from 'next/navigation';
 import {
   ApiError,
   billingPortal,
+  cancelPaypalSubscription,
+  cancelUpgradeRequest,
   createKey,
+  createPaymentHook,
   deleteAccount,
+  deletePaymentHook,
   exportAccount,
   listKeys,
   logout,
   me,
+  paymentHookStatus,
   requestUpgrade,
   revokeKey,
   startCheckout,
+  startPaypalSubscription,
   type ApiKeySummary,
   type Me,
 } from '@/lib/account-client';
+import { entitlementsFor } from '@/lib/entitlements';
 import { PLANS, type FeatureId, type PlanId } from '@/lib/plans';
 
 const FEATURE_LABELS: Record<FeatureId, string> = {
@@ -68,7 +76,10 @@ function Skeleton() {
 
 export function AccountView() {
   const router = useRouter();
-  const upgradeParam = useSearchParams().get('upgrade');
+  const params = useSearchParams();
+  const upgradeParam = params.get('upgrade');
+  /** Set by PayPal's return_url — the buyer approved and is on their way back. */
+  const returnedFromPaypal = params.get('subscribed') === 'paypal';
 
   const [account, setAccount] = useState<Me | null>(null);
   const [loadError, setLoadError] = useState<string | null>(null);
@@ -85,6 +96,17 @@ export function AccountView() {
   const [upgradeError, setUpgradeError] = useState<string | null>(null);
   /** PayPal link for the plan just requested, when PayPal is configured. */
   const [payUrl, setPayUrl] = useState<string | null>(null);
+  /** True while waiting for PayPal's webhook to activate a just-approved plan. */
+  const [activating, setActivating] = useState(false);
+  const [cancelArmed, setCancelArmed] = useState(false);
+  const pollStarted = useRef(false);
+
+  // Payment hook (auto-invoicing)
+  const [hookConfigured, setHookConfigured] = useState<boolean | null>(null);
+  const [hookUrl, setHookUrl] = useState<string | null>(null);
+  const [hookCopied, setHookCopied] = useState(false);
+  const [hookArmed, setHookArmed] = useState<'rotate' | 'remove' | null>(null);
+  const [hookError, setHookError] = useState<string | null>(null);
 
   // Data controls (GDPR export / erasure)
   const [dataError, setDataError] = useState<string | null>(null);
@@ -107,8 +129,48 @@ export function AccountView() {
         setAccount(acct);
         const { keys: keyList } = await listKeys();
         if (!cancelled) setKeys(keyList);
+        // Separate catch: a hiccup here should not blank the whole page — and
+        // must NOT be read as "no hook", or one un-confirmed click would
+        // overwrite a live webhook. Leave the state unknown and say so.
+        try {
+          const { configured } = await paymentHookStatus();
+          if (!cancelled) setHookConfigured(configured);
+        } catch {
+          if (!cancelled) {
+            setHookConfigured(null);
+            setHookError('Could not check your webhook status — refresh to try again.');
+          }
+        }
       } catch {
-        if (!cancelled) setLoadError('Could not load your account. Refresh to try again.');
+        // The production account API is supplied by the Cloudflare worker and
+        // does not exist inside `next dev`. Keep the localhost design preview
+        // usable without weakening the production authentication boundary.
+        if (!cancelled && window.location.hostname === 'localhost') {
+          setAccount({
+            email: 'hello@stampbench.com',
+            plan: 'free',
+            createdAt: Date.now(),
+            usage: {
+              api: { used: 0, limit: 100 },
+              share: { used: 0, limit: 10 },
+              regress: { used: 0, limit: 5 },
+              ai: { used: 0, limit: 5 },
+            },
+            pendingUpgrade: null,
+            billing: {
+              enabled: false,
+              subscribed: false,
+              hasCustomer: false,
+              paypalSubscriptions: false,
+              paypalSubscribed: false,
+            },
+          });
+          setKeys([]);
+          setHookConfigured(false);
+          setLoadError(null);
+        } else if (!cancelled) {
+          setLoadError('Could not load your account. Refresh to try again.');
+        }
       }
     })();
     return () => {
@@ -117,16 +179,67 @@ export function AccountView() {
   }, [router]);
 
   /* ?upgrade=starter|pro|scale (e.g. from a quota upsell) pre-arms a one-click
-     confirm on the matching card and scrolls it into view — but never past a
-     request that is already pending, and never for the plan already held. */
+     confirm on the matching card and scrolls it into view — never for the plan
+     already held. A pending manual request only blocks this in the manual
+     world: once self-serve billing exists, the pending note is history, not a
+     gate, and the person who already asked for a plan is the last person the
+     buttons should hide from. */
   useEffect(() => {
-    if (!account || account.pendingUpgrade || !isUpgradeId(upgradeParam)) return;
+    if (!account || !isUpgradeId(upgradeParam)) return;
+    const selfServeNow = account.billing.enabled || account.billing.paypalSubscriptions;
+    if (account.pendingUpgrade && !selfServeNow) return;
     if (upgradeParam === account.plan) return;
     setArmedPlan(upgradeParam);
     requestAnimationFrame(() => {
       cardRefs.current[upgradeParam]?.scrollIntoView({ behavior: 'smooth', block: 'center' });
     });
   }, [account, upgradeParam]);
+
+  /* Coming back from PayPal's approval page, the plan is usually not live yet:
+     the browser is racing a webhook. Rather than showing the old plan (which
+     reads as "my payment did nothing"), poll for the entitlement the webhook
+     grants. Polling, not trusting the return URL — that URL is a navigation
+     anyone can perform, and it is not evidence that anything was paid. */
+  useEffect(() => {
+    if (!returnedFromPaypal || !account || pollStarted.current) return;
+    if (account.billing.paypalSubscribed) return;
+    pollStarted.current = true;
+    setActivating(true);
+
+    let cancelled = false;
+    let attempts = 0;
+    let timer: ReturnType<typeof setTimeout>;
+    const poll = async () => {
+      attempts += 1;
+      try {
+        const fresh = await me();
+        if (cancelled) return;
+        if (fresh) {
+          setAccount(fresh);
+          if (fresh.billing.paypalSubscribed) {
+            setActivating(false);
+            return;
+          }
+        }
+      } catch {
+        // Transient failure — keep waiting; the attempt cap ends this anyway.
+      }
+      if (cancelled) return;
+      // ~30s in total. Past that it is more honest to stop spinning and tell
+      // someone what to do than to imply we are still making progress.
+      if (attempts >= 10) {
+        setActivating(false);
+        return;
+      }
+      timer = setTimeout(poll, 3000);
+    };
+    timer = setTimeout(poll, 2000);
+
+    return () => {
+      cancelled = true;
+      clearTimeout(timer);
+    };
+  }, [returnedFromPaypal, account]);
 
   /** Shared handling for actions that can outlive the session. */
   function apiMessage(e: unknown, fallback: string): string {
@@ -143,7 +256,15 @@ export function AccountView() {
     } catch {
       // Session already gone server-side — the destination is the same.
     }
-    router.push('/');
+    // Drop the assistant transcript so the next person on this browser cannot
+    // read the previous user's conversation, and hard-navigate so every piece
+    // of cached client state (the memoised plan, the widget) resets cleanly.
+    try {
+      window.sessionStorage.removeItem('sb_assistant_chat');
+    } catch {
+      // storage unavailable — nothing to clear
+    }
+    window.location.assign('/');
   }
 
   async function onCreateKey() {
@@ -172,6 +293,38 @@ export function AccountView() {
       setKeyError(apiMessage(e, 'Could not revoke the key.'));
     } finally {
       setArmedRevoke(null);
+      setBusy(null);
+    }
+  }
+
+  /** Create or rotate the payment hook. The URL shows exactly once. */
+  async function onCreateHook() {
+    setBusy('hook:create');
+    setHookError(null);
+    setHookCopied(false);
+    try {
+      const { url } = await createPaymentHook();
+      setHookUrl(url);
+      setHookConfigured(true);
+    } catch (e) {
+      setHookError(apiMessage(e, 'Could not set up the webhook.'));
+    } finally {
+      setHookArmed(null);
+      setBusy(null);
+    }
+  }
+
+  async function onRemoveHook() {
+    setBusy('hook:remove');
+    setHookError(null);
+    try {
+      await deletePaymentHook();
+      setHookConfigured(false);
+      setHookUrl(null);
+    } catch (e) {
+      setHookError(apiMessage(e, 'Could not remove the webhook.'));
+    } finally {
+      setHookArmed(null);
       setBusy(null);
     }
   }
@@ -221,10 +374,54 @@ export function AccountView() {
     }
   }
 
-  /** Route to whichever upgrade mechanism the server actually has available. */
+  /**
+   * PayPal's recurring path. Same discipline as `onCheckout`: this only sends
+   * the browser to PayPal. The plan changes when the verified webhook says the
+   * subscription activated.
+   */
+  async function onPaypalSubscribe(plan: UpgradeId) {
+    setBusy(`upgrade:${plan}`);
+    setUpgradeError(null);
+    setArmedPlan(null);
+    try {
+      const { url } = await startPaypalSubscription(plan);
+      if (!url) throw new Error('No approval URL returned.');
+      window.location.assign(url);
+    } catch (e) {
+      setUpgradeError(apiMessage(e, 'Could not start the PayPal subscription. Try again, or email hello@stampbench.com.'));
+      setBusy(null);
+    }
+    // No `finally`: the page is navigating away on success.
+  }
+
+  /**
+   * Route to whichever upgrade mechanism the server actually has available.
+   *
+   * Cards first when both exist — instant activation and a hosted portal beat
+   * PayPal's approval hop. PayPal subscriptions next, because they recur.
+   * The email loop last: it always works, and it always needs a human.
+   */
   function onUpgrade(plan: UpgradeId) {
     if (account?.billing.enabled) void onCheckout(plan);
+    else if (account?.billing.paypalSubscriptions) void onPaypalSubscribe(plan);
     else void onRequestUpgrade(plan);
+  }
+
+  async function onCancelPaypal() {
+    setBusy('cancel-paypal');
+    setUpgradeError(null);
+    try {
+      await cancelPaypalSubscription();
+      const fresh = await me();
+      if (fresh) setAccount(fresh);
+    } catch (e) {
+      setUpgradeError(
+        apiMessage(e, 'Could not cancel with PayPal. Try again, or cancel under Automatic Payments in your PayPal account.'),
+      );
+    } finally {
+      setCancelArmed(false);
+      setBusy(null);
+    }
   }
 
   async function onManageBilling() {
@@ -304,7 +501,8 @@ export function AccountView() {
      promises a checkout, "Request X" promises an email. Saying the wrong one
      is a small lie that costs trust at exactly the moment someone is deciding
      whether to hand over a card. */
-  const cardCopy = account.billing.enabled
+  const selfServe = account.billing.enabled || account.billing.paypalSubscriptions;
+  const cardCopy = selfServe
     ? { idle: 'Subscribe to', confirm: 'Continue to payment —', busy: 'Redirecting…' }
     : { idle: 'Request', confirm: 'Confirm request for', busy: 'Sending…' };
 
@@ -475,12 +673,14 @@ export function AccountView() {
       {/* ————— Upgrade ————— */}
       <section className="rounded-xl border border-border bg-surface p-5">
         <h2 className="mb-2 text-lg font-semibold tracking-tight">
-          {account.billing.subscribed ? 'Plan & billing' : 'Upgrade'}
+          {account.billing.subscribed || account.billing.paypalSubscribed ? 'Plan & billing' : 'Upgrade'}
         </h2>
         <p className="mb-4 text-sm text-muted">
           {account.billing.enabled
             ? 'Pay by card through Stripe — your plan activates as soon as the payment clears. Cancel any time from the billing portal.'
-            : 'No card is taken on the site. We email you, arrange payment, and activate the plan — usually within a day.'}
+            : account.billing.paypalSubscriptions
+              ? 'Subscribe with PayPal — it renews monthly and your plan activates as soon as PayPal confirms the first payment. Cancel any time, right here.'
+              : 'No card is taken on the site. We email you, arrange payment, and activate the plan — usually within a day.'}
         </p>
 
         {(account.billing.subscribed || account.billing.hasCustomer) && (
@@ -493,9 +693,93 @@ export function AccountView() {
           </button>
         )}
 
+        {/* PayPal has no hosted portal, so cancellation lives here. Two clicks:
+            this ends a paid plan, and a mis-click should not do that. */}
+        {account.billing.paypalSubscribed && (
+          <div className="mb-4">
+            {cancelArmed ? (
+              <div className="rounded-lg border border-border bg-bg p-4">
+                <p className="text-sm">
+                  Cancel your PayPal subscription? Your plan drops to Free and PayPal stops billing
+                  you. Nothing else on the account changes — your keys, reports and usage stay.
+                </p>
+                <div className="mt-3 flex flex-wrap gap-2">
+                  <button
+                    onClick={onCancelPaypal}
+                    disabled={busy === 'cancel-paypal'}
+                    className="rounded-lg border border-danger/50 px-3.5 py-1.5 text-sm font-medium text-danger transition hover:bg-danger/5 disabled:opacity-40"
+                  >
+                    {busy === 'cancel-paypal' ? 'Cancelling…' : 'Yes, cancel my subscription'}
+                  </button>
+                  <button
+                    onClick={() => setCancelArmed(false)}
+                    className="rounded-lg border border-border px-3.5 py-1.5 text-sm font-medium transition hover:border-border-hi"
+                  >
+                    Keep it
+                  </button>
+                </div>
+              </div>
+            ) : (
+              <button
+                onClick={() => setCancelArmed(true)}
+                className="rounded-lg border border-border bg-bg px-3.5 py-1.5 text-sm font-medium transition hover:border-border-hi"
+              >
+                Cancel PayPal subscription
+              </button>
+            )}
+          </div>
+        )}
+
+        {/* The gap between PayPal's redirect and its webhook. Saying nothing
+            here reads as "my payment did nothing". */}
+        {activating && (
+          <p className="mb-4 rounded-lg border border-accent/40 bg-accent-dim/40 p-4 text-sm text-accent-hi">
+            PayPal approved — waiting for confirmation. This usually takes a few seconds; the page
+            updates on its own.
+          </p>
+        )}
+        {returnedFromPaypal && !activating && !account.billing.paypalSubscribed && (
+          <p className="mb-4 rounded-lg border border-border bg-bg p-4 text-sm text-muted">
+            PayPal has not confirmed the subscription yet. If you completed payment, refresh in a
+            minute — and if it still is not live, email hello@stampbench.com and we will sort it out
+            by hand.
+          </p>
+        )}
+
         {upgradeError && <p className="mb-4 text-sm text-danger">{upgradeError}</p>}
 
-        {pendingPlan && (
+        {/* A pending manual request, in a world where self-serve now exists:
+            say the request is remembered, point at the faster path, and offer
+            a way to withdraw it. Subscribing also clears it server-side the
+            moment the webhook lands, so nobody is ever asked to tidy up after
+            paying. */}
+        {pendingPlan && selfServe && (
+          <div className="mb-4 rounded-lg border border-accent/40 bg-accent-dim/40 p-4 text-sm">
+            <p className="font-medium text-accent-hi">
+              You requested {pendingPlan.name} earlier, when activation was done by hand.
+            </p>
+            <p className="mt-1 text-muted">
+              Good news since then: you can now activate it yourself, instantly — use the{' '}
+              <span className="font-medium text-text">Subscribe to {pendingPlan.name}</span> button
+              below. Subscribing replaces the old request automatically.
+            </p>
+            <button
+              onClick={async () => {
+                try {
+                  await cancelUpgradeRequest();
+                  setAccount({ ...account, pendingUpgrade: null });
+                } catch {
+                  // The note stays; nothing was lost. Next visit tries again.
+                }
+              }}
+              className="mt-2 text-xs text-faint underline transition hover:text-text"
+            >
+              Or dismiss the old request
+            </button>
+          </div>
+        )}
+
+        {pendingPlan && !selfServe && (
           <div className="mb-4 rounded-lg border border-accent/40 bg-accent-dim/40 p-4 text-sm">
             {payUrl ? (
               <>
@@ -529,7 +813,12 @@ export function AccountView() {
           {UPGRADE_IDS.map((id) => {
             const p = PLANS[id];
             const isCurrent = id === account.plan;
-            const armed = armedPlan === id && !pendingPlan;
+            // A pending manual request only suppresses the buttons while
+            // manual is the only mechanism. With self-serve on, hiding the
+            // subscribe button from the one person who already asked to pay
+            // would be the deadlock this section used to have.
+            const blockedByPending = Boolean(pendingPlan) && !selfServe;
+            const armed = armedPlan === id && !blockedByPending;
             return (
               <div
                 key={id}
@@ -553,7 +842,7 @@ export function AccountView() {
                     </li>
                   ))}
                 </ul>
-                {pendingPlan ? null : isCurrent ? (
+                {blockedByPending ? null : isCurrent ? (
                   <div className="mt-auto rounded-lg border border-border py-1.5 text-center text-sm text-faint">
                     Current plan
                   </div>
@@ -590,6 +879,158 @@ export function AccountView() {
         </div>
       </section>
 
+      {/* ————— Invoice Autopilot — account-only product preview ————— */}
+      <section className="account-autopilot" aria-labelledby="invoice-autopilot-title">
+        <div className="autopilot-head">
+          <div>
+            <p className="autopilot-kicker"><i />INVOICE AUTOPILOT / EARLY ACCESS</p>
+            <h2 id="invoice-autopilot-title">
+              Put your invoicing<br /><em>on autopilot.</em>
+            </h2>
+          </div>
+          <p>Five small setup steps. After that, routine invoices can prepare themselves and only exceptions come back to you.</p>
+        </div>
+
+        <figure className="autopilot-flipbook">
+          {/* eslint-disable-next-line @next/next/no-img-element */}
+          <img
+            src="/brand/invoice-autopilot-flipbook.png"
+            alt="Four illustrated steps showing an order email becoming a checked invoice, followed by reminders and a human review flag"
+          />
+          <figcaption>FROM THE LATEST LABELLED EMAIL → TO A READY, CHECKED INVOICE</figcaption>
+        </figure>
+
+        <ol className="autopilot-steps">
+          <li><b>01</b><strong>Make one Gmail label</strong><span>In Gmail, create a label called “Stampbench”. Add a filter so order emails from chosen customers receive it.</span></li>
+          <li><b>02</b><strong>Connect that label</strong><span>When early access is enabled, click Connect Gmail, sign in with Google, then choose only the Stampbench label.</span></li>
+          <li><b>03</b><strong>Add your invoice rules</strong><span>Choose your business details, prices, payment terms and the address invoices should be sent from.</span></li>
+          <li><b>04</b><strong>Approve the first draft</strong><span>Stampbench reads the newest labelled email and prepares an invoice. Check it once and approve the customer.</span></li>
+          <li><b>05</b><strong>Switch on reminders</strong><span>Choose the due date and up to three reminder dates. After the last reminder, it returns to you for a manual decision.</span></li>
+        </ol>
+
+        <div className="autopilot-foot">
+          <div>
+            <strong>Your inbox stays yours.</strong>
+            <p>
+              When enabled, Stampbench will fetch only messages carrying the Gmail label you
+              choose. Other mail is not processed, and nothing sends until your rules allow it.
+            </p>
+          </div>
+          <a href="mailto:hello@stampbench.com?subject=Invoice%20Autopilot%20early%20access">
+            Join early access <span>↗</span>
+          </a>
+        </div>
+      </section>
+
+      {/* ————— Payment matching (inbound payment webhook) ————— */}
+      <section className="mt-6 rounded-xl border border-border bg-surface p-5">
+        <h2 className="mb-2 text-lg font-semibold tracking-tight">Payment matching</h2>
+        <p className="mb-4 text-sm text-muted">
+          A secret webhook URL for your account. Point PayPal, Stripe or anything that can send
+          JSON at it, and an incoming payment marks the matching invoice paid — or creates a draft
+          invoice for you when nothing matches. New invoices appear in{' '}
+          <a href="/my-invoices" className="text-accent-hi hover:underline">My invoices</a> the next
+          time it syncs. See the{' '}
+          <a href="/docs#payment-webhook" className="text-accent-hi hover:underline">
+            webhook documentation
+          </a>{' '}
+          for the payload it accepts.
+        </p>
+
+        {hookError && <p className="mb-4 text-sm text-danger">{hookError}</p>}
+
+        {!entitlementsFor(account.plan).autoInvoicing ? (
+          <div className="rounded-lg border border-accent/40 bg-accent-dim/40 p-4 text-sm">
+            Payment matching is part of paid plans.{' '}
+            <button
+              onClick={() => {
+                setArmedPlan('starter');
+                requestAnimationFrame(() => {
+                  cardRefs.current.starter?.scrollIntoView({ behavior: 'smooth', block: 'center' });
+                });
+              }}
+              className="font-medium text-accent-hi hover:underline"
+            >
+              See plans
+            </button>
+          </div>
+        ) : (
+          <>
+            {hookUrl && (
+              <div className="mb-4 rounded-lg border border-accent/40 bg-accent-dim/40 p-4">
+                <p className="mb-2 text-sm">
+                  Your webhook URL — copy it now, it is shown only this once:
+                </p>
+                <code className="block overflow-x-auto rounded-lg border border-border bg-bg px-3 py-2 font-mono text-xs">
+                  {hookUrl}
+                </code>
+                <button
+                  onClick={() => {
+                    void navigator.clipboard?.writeText(hookUrl).then(() => setHookCopied(true));
+                  }}
+                  className="mt-2 rounded-lg border border-border bg-surface px-3.5 py-1.5 text-sm transition hover:border-border-hi"
+                >
+                  {hookCopied ? 'Copied ✓' : 'Copy URL'}
+                </button>
+              </div>
+            )}
+
+            <div className="flex flex-wrap items-center gap-2">
+              {hookConfigured === false && (
+                <button
+                  onClick={onCreateHook}
+                  disabled={busy === 'hook:create'}
+                  className="sb-press rounded-lg bg-accent px-3.5 py-1.5 text-sm font-medium text-white transition hover:bg-accent-hi disabled:opacity-40"
+                >
+                  {busy === 'hook:create' ? 'Setting up…' : 'Set up the webhook'}
+                </button>
+              )}
+              {hookConfigured === true && !hookArmed && (
+                <>
+                  <span className="rounded-full bg-accent-dim px-2 py-0.5 text-[11px] font-medium text-accent-hi">
+                    Active
+                  </span>
+                  <button
+                    onClick={() => setHookArmed('rotate')}
+                    className="rounded-lg border border-border bg-surface px-3.5 py-1.5 text-sm transition hover:border-border-hi"
+                  >
+                    Rotate URL
+                  </button>
+                  <button
+                    onClick={() => setHookArmed('remove')}
+                    className="rounded-lg border border-danger/40 px-3.5 py-1.5 text-sm text-danger transition hover:border-danger"
+                  >
+                    Remove
+                  </button>
+                </>
+              )}
+              {hookConfigured === true && hookArmed && (
+                <>
+                  <span className="text-sm text-muted">
+                    {hookArmed === 'rotate'
+                      ? 'Rotating stops the current URL working immediately.'
+                      : 'Removing stops all deliveries — invoices already created stay.'}
+                  </span>
+                  <button
+                    onClick={hookArmed === 'rotate' ? onCreateHook : onRemoveHook}
+                    disabled={busy === 'hook:create' || busy === 'hook:remove'}
+                    className="rounded-lg bg-danger px-3.5 py-1.5 text-sm font-medium text-white transition disabled:opacity-40"
+                  >
+                    {busy ? 'Working…' : hookArmed === 'rotate' ? 'Rotate now' : 'Remove now'}
+                  </button>
+                  <button
+                    onClick={() => setHookArmed(null)}
+                    className="rounded-lg border border-border px-3.5 py-1.5 text-sm transition hover:border-border-hi"
+                  >
+                    Cancel
+                  </button>
+                </>
+              )}
+            </div>
+          </>
+        )}
+      </section>
+
       {/* ————— Your data (GDPR Art. 15/17/20) ————— */}
       <section className="mt-6 rounded-xl border border-border bg-surface p-5">
         <h2 className="mb-2 text-lg font-semibold tracking-tight">Your data</h2>
@@ -622,8 +1063,9 @@ export function AccountView() {
           <div className="mt-4 rounded-lg border border-danger/40 bg-danger/5 p-4">
             <p className="text-sm">
               This permanently deletes your account, API keys, usage history and shared reports.
-              {account.billing.subscribed && ' Your subscription is cancelled at the same time.'} It
-              cannot be undone.
+              {(account.billing.subscribed || account.billing.paypalSubscribed) &&
+                ' Your subscription is cancelled at the same time.'}{' '}
+              It cannot be undone.
             </p>
             <label className="mt-3 block text-xs text-muted" htmlFor="delete-confirm">
               Type <span className="font-mono text-text">{account.email}</span> to confirm

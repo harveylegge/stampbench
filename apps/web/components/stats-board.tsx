@@ -13,10 +13,14 @@ import type { Copy } from '@/lib/copy';
  * every segment carries a text label so colour is never the only encoding.
  */
 
+// Counted from actual runs (vitest, 2026-08-15): packages/core, packages/cli
+// and apps/web. The web figure had drifted 28 tests behind the suite, which
+// made the headline total wrong on the homepage and on /trust — a number this
+// page invites people to verify has to be re-counted when it changes.
 const TESTS = [
   { label: 'library', n: 140 },
   { label: 'CLI', n: 50 },
-  { label: 'web', n: 75 },
+  { label: 'web', n: 103 },
 ];
 const TESTS_TOTAL = TESTS.reduce((s, t) => s + t.n, 0);
 
@@ -90,7 +94,12 @@ function DocsDonut() {
   );
 }
 
-/** Semicircular gauge, full because the measured value really is 100%. */
+/**
+ * Semicircular gauge, full because the measured value really is 100% — of the
+ * narrow thing the card's label names: every violation the engine *reports*
+ * comes with a location. It is not a claim about detection rate, and the label
+ * next to it has to keep saying so.
+ */
 function LocatedGauge() {
   return (
     <svg viewBox="0 0 120 68" className="h-20 w-32" aria-hidden>

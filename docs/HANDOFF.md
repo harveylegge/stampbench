@@ -158,49 +158,93 @@ no account. **237 tests green** (132 library / 50 CLI / 55 web).
 
 ---
 
-## PAYPAL (2026-08-11) — link path shipped; Subscriptions is the real answer
+## PAYPAL — both paths shipped: the link (manual) and Subscriptions (recurring)
 
 Harvey set up PayPal instead of activating Stripe. **The dormant Stripe stack
 (checkout / signed webhook / portal) is Stripe-only and does not work with
-PayPal** — so PayPal is wired into the *manual* upgrade loop instead.
+PayPal**, so PayPal got its own two paths.
 
-**Shipped and live behind one secret.** Set any of these as Pages secrets on
-the `stampbench` project and PayPal turns on with no redeploy:
+### 1. The link path (2026-08-11) — manual, one secret
+
+Set any of these as Pages secrets on the `stampbench` project and it turns on:
 - `PAYPAL_ME` — a PayPal.me handle (`harveylegge`, `@harveylegge` or the full
   URL all work). The plan price is appended: `.../29GBP`.
 - `PAYPAL_LINK_STARTER` / `_PRO` / `_SCALE` — per-plan payment or subscription
   links; these win over `PAYPAL_ME` where set.
 
-What it changes: `POST /api/upgrade` now returns `payUrl`, the account page
-shows a **Pay £N with PayPal** button immediately instead of "we'll email
-you", `/api/billing/status` reports `{ enabled, paypal }`, and the operator
+What it changes: `POST /api/upgrade` returns `payUrl`, the account page shows a
+**Pay £N with PayPal** button instead of "we'll email you", and the operator
 email says *check PayPal first* with both PowerShell and bash activation
-commands. Activation is still a human step — a PayPal.me payment carries no
-reliable buyer reference, so nothing auto-grants a plan. That is deliberate.
+commands. Activation is a human step — a PayPal.me payment carries no reliable
+buyer reference, so nothing auto-grants a plan. That is deliberate.
 
-**The decision that matters (researched 2026-08-11, 4 agents against PayPal's
-published OpenAPI spec):** of the four PayPal products, **only PayPal
-Subscriptions actually recurs**. Payment links, PayPal.me, Invoicing and
-Standard Checkout are all *manual-repeat* — the customer must consciously pay
-again every month, and none of them emit a usable cancellation signal, so
-churn has to be inferred from absence with a cron job. For a £29/£99 self-serve
-tier that halves LTV versus card-on-file.
+### 2. PayPal Subscriptions (2026-08-12) — self-serve, recurring, SHIPPED
 
-If/when we want real MRR through PayPal, the target is:
-`POST /v1/catalogs/products` → `POST /v1/billing/plans` (×3, GBP, one currency
-per plan) → `/activate`; then a Worker route that calls
-`POST /v1/billing/subscriptions` with **`custom_id` = the Stampbench user id**
-(this is the only reliable link from a PayPal event back to an account) and
-302s the browser to the `approve` link. Grant on the webhook, never on
-`return_url`. Events: `BILLING.SUBSCRIPTION.ACTIVATED` (grant),
-`.CANCELLED` / `.SUSPENDED` / `.EXPIRED` (revoke),
-`PAYMENT.SALE.COMPLETED` (renewal — note it is SALE, not CAPTURE; capture is
-Orders v2 and several 2026 blogs get this wrong), `BILLING.SUBSCRIPTION.PAYMENT.FAILED`.
-Signature verification: `POST /v1/notifications/verify-webhook-signature` is
-an outbound call per webhook (fine on Workers, ~200-400ms); the local-crypto
-alternative needs hand-rolled CRC32 + X.509→SPKI parsing because WebCrypto
-`importKey` only takes `spki`. Requires a **Business** account; sandbox and
-live have entirely separate credentials, plan ids and webhook ids.
+Real MRR: the customer subscribes, PayPal bills monthly, the plan activates and
+revokes itself. Code is in `workers/api/src/paypal-subscriptions.ts` (pure
+decisions + REST client) and the routes/`syncPaypalSubscription` in
+`workers/api/src/index.ts`. **Dormant until the secrets below exist** — with
+none of them set, the site behaves exactly as it did before.
+
+**To switch it on (Harvey-only, ~15 minutes):**
+
+1. PayPal Developer dashboard → Apps & Credentials → create a REST app
+   (Business account required). Copy the client id and secret.
+2. Create the catalog product, the three GBP plans and the webhook:
+   ```
+   PAYPAL_CLIENT_ID=… PAYPAL_SECRET=… node workers/api/scripts/paypal-setup.mjs --sandbox
+   ```
+   Re-runnable (reuses anything already there by name), prints the exact
+   secrets block to paste. Drop `--sandbox` for live — **separate credentials,
+   plan ids and webhook id per environment; they never mix.**
+3. Apply the migration (adds `users.paypal_subscription_id`):
+   ```
+   npx wrangler d1 execute stampbench --remote --file=workers/api/migrations/003_paypal_subscriptions.sql
+   ```
+4. Paste `PAYPAL_CLIENT_ID`, `PAYPAL_SECRET`, `PAYPAL_WEBHOOK_ID`,
+   `PAYPAL_PLAN_STARTER/_PRO/_SCALE` (+ `PAYPAL_ENV=sandbox` while testing)
+   into the Pages project as encrypted variables, then deploy.
+5. Check `/api/billing/status` reports `"paypalSubscriptions": true`, and run
+   one sandbox subscription end to end before going live.
+
+**Routes.** `POST /api/billing/paypal/subscribe` (auth, same-origin) creates
+the subscription with `custom_id` = user id and returns the `approve` URL;
+`POST /api/billing/paypal/cancel` is the self-serve exit (PayPal has no hosted
+portal, so cancellation must live in our UI); `POST /api/paypal/webhook` is the
+entitlement authority. `return_url` is `/account?subscribed=paypal`, which only
+*polls* — it grants nothing, because anyone can visit it.
+
+**Invariants worth not relearning:**
+- **Only the verified webhook changes a plan.** Same rule as Stripe.
+- **Re-fetch, never trust the event body.** PayPal retries for days and does
+  not order deliveries, so every event triggers a `GET` of the subscription;
+  404 is treated as cancelled.
+- **Only `ACTIVE` entitles.** `APPROVED` means agreed-but-unpaid.
+- **Stale cancellations are ignored** — an event for a subscription that is not
+  the account's current one may never revoke (resubscribe races).
+- **PayPal never revokes a Stripe-entitled account** and vice versa; the two
+  are independent authorities over the same `plan` column.
+- **An unmapped `P-…` grants nothing** (fails to free) but is still recorded so
+  it stays cancellable, and it is logged loudly.
+- Plan → tier mapping is env config because PayPal billing plans carry no
+  metadata field. `custom_id` is the only reliable link back to an account.
+- Prices in `paypal-setup.mjs` are asserted against `lib/plans.ts` by a test.
+  PayPal plans are effectively immutable once subscribed — a real price change
+  means new plan ids and migrating existing subscribers.
+
+**Research behind it (2026-08-11, 4 agents against PayPal's published OpenAPI
+spec):** of the four PayPal products, **only Subscriptions actually recurs**.
+Payment links, PayPal.me, Invoicing and Standard Checkout are all
+*manual-repeat* — the customer must consciously pay again every month, and none
+emit a usable cancellation signal, so churn would have to be inferred from
+absence with a cron job. Renewals arrive as `PAYMENT.SALE.COMPLETED` — SALE,
+not CAPTURE; capture is Orders v2 and several 2026 blogs get this wrong.
+Signature verification is an outbound call to
+`/v1/notifications/verify-webhook-signature` (~200-400ms, fine on Workers); the
+local-crypto alternative needs hand-rolled CRC32 + X.509→SPKI parsing because
+WebCrypto `importKey` only takes `spki`. The verification request body splices
+the **raw** delivery bytes in verbatim: `JSON.parse` → `JSON.stringify` is not
+the identity function and silently breaks every genuine delivery.
 
 Fees to model honestly: ~2.9% + £0.30 domestic UK, **plus 1.29% (EEA) or 1.99%
 (rest of world)** — a dev tool sold in GBP takes a lot of US traffic, so budget
@@ -293,6 +337,20 @@ and `STRIPE_WEBHOOK_SECRET` and register the webhook endpoint for
 `checkout.session.completed` + `customer.subscription.*`. Until both secrets exist,
 `/api/billing/status` reports `enabled:false` and the pricing/account pages fall back
 to the manual Request path automatically.
+
+**PayPal Subscriptions BUILT 2026-08-12, DORMANT** — the recurring alternative to
+Stripe, same discipline (verified webhook is the only thing that changes a plan).
+Full switch-on instructions in the PAYPAL section above. Note the one piece of
+remote state it needs: migration
+`workers/api/migrations/003_paypal_subscriptions.sql` is **NOT yet applied to
+remote D1** — apply it before setting the secrets, or every subscription write
+fails on a missing column.
+
+**Upgrade routing** is a three-way fallback decided by `/api/billing/status` and
+`/api/auth/me`: Stripe cards if configured (instant + hosted portal), else PayPal
+subscriptions (recurring, self-serve), else the PayPal link, else the email loop.
+Each layer's copy matches what it actually does, so the page never promises a
+checkout that would 503.
 
 **The manual path still exists** as the fallback: user clicks Request → D1 row + email
 to Harvey → Harvey arranges payment → activates with the admin command in `.env.local`.

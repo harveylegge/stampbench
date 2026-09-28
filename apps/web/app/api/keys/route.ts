@@ -5,6 +5,7 @@ import { createApiKey, revokeApiKey } from '@/lib/api-keys';
 import { db } from '@/lib/db';
 import { apiError } from '@/lib/api';
 import { log } from '@/lib/log';
+import { guardMutation } from '@/lib/request-security';
 
 export const runtime = 'nodejs';
 
@@ -14,6 +15,8 @@ const MAX_ACTIVE_KEYS = 10;
 export async function POST(request: Request) {
   const user = await getCurrentUser();
   if (!user) return apiError(401, 'unauthenticated', 'Sign in first.');
+  const blocked = await guardMutation(request, 'api-key-create', { userId: user.id, limit: 5, windowMs: 60_000 });
+  if (blocked) return blocked;
 
   let name = 'Default';
   try {
@@ -42,6 +45,8 @@ export async function POST(request: Request) {
 export async function DELETE(request: Request) {
   const user = await getCurrentUser();
   if (!user) return apiError(401, 'unauthenticated', 'Sign in first.');
+  const blocked = await guardMutation(request, 'api-key-revoke', { userId: user.id, limit: 10, windowMs: 60_000 });
+  if (blocked) return blocked;
   let id: string;
   try {
     const body = z.object({ id: z.string().min(1) }).parse(await request.json());

@@ -151,6 +151,16 @@ export interface Market {
   adjective: string;
   /** One line on the homepage card. */
   tagline: string;
+  /**
+   * One line under the market's card in the invoice builder, written for
+   * someone making their first invoice. Deliberately not the format list that
+   * used to sit here: "EN 16931 (UBL) · XRechnung 3.0 (UBL) · Commercial
+   * invoice" is three unexplained terms in the first interaction of the
+   * beginner path, and choosing a market has never required understanding any
+   * of them. The formats themselves are unchanged and still selectable under
+   * Invoice settings once the editor is open.
+   */
+  pickerHint: string;
   /** Which profile the playground defaults to for this market. */
   profile: MarketProfile;
   /** Page headline. */
@@ -183,6 +193,7 @@ export const MARKETS: Record<MarketId, Market> = {
     short: 'UK',
     adjective: 'UK',
     tagline: 'EN 16931 validation for the invoices your customers and their portals ask for.',
+    pickerHint: 'Billing UK customers, or EU customers who ask for a structured invoice.',
     profile: 'en16931',
     headline: 'Stampbench for UK businesses',
     stance:
@@ -210,6 +221,7 @@ export const MARKETS: Record<MarketId, Market> = {
     short: 'US',
     adjective: 'US',
     tagline: 'Structured invoicing and validation for US businesses billing across borders.',
+    pickerHint: 'Billing US customers, or invoicing from the US into Europe.',
     profile: 'en16931',
     headline: 'Stampbench for US businesses',
     stance:
@@ -237,6 +249,7 @@ export const MARKETS: Record<MarketId, Market> = {
     short: 'EU',
     adjective: 'European',
     tagline: 'The EN 16931 core, plus the German CIUS in full depth.',
+    pickerHint: 'Billing customers anywhere in the EU.',
     profile: 'en16931',
     headline: 'Stampbench for the European Union',
     stance:
@@ -261,6 +274,7 @@ export const MARKETS: Record<MarketId, Market> = {
     short: 'Germany',
     adjective: 'German',
     tagline: 'XRechnung 3.0 and ZUGFeRD, 56 rules, with the failing line pointed at.',
+    pickerHint: 'Billing German customers, including public authorities.',
     profile: 'xrechnung',
     headline: 'Stampbench for Germany — XRechnung and ZUGFeRD',
     stance:
@@ -282,6 +296,7 @@ export const MARKETS: Record<MarketId, Market> = {
     short: 'Multi-market',
     adjective: 'multi-market',
     tagline: 'Compare what Stampbench covers everywhere, side by side.',
+    pickerHint: 'Not sure yet — compare what is covered where.',
     profile: 'en16931',
     headline: 'Stampbench across markets',
     stance:

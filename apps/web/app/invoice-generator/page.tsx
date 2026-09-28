@@ -27,7 +27,15 @@ export const metadata: Metadata = {
 export default function InvoiceGeneratorPage() {
   return (
     <div className="mx-auto max-w-6xl px-4 py-8 sm:py-10">
-      <h1 className="mb-6 text-2xl font-semibold tracking-tight sm:text-3xl">Create an invoice</h1>
+      <h1 className="mb-1.5 text-2xl font-semibold tracking-tight sm:text-3xl">Create an invoice</h1>
+      {/* One line, and it answers the three questions a first-time visitor
+          actually has: is this free, will it work, where does my data go. It
+          does not name a standard — the point of this page is that they never
+          have to learn one. */}
+      <p className="mb-6 max-w-2xl text-sm leading-relaxed text-muted">
+        Add your business, customer and work details. We handle the totals and prepare a PDF ready
+        to send. Free, no account needed, and your draft stays in your browser.
+      </p>
 
       <InvoiceGenerator />
 
@@ -36,23 +44,51 @@ export default function InvoiceGeneratorPage() {
           <div>
             <h2 className="mb-2 text-lg font-semibold tracking-tight">What this does</h2>
             <p className="text-sm leading-relaxed text-muted">
-              Build the invoice, and Stampbench checks it against the ruleset for your market in the same
-              step — {RULE_COUNTS.en16931} rules for the European core, {RULE_COUNTS.xrechnung} for the
-              German profile. Totals are computed in exact minor units, so the figure on screen is the
-              figure in the file.
+              You fill in your details, your customer and what you are charging for. Stampbench works
+              out the VAT and the totals exactly, checks the invoice against the e-invoicing
+              requirements that apply where you bill, and tells you in plain English if anything is
+              missing — before you send it.
             </p>
           </div>
           <div>
             <h2 className="mb-2 text-lg font-semibold tracking-tight">Where it runs</h2>
             <p className="text-sm leading-relaxed text-muted">
-              In your browser. The engine is an open-source npm package, so the invoice is never uploaded
-              and the draft is kept only in this browser. No account is needed to create, validate or
-              export one.
+              In your browser. The invoice is never uploaded, and the draft is kept only on this
+              device. No account is needed to create one, check it or download it.
             </p>
           </div>
         </div>
 
-        <p className="mt-8 text-sm text-faint">
+        {/* The technical account of the same paragraph, for whoever wants it —
+            and the bridge to the developer product, stated once. */}
+        <details className="mt-8 rounded-xl border border-border bg-surface p-5">
+          <summary className="cursor-pointer list-none text-sm font-medium">
+            Technical details
+            <span className="ml-1.5 text-xs font-normal text-faint">
+              standards, rules and formats
+            </span>
+          </summary>
+          <div className="mt-4 space-y-3 border-t border-border pt-4 text-sm leading-relaxed text-muted">
+            <p>
+              Invoices are validated against EN 16931 — {RULE_COUNTS.en16931} rules in the European
+              core profile, {RULE_COUNTS.xrechnung} under the German XRechnung 3.0 CIUS, selected by
+              the market you chose. Output is UBL 2.1. Totals and the VAT breakdown are computed in
+              exact minor units from your lines, so the BR-CO arithmetic rules pass by construction
+              and the figure on screen is the figure in the file.
+            </p>
+            <p>
+              The engine is <code className="font-mono text-xs">@stampbench/core</code>, an
+              MIT-licensed npm package running client-side on this page. The same validation and
+              generation are available as a library, a CLI and a hosted REST API —{' '}
+              <Link href="/developers" className="text-accent-hi hover:underline">
+                see the developer platform
+              </Link>
+              .
+            </p>
+          </div>
+        </details>
+
+        <p className="mt-6 text-sm text-faint">
           Per-market detail:{' '}
           {PAGE_MARKETS.map((id, index) => (
             <span key={id}>

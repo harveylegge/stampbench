@@ -1,7 +1,7 @@
 <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 64 64" fill="none">
   <defs>
     <linearGradient id="p" x1="12" y1="13" x2="52" y2="37" gradientUnits="userSpaceOnUse">
-      <stop stop-color="#7B57F6"/><stop offset="1" stop-color="#5B2BD6"/>
+      <stop stop-color="#F06443"/><stop offset="1" stop-color="#DC482A"/>
     </linearGradient>
   </defs>
   <path d="M52 25 V19 Q52 13 46 13 H18 Q12 13 12 19 V31 Q12 37 18 37 H40"

@@ -5,14 +5,16 @@ import { redirect } from 'next/navigation';
 import { cache } from 'react';
 import bcrypt from 'bcryptjs';
 import { db } from './db';
-import { env, insecureProductionSecret } from './env';
+import { assertProductionSecrets, env, insecureProductionSecret } from './env';
 import { log } from './log';
 
 const SESSION_COOKIE = 'ig_session';
-const SESSION_DAYS = 30;
+const SESSION_DAYS = 14;
+const MAX_SESSIONS_PER_USER = 5;
 
 /** Hash a session token with the server pepper before storage. */
 export function hashToken(token: string): string {
+  assertProductionSecrets();
   if (insecureProductionSecret()) {
     // Fail loudly rather than run production auth on a known secret.
     throw new Error('SESSION_SECRET must be set in production.');
@@ -21,6 +23,7 @@ export function hashToken(token: string): string {
 }
 
 export async function hashPassword(password: string): Promise<string> {
+  assertProductionSecrets();
   return bcrypt.hash(password, 12);
 }
 
@@ -36,11 +39,23 @@ export function safeEqualHex(a: string, b: string): boolean {
 }
 
 export async function createSession(userId: string): Promise<void> {
+  assertProductionSecrets();
   const token = randomBytes(32).toString('hex');
   const expiresAt = new Date(Date.now() + SESSION_DAYS * 24 * 60 * 60 * 1000);
   await db.session.create({
     data: { tokenHash: hashToken(token), userId, expiresAt },
   });
+  // Bound the damage from forgotten/shared devices and remove expired tokens.
+  const sessions = await db.session.findMany({
+    where: { userId },
+    orderBy: { createdAt: 'desc' },
+    select: { id: true, expiresAt: true },
+  });
+  const now = new Date();
+  const remove = sessions
+    .filter((session, index) => session.expiresAt <= now || index >= MAX_SESSIONS_PER_USER)
+    .map((session) => session.id);
+  if (remove.length) await db.session.deleteMany({ where: { id: { in: remove } } });
   const jar = await cookies();
   jar.set(SESSION_COOKIE, token, {
     httpOnly: true,
@@ -48,6 +63,7 @@ export async function createSession(userId: string): Promise<void> {
     sameSite: 'lax',
     path: '/',
     expires: expiresAt,
+    priority: 'high',
   });
 }
 
@@ -107,7 +123,7 @@ export async function requireUser(): Promise<CurrentUser> {
   return user;
 }
 
-export async function registerUser(email: string, password: string, name?: string) {
+export async function registerUser(email: string, password: string, name?: string, termsVersion = '2026-09-28') {
   const existing = await db.user.findUnique({ where: { email } });
   if (existing) return { error: 'An account with this email already exists.' as const };
   const passwordHash = await hashPassword(password);
@@ -116,11 +132,11 @@ export async function registerUser(email: string, password: string, name?: strin
   // account is admin ONLY when its email matches — so an attacker can't grab
   // admin by racing to register first. Without email verification we must not
   // grant admin on an email match alone at any other time.
-  const userCount = await db.user.count();
-  const isFirst = userCount === 0;
-  const role = isFirst && (!env.adminEmail || email === env.adminEmail) ? 'admin' : 'user';
+  // Admin rights are configuration-driven. Public registration can never win
+  // an "I was first" race and turn itself into an administrator.
+  const role = env.adminEmail && email === env.adminEmail.toLowerCase() ? 'admin' : 'user';
   const user = await db.user.create({
-    data: { email, passwordHash, name: name ?? null, role },
+    data: { email, passwordHash, name: name ?? null, role, termsAcceptedAt: new Date(), termsVersion },
   });
   log.info('user.registered', { userId: user.id, role });
   await createSession(user.id);

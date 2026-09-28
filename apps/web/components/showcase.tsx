@@ -1,7 +1,7 @@
 'use client';
 
 import Link from 'next/link';
-import { useState } from 'react';
+import { useRef, useState } from 'react';
 import type { Copy } from '@/lib/copy';
 
 /**
@@ -94,23 +94,51 @@ function CreatePanel({ copy }: { copy: Copy }) {
   );
 }
 
+/**
+ * The check panel, and the one animated moment on the site.
+ *
+ * A sweep crosses the document, the verdict resolves from "checking" to the
+ * count, and each finding lands with its rule id a beat behind it. Every class
+ * involved is inert below 1024px and under prefers-reduced-motion, and the CSS
+ * only ever animates *towards* the finished state — so with no animation at
+ * all this renders exactly as it did before, fully legible.
+ *
+ * The pending label is aria-hidden: it is a visual beat, not information, and
+ * a screen reader announcing "Checking… 2 problems found" from a static
+ * illustration would be a lie about what is happening.
+ */
 function CheckPanel({ copy }: { copy: Copy }) {
   const t = copy.showcase.check;
   return (
     <Chrome title="invoice.xml">
-      <div className="p-5 sm:p-7">
+      <div className="sb-scan p-5 sm:p-7">
         <div className="mb-4 flex flex-wrap items-center gap-3">
-          <span className="rounded-full bg-danger/10 px-3 py-1 text-sm font-medium text-danger">
-            {t.verdict}
+          <span className="sb-verdict">
+            <span
+              aria-hidden
+              className="sb-verdict-pending rounded-full bg-surface-2 px-3 py-1 text-sm font-medium text-faint"
+            >
+              {t.checking}
+            </span>
+            <span className="sb-verdict-done rounded-full bg-danger/10 px-3 py-1 text-sm font-medium text-danger">
+              {t.verdict}
+            </span>
           </span>
           <span className="font-mono text-xs text-faint">{t.rulesetLine}</span>
         </div>
         <div className="flex flex-col gap-3">
-          {t.problems.map((problem) => (
-            <div key={problem.title} className="rounded-lg border border-border bg-bg p-3.5">
+          {t.problems.map((problem, index) => (
+            <div
+              key={problem.title}
+              style={{ '--sb-i': index } as React.CSSProperties}
+              className="sb-finding rounded-lg border border-border bg-bg p-3.5"
+            >
               <div className="mb-1 flex flex-wrap items-center gap-2">
                 <span className="text-sm font-medium">{problem.title}</span>
-                <span className="rounded bg-surface-2 px-1.5 py-0.5 font-mono text-[10px] text-faint">
+                <span
+                  style={{ '--sb-i': index } as React.CSSProperties}
+                  className="sb-rule rounded bg-surface-2 px-1.5 py-0.5 font-mono text-[10px] text-faint"
+                >
                   {problem.rule}
                 </span>
               </div>
@@ -118,7 +146,7 @@ function CheckPanel({ copy }: { copy: Copy }) {
             </div>
           ))}
         </div>
-        <p className="mt-4 text-xs leading-relaxed text-faint">{t.footnote}</p>
+        <p className="sb-footnote mt-4 text-xs leading-relaxed text-faint">{t.footnote}</p>
       </div>
     </Chrome>
   );
@@ -178,7 +206,31 @@ function AutomatePanel({ copy }: { copy: Copy }) {
 
 export function ProductShowcase({ copy }: { copy: Copy }) {
   const [tab, setTab] = useState<TabId>('create');
+  /** Bumped to remount the panel, which is what restarts its CSS animation. */
+  const [replay, setReplay] = useState(0);
+  const running = useRef(false);
   const tabs = copy.showcase.tabs;
+
+  /**
+   * Hovering the check panel runs the validator again.
+   *
+   * Guarded by a flag rather than by pointer position: without it, a mouse
+   * crossing the panel would restart the sequence on every re-entry and the
+   * findings would never finish landing. The guard clears a beat after the
+   * last one does, so a second pass is always a deliberate return.
+   *
+   * Hover is the right trigger precisely because it does not exist on touch —
+   * this costs a phone visitor nothing, which is the same reason the CSS is
+   * scoped to wide viewports.
+   */
+  function replayCheck() {
+    if (tab !== 'check' || running.current) return;
+    running.current = true;
+    setReplay((n) => n + 1);
+    window.setTimeout(() => {
+      running.current = false;
+    }, 2500);
+  }
 
   return (
     <section className="mx-auto max-w-5xl px-4 pb-4">
@@ -209,14 +261,16 @@ export function ProductShowcase({ copy }: { copy: Copy }) {
         })}
       </div>
 
-      {/* key={tab} remounts on switch so the crossfade replays; the panel is
+      {/* The key remounts on switch so the crossfade replays, and on hover of
+          the check panel so its validator sequence runs again; the panel is
           otherwise identical markup. */}
       <div
-        key={tab}
+        key={`${tab}-${replay}`}
         role="tabpanel"
         id={`showcase-panel-${tab}`}
         aria-labelledby={`showcase-tab-${tab}`}
         tabIndex={0}
+        onMouseEnter={replayCheck}
         className="sb-panel-in"
       >
         {tab === 'create' && <CreatePanel copy={copy} />}

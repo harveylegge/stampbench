@@ -29,6 +29,7 @@ import {
   AI_GLOBAL_MONTHLY_CAP,
   FEATURE_LIMITS,
   PLANS,
+  backupLimit,
   currentPeriodKey,
   featureLimit,
   planFor,
@@ -37,10 +38,35 @@ import {
 } from '../../../apps/web/lib/plans';
 import { paypalLink } from './paypal';
 import {
+  approvalUrl,
+  isSubscriptionEvent,
+  paypalPlanIdFor,
+  paypalRequest,
+  paypalSubscriptionEntitles,
+  paypalWebhookVerified,
+  planFromPaypalPlanId,
+  readSignatureHeaders,
+  revokeApplies,
+  subscriptionIdFromEvent,
+  type PaypalCreds,
+  type PaypalJson,
+  type PaypalPlanIds,
+} from './paypal-subscriptions';
+import {
   planFromSubscription,
   stripeSignatureValid,
   subscriptionEntitles,
 } from './stripe';
+import { checkUsersSchema, schemaFailureMessage } from './schema';
+import {
+  autoInvoiceId,
+  buildAutoDraft,
+  decideHookAction,
+  parsePaymentEvent,
+  type InvoiceCandidate,
+} from './payment-hook';
+import { chatSystemPrompt, sanitizeChatTurns } from './assistant';
+import { analyticsDay, countablePath } from './analytics';
 import {
   clearSessionCookie,
   clearSessionMarkerCookie,
@@ -64,6 +90,12 @@ export interface Env {
   MAILER?: Fetcher;
   JWT_SECRET: string;
   ADMIN_SECRET: string;
+  /**
+   * New paid checkouts stay off unless this is explicitly set to "true".
+   * Existing billing webhooks and cancellation routes remain available so a
+   * paused launch can still process or end an existing subscription safely.
+   */
+  BILLING_LIVE?: string;
   /** Unset = AI explanations disabled site-wide; the UI hides the button. */
   ANTHROPIC_API_KEY?: string;
   /** Override the explanation model; defaults to Haiku per the cost budget. */
@@ -89,10 +121,33 @@ export interface Env {
   PAYPAL_LINK_STARTER?: string;
   PAYPAL_LINK_PRO?: string;
   PAYPAL_LINK_SCALE?: string;
+  /**
+   * PayPal Subscriptions — the self-serve recurring path.
+   *
+   * Unlike the link above, these ARE secrets. Set all of CLIENT_ID, SECRET,
+   * WEBHOOK_ID and at least one PLAN id and self-serve subscriptions switch on;
+   * leave any of them unset and the site falls back to the link, then to the
+   * email loop, without shipping a button that 503s.
+   *
+   * Everything is created by `scripts/paypal-setup.mjs`, which prints these
+   * values. Sandbox and live are entirely separate universes — different
+   * credentials, different plan ids, different webhook id — so PAYPAL_ENV must
+   * match the credentials or every call fails in a confusing way.
+   */
+  PAYPAL_CLIENT_ID?: string;
+  PAYPAL_SECRET?: string;
+  /** Required whenever the credentials are set — unverified webhooks are refused. */
+  PAYPAL_WEBHOOK_ID?: string;
+  /** 'sandbox' to point at PayPal's test environment; anything else is live. */
+  PAYPAL_ENV?: string;
+  PAYPAL_PLAN_STARTER?: string;
+  PAYPAL_PLAN_PRO?: string;
+  PAYPAL_PLAN_SCALE?: string;
 }
 
 /** The public PayPal link for a plan, or null when PayPal is not configured. */
 function paypalLinkFor(env: Env, plan: PlanId): string | null {
+  if (!billingLaunchEnabled(env)) return null;
   return paypalLink(
     {
       me: env.PAYPAL_ME,
@@ -106,11 +161,65 @@ function paypalLinkFor(env: Env, plan: PlanId): string | null {
 
 /** True when any PayPal route is configured, for the UI's copy decisions. */
 function paypalConfigured(env: Env): boolean {
-  return Boolean(env.PAYPAL_ME || env.PAYPAL_LINK_STARTER || env.PAYPAL_LINK_PRO || env.PAYPAL_LINK_SCALE);
+  return billingLaunchEnabled(env) && Boolean(env.PAYPAL_ME || env.PAYPAL_LINK_STARTER || env.PAYPAL_LINK_PRO || env.PAYPAL_LINK_SCALE);
+}
+
+/** One deliberate production switch controls whether visitors can start payments. */
+function billingLaunchEnabled(env: Env): boolean {
+  return env.BILLING_LIVE === 'true';
+}
+
+/** API credentials, or null when PayPal Subscriptions is not configured. */
+function paypalCreds(env: Env): PaypalCreds | null {
+  if (!env.PAYPAL_CLIENT_ID || !env.PAYPAL_SECRET) return null;
+  return {
+    clientId: env.PAYPAL_CLIENT_ID,
+    secret: env.PAYPAL_SECRET,
+    env: env.PAYPAL_ENV === 'sandbox' ? 'sandbox' : 'live',
+  };
+}
+
+function paypalPlanIds(env: Env): PaypalPlanIds {
+  return {
+    starter: env.PAYPAL_PLAN_STARTER,
+    pro: env.PAYPAL_PLAN_PRO,
+    scale: env.PAYPAL_PLAN_SCALE,
+  };
+}
+
+/**
+ * True when the whole self-serve subscription path is usable.
+ *
+ * The webhook id is part of the condition on purpose. Without it no delivery
+ * can be verified, so subscriptions would be created that could never activate
+ * an account — the customer pays, nothing happens, and the first anyone knows
+ * is a support email. Refusing to offer the button is the better failure.
+ */
+function paypalSubscriptionsEnabled(env: Env): boolean {
+  if (!billingLaunchEnabled(env)) return false;
+  if (!paypalCreds(env) || !env.PAYPAL_WEBHOOK_ID) return false;
+  const plans = paypalPlanIds(env);
+  return Boolean(plans.starter || plans.pro || plans.scale);
 }
 
 const MAX_BODY = 1_500_000; // ~1.5 MB — the largest official test invoice is far smaller
 const NEUTRAL_AUTH_ERROR = 'Email or password is incorrect.';
+
+/**
+ * Refuse any billing path when the D1 schema this worker was built against is
+ * missing columns the code will silently corrupt via `SELECT *`. On the
+ * 2026-08-17 near-miss the migration for `paypal_subscription_id` had not run;
+ * a real buyer would have been charged and stranded on Free forever. Failing
+ * loud here means the very first request after a bad deploy makes the gap
+ * obvious to the operator, instead of surfacing when money moves.
+ */
+async function requireBillingSchema(env: Env): Promise<Response | null> {
+  const check = await checkUsersSchema(env.DB);
+  if (check.ok) return null;
+  const message = schemaFailureMessage(check);
+  console.error('billing refused: schema drift', message);
+  return fail(503, 'schema_drift', message);
+}
 
 type Json = Record<string, unknown>;
 
@@ -214,6 +323,19 @@ interface UserRow {
   stripe_customer_id?: string | null;
   /** Set only while a subscription is actually entitling the account. */
   stripe_subscription_id?: string | null;
+  /**
+   * The account's PayPal subscription (`I-…`). Set when one is created, and
+   * kept while it entitles the account so cancellation has something to act
+   * on; cleared when the subscription stops entitling.
+   */
+  paypal_subscription_id?: string | null;
+  /**
+   * SHA-256 hash of the inbound payment-webhook token (auto-invoicing), or
+   * null when none is configured. Requires migration 005 — without it the
+   * configure endpoint fails loudly on the missing column, which is the
+   * intended signal rather than a silent undefined.
+   */
+  payment_hook_hash?: string | null;
 }
 
 async function sessionUser(request: Request, env: Env): Promise<UserRow | null> {
@@ -272,11 +394,14 @@ async function meResponse(env: Env, user: UserRow, setCookies?: string[]): Promi
     usage: await usageSummary(env, user),
     pendingUpgrade: (pending?.plan as PlanId | undefined) ?? null,
     // Drives the account page: a card-paying customer gets "Manage billing"
-    // (Stripe's portal), everyone else gets the upgrade options.
+    // (Stripe's portal), a PayPal subscriber gets "Cancel subscription", and
+    // everyone else gets the upgrade options.
     billing: {
       enabled: !!(env.STRIPE_SECRET_KEY && env.STRIPE_WEBHOOK_SECRET),
       subscribed: !!user.stripe_subscription_id,
       hasCustomer: !!user.stripe_customer_id,
+      paypalSubscriptions: paypalSubscriptionsEnabled(env),
+      paypalSubscribed: !!user.paypal_subscription_id,
     },
   });
   for (const cookie of setCookies ?? []) res.headers.append('Set-Cookie', cookie);
@@ -296,6 +421,9 @@ async function handleRegister(request: Request, env: Env): Promise<Response> {
   const body = await readJson(request);
   const email = String(body?.email ?? '').trim().toLowerCase();
   const password = String(body?.password ?? '');
+  const termsAccepted = body?.termsAccepted === true;
+  const termsVersion = String(body?.termsVersion ?? '').slice(0, 32);
+  if (!termsAccepted) return fail(400, 'terms_required', 'Agree to the Terms and Privacy Policy to create an account.');
   if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) return fail(400, 'invalid_email', 'Enter a valid email address.');
   if (email.length > 254) return fail(400, 'invalid_email', 'Enter a valid email address.');
   if (password.length < 10) return fail(400, 'weak_password', 'Password must be at least 10 characters.');
@@ -310,9 +438,9 @@ async function handleRegister(request: Request, env: Env): Promise<Response> {
   const id = crypto.randomUUID();
   const now = Date.now();
   await env.DB.prepare(
-    'INSERT INTO users (id, email, pw_hash, pw_salt, plan, created_at) VALUES (?, ?, ?, ?, ?, ?)',
+    'INSERT INTO users (id, email, pw_hash, pw_salt, plan, created_at, terms_accepted_at, terms_version) VALUES (?, ?, ?, ?, ?, ?, ?, ?)',
   )
-    .bind(id, email, hash, salt, 'free', now)
+    .bind(id, email, hash, salt, 'free', now, now, termsVersion || '2026-09-28')
     .run();
   const user: UserRow = { id, email, pw_hash: hash, pw_salt: salt, plan: 'free', created_at: now };
   return meResponse(env, user, [
@@ -452,6 +580,96 @@ async function handleShare(request: Request, env: Env, user: UserRow, origin: st
     .bind(id, user.id, JSON.stringify(body.payload), Date.now())
     .run();
   return json({ id, url: `${origin}/report?id=${id}` });
+}
+
+/**
+ * Account-saved invoices — the browser's "My invoices" list, backed up.
+ *
+ * Strictly opt-in, because the site promises invoices stay in the browser
+ * unless you choose otherwise. The payload is the builder's draft JSON,
+ * stored verbatim and returned verbatim: this worker never parses, edits or
+ * even understands an invoice — it keeps what the browser chose to save, for
+ * that account only. Summary columns exist purely so the list can render
+ * without shipping every payload. Logos are stripped client-side before
+ * upload, which keeps rows small.
+ *
+ * These same rows are where auto-created invoices (from payments or
+ * forwarded emails) will land later, with a status that says who made them.
+ *
+ * The archive is rolling, sized by plan (BACKUP_LIMITS): saving never fails
+ * over the limit — the oldest entries fall off instead, and the UI says so.
+ */
+const MAX_INVOICE_PAYLOAD = 400_000;
+
+/** Clip a client-sent summary field: display data, never trusted for length. */
+function summaryField(value: unknown, max: number): string {
+  return typeof value === 'string' ? value.slice(0, max) : '';
+}
+
+async function handleSaveInvoice(request: Request, env: Env, user: UserRow, id: string): Promise<Response> {
+  if (!(await rateLimit(env, 'invoice-save', user.id, 90, 60_000))) return TOO_MANY(60);
+  const body = await readJson(request);
+  const payload = body?.payload;
+  if (typeof payload !== 'string' || payload.length === 0 || payload.length > MAX_INVOICE_PAYLOAD) {
+    return fail(400, 'bad_request', 'Provide { "payload": "<draft JSON>" } under 400 kB.');
+  }
+  try {
+    JSON.parse(payload);
+  } catch {
+    return fail(400, 'bad_request', 'The payload is not valid JSON.');
+  }
+
+  // Ids are client-generated so the browser list and the account stay in step,
+  // which means an id must never silently adopt a row that is not yours.
+  const existing = await env.DB.prepare('SELECT user_id FROM invoices WHERE id = ?')
+    .bind(id)
+    .first<{ user_id: string }>();
+  if (existing && existing.user_id !== user.id) {
+    return fail(403, 'forbidden', 'That invoice id belongs to another account.');
+  }
+
+  const now = Date.now();
+  await env.DB.prepare(
+    `INSERT INTO invoices (id, user_id, number, customer, total, currency, market, status, payload, created_at, updated_at)
+     VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+     ON CONFLICT(id) DO UPDATE SET
+       number = excluded.number, customer = excluded.customer, total = excluded.total,
+       currency = excluded.currency, market = excluded.market,
+       -- An auto-created row (id 'wh…') is a record of a received payment.
+       -- A stale browser push that has not yet learned it was paid must not
+       -- silently revert it to 'created'; keep the server's stronger status.
+       status = CASE WHEN invoices.id LIKE 'wh%' AND excluded.status = 'created'
+                     THEN invoices.status ELSE excluded.status END,
+       payload = excluded.payload, updated_at = excluded.updated_at`,
+  )
+    .bind(
+      id,
+      user.id,
+      summaryField(body?.number, 80),
+      summaryField(body?.customer, 160),
+      summaryField(body?.total, 40),
+      summaryField(body?.currency, 8),
+      summaryField(body?.market, 16),
+      summaryField(body?.status, 16) || 'created',
+      payload,
+      now,
+      now,
+    )
+    .run();
+
+  // Rolling archive, scoped to browser-saved rows ONLY (not the 'wh…' auto
+  // rows, which are trimmed on their own window in handlePaymentHook). Keeping
+  // the two buckets separate is what stops webhook invoices and user-saved
+  // invoices from evicting each other. The browser's own list is untouched.
+  await env.DB.prepare(
+    `DELETE FROM invoices WHERE user_id = ? AND id NOT LIKE 'wh%' AND id NOT IN (
+       SELECT id FROM invoices WHERE user_id = ? AND id NOT LIKE 'wh%' ORDER BY updated_at DESC LIMIT ?
+     )`,
+  )
+    .bind(user.id, user.id, backupLimit(user.plan))
+    .run();
+
+  return json({ ok: true, id, keeps: backupLimit(user.plan) });
 }
 
 async function handleUpgrade(request: Request, env: Env, user: UserRow): Promise<Response> {
@@ -672,6 +890,175 @@ async function handleAiDraft(request: Request, env: Env, user: UserRow): Promise
   }
 }
 
+/**
+ * The Stampbench assistant — multi-turn chat, paid plans only.
+ *
+ * The plan gate comes before everything else and is the point: Free keeps its
+ * five explain/draft credits, but the assistant is a paid feature, enforced
+ * here where it costs money, not just in the widget. Metering and the
+ * refund-on-failure behaviour are the explainer's, from the same credit jar.
+ */
+async function handleAiChat(request: Request, env: Env, user: UserRow): Promise<Response> {
+  if (!env.ANTHROPIC_API_KEY) {
+    return fail(503, 'disabled', 'The assistant is not enabled yet.');
+  }
+  const plan = planFor(user.plan);
+  if (plan.id === 'free') {
+    return fail(402, 'plan', 'The assistant is part of paid plans — upgrade to use it.');
+  }
+  const body = await readJson(request);
+  const turns = sanitizeChatTurns(body?.messages);
+  if (!turns) return fail(400, 'bad_request', 'Provide { "messages": [{ "role", "content" }, …] } ending with a user turn.');
+
+  if (!(await meterGlobalAi(env))) {
+    return fail(503, 'pool_empty', 'The monthly AI allowance is used up site-wide — back next month.');
+  }
+  // meter() can throw on a transient D1 error; if it does, the global unit is
+  // already spent and must be refunded, matching the try-block's discipline.
+  let spent: number | null;
+  try {
+    spent = await meter(env, user.id, user.plan, 'ai');
+  } catch (e) {
+    await unmeter(env, '__global__', 'ai');
+    console.error('ai chat meter failed', e);
+    return fail(502, 'upstream', 'The assistant had a hiccup — your quota was not charged. Try again.');
+  }
+  if (spent === null) {
+    await unmeter(env, '__global__', 'ai');
+    return fail(402, 'quota', `AI credits used up for this month (${featureLimit(user.plan, 'ai')} on ${plan.name}). Upgrade for more.`);
+  }
+
+  try {
+    const client = new Anthropic({ apiKey: env.ANTHROPIC_API_KEY });
+    const response = await client.messages.create({
+      model: env.AI_MODEL ?? 'claude-haiku-4-5',
+      max_tokens: 1024,
+      system: chatSystemPrompt(plan.name),
+      messages: turns,
+    });
+    const text = response.content
+      .filter((block): block is Anthropic.TextBlock => block.type === 'text')
+      .map((block) => block.text)
+      .join('\n')
+      .trim();
+    if (!text) throw new Error('empty completion');
+    return json({ reply: text });
+  } catch (e) {
+    await unmeter(env, '__global__', 'ai');
+    await unmeter(env, user.id, 'ai');
+    console.error('ai chat failed', e);
+    return fail(502, 'upstream', 'The assistant had a hiccup — your quota was not charged. Try again.');
+  }
+}
+
+// ---------------------------------------------------------------- payment hook
+
+/**
+ * Manage the account's inbound payment-webhook URL (see payment-hook.ts for
+ * what deliveries do). One hook per account; the token is returned exactly
+ * once and stored hashed, like an API key. Paid plans only — auto-invoicing
+ * is continuity/automation, which is what a plan buys, and a Free account's
+ * 10-row rolling archive would silently eat webhook-created rows anyway.
+ */
+async function handleCreatePaymentHook(env: Env, user: UserRow, origin: string): Promise<Response> {
+  if (planFor(user.plan).id === 'free') {
+    return fail(402, 'plan', 'Auto-invoicing is part of paid plans — upgrade to switch it on.');
+  }
+  const bytes = crypto.getRandomValues(new Uint8Array(20));
+  const token = 'sbwh_' + [...bytes].map((b) => b.toString(16).padStart(2, '0')).join('');
+  await env.DB.prepare('UPDATE users SET payment_hook_hash = ? WHERE id = ?')
+    .bind(await sha256Hex(token), user.id)
+    .run();
+  return json({ url: `${origin}/api/hooks/payment/${token}` });
+}
+
+/**
+ * One inbound payment delivery. Sits above the origin gate — providers send
+ * no Origin header — so the secret token in the path is the whole of the
+ * authentication, compared by hash. Responses are 200 even for "ignored"
+ * outcomes, because a non-2xx teaches providers to retry forever.
+ */
+async function handlePaymentHook(request: Request, env: Env, token: string): Promise<Response> {
+  const tokenHash = await sha256Hex(token);
+  if (!(await rateLimit(env, 'payment-hook', tokenHash.slice(0, 16), 120, 60_000))) return TOO_MANY(60);
+
+  const user = await env.DB.prepare('SELECT * FROM users WHERE payment_hook_hash = ?')
+    .bind(tokenHash)
+    .first<UserRow>();
+  if (!user) return fail(404, 'not_found', 'No such webhook.');
+  if (planFor(user.plan).id === 'free') {
+    // A downgraded account's hook goes quiet rather than erroring: the
+    // provider keeps delivering happily and nothing lands.
+    return json({ ok: false, action: 'ignored', reason: 'plan' });
+  }
+
+  const body = await readJson(request);
+  if (!body) return fail(400, 'bad_request', 'Send a JSON body.');
+  const event = parsePaymentEvent(body);
+  if (!event) {
+    // Unrecognised event types are normal provider chatter, not failures.
+    return json({ ok: false, action: 'ignored', reason: 'unrecognised' });
+  }
+
+  if (event.invoiceNumber) {
+    const rows = await env.DB.prepare(
+      'SELECT id, number, status FROM invoices WHERE user_id = ? ORDER BY updated_at DESC',
+    )
+      .bind(user.id)
+      .all<InvoiceCandidate>();
+    const decision = decideHookAction(event, rows.results ?? []);
+    if (decision.action === 'already_paid') return json({ ok: true, action: 'already_paid', id: decision.id });
+    if (decision.action === 'mark_paid') {
+      await env.DB.prepare('UPDATE invoices SET status = ?, updated_at = ? WHERE id = ? AND user_id = ?')
+        .bind('paid', Date.now(), decision.id, user.id)
+        .run();
+      return json({ ok: true, action: 'marked_paid', id: decision.id });
+    }
+  }
+
+  // No reference → a random nonce, so two genuinely distinct same-amount
+  // payments never collapse to one row (they would silently drop money);
+  // with a reference the id is deterministic and retries stay idempotent.
+  const id = await autoInvoiceId(user.id, event, crypto.randomUUID());
+  const draft = buildAutoDraft(event, new Date(), id);
+  const now = Date.now();
+  // INSERT OR IGNORE is the idempotency: a redelivered event with a reference
+  // computes the same id and bounces off the primary key instead of duplicating.
+  const inserted = await env.DB.prepare(
+    `INSERT OR IGNORE INTO invoices (id, user_id, number, customer, total, currency, market, status, payload, created_at, updated_at)
+     VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
+  )
+    .bind(
+      id,
+      user.id,
+      draft.document.number.slice(0, 80),
+      draft.buyer.name.slice(0, 160),
+      `${event.amount} ${event.currency}`.slice(0, 40),
+      event.currency.slice(0, 8),
+      draft.market.slice(0, 16),
+      'auto',
+      JSON.stringify(draft),
+      now,
+      now,
+    )
+    .run();
+  if (!inserted.meta.changes) return json({ ok: true, action: 'duplicate', id });
+
+  // Rolling archive, scoped to auto rows ONLY (id prefix 'wh', which survives
+  // the status round-trip through the browser). A flood of webhook payments —
+  // or a leaked hook URL — must never evict a user's own saved invoices, which
+  // are trimmed on their own separate window in handleSaveInvoice.
+  await env.DB.prepare(
+    `DELETE FROM invoices WHERE user_id = ? AND id LIKE 'wh%' AND id NOT IN (
+       SELECT id FROM invoices WHERE user_id = ? AND id LIKE 'wh%' ORDER BY updated_at DESC LIMIT ?
+     )`,
+  )
+    .bind(user.id, user.id, backupLimit(user.plan))
+    .run();
+
+  return json({ ok: true, action: 'created', id });
+}
+
 // ---------------------------------------------------------------- billing
 
 /**
@@ -818,9 +1205,11 @@ async function stripeCustomerFor(env: Env, user: UserRow): Promise<string | null
  * "paid but no account" state to reconcile by hand.
  */
 async function handleCheckout(request: Request, env: Env, user: UserRow, origin: string): Promise<Response> {
-  if (!env.STRIPE_SECRET_KEY) {
+  if (!billingLaunchEnabled(env) || !env.STRIPE_SECRET_KEY) {
     return fail(503, 'billing_disabled', 'Card payment is not switched on yet — use Request upgrade.');
   }
+  const schemaGate = await requireBillingSchema(env);
+  if (schemaGate) return schemaGate;
   if (!(await rateLimit(env, 'checkout', user.id, 10, 60 * 60_000))) return TOO_MANY(3600);
 
   const body = await readJson(request);
@@ -865,6 +1254,8 @@ async function handleCheckout(request: Request, env: Env, user: UserRow, origin:
  */
 async function handleBillingPortal(env: Env, user: UserRow, origin: string): Promise<Response> {
   if (!env.STRIPE_SECRET_KEY) return fail(503, 'billing_disabled', 'Card payment is not switched on yet.');
+  const schemaGate = await requireBillingSchema(env);
+  if (schemaGate) return schemaGate;
   if (!user.stripe_customer_id) return fail(400, 'no_customer', 'No billing history on this account yet.');
   const portal = await stripeRequest(env, 'POST', '/v1/billing_portal/sessions', {
     customer: user.stripe_customer_id,
@@ -886,6 +1277,8 @@ async function handleStripeWebhook(request: Request, env: Env): Promise<Response
   if (!env.STRIPE_SECRET_KEY || !env.STRIPE_WEBHOOK_SECRET) {
     return fail(503, 'billing_disabled', 'Billing is not configured.');
   }
+  const schemaGate = await requireBillingSchema(env);
+  if (schemaGate) return schemaGate;
   const raw = await request.text();
   if (raw.length > MAX_BODY) return fail(413, 'too_large', 'Payload too large.');
   if (!(await stripeSignatureValid(raw, request.headers.get('Stripe-Signature'), env.STRIPE_WEBHOOK_SECRET))) {
@@ -924,6 +1317,283 @@ async function handleStripeWebhook(request: Request, env: Env): Promise<Response
   return json({ received: true });
 }
 
+// ---------------------------------------------------------------- PayPal Subscriptions
+
+/**
+ * Bring a user's plan into line with a PayPal subscription object — the
+ * PayPal twin of `syncSubscription`, and the only write path by which PayPal
+ * can change an entitlement.
+ *
+ * Idempotent, because PayPal retries deliveries for up to three days and
+ * replaying an event must simply rewrite the same row.
+ *
+ * Two guards exist here that the Stripe path does not need:
+ *
+ *  - **Stale-cancellation.** PayPal does not order its deliveries. If someone
+ *    resubscribes after cancelling, the old subscription's CANCELLED event can
+ *    arrive after the new one activated; applying it would revoke a plan
+ *    somebody is paying for. An event about a subscription that is not the
+ *    account's current one may never revoke.
+ *  - **Cross-provider.** Stripe and PayPal are independent authorities over
+ *    the same `plan` column. A PayPal revoke must not drop an account that a
+ *    live Stripe subscription is entitling, or cancelling a long-dead PayPal
+ *    subscription would silently downgrade a paying card customer.
+ */
+async function syncPaypalSubscription(env: Env, subscription: PaypalJson): Promise<void> {
+  const subscriptionId = String(subscription.id ?? '');
+  const status = String(subscription.status ?? '');
+  const customId = typeof subscription.custom_id === 'string' ? subscription.custom_id : '';
+
+  const user =
+    (customId
+      ? await env.DB.prepare('SELECT * FROM users WHERE id = ?').bind(customId).first<UserRow>()
+      : null) ??
+    (subscriptionId
+      ? await env.DB.prepare('SELECT * FROM users WHERE paypal_subscription_id = ?')
+          .bind(subscriptionId)
+          .first<UserRow>()
+      : null);
+
+  if (!user) {
+    // A subscription can outlive the account it belonged to. Returning without
+    // error stops PayPal retrying something that will never resolve.
+    console.error('paypal: no user for subscription', subscriptionId, customId);
+    return;
+  }
+
+  const entitled = paypalSubscriptionEntitles(status);
+
+  if (!entitled && !revokeApplies(user.paypal_subscription_id, subscriptionId)) {
+    console.log('paypal: ignoring revoke for a subscription that is not current', subscriptionId, user.id);
+    return;
+  }
+
+  // An active subscription against a plan id we do not recognise means someone
+  // is paying for something this deployment cannot map to a tier — a plan
+  // created by hand, or sandbox ids left in a live environment. Granting a
+  // guess would be worse than granting nothing, but the subscription is real,
+  // so it is still recorded and still cancellable.
+  const granted = entitled ? planFromPaypalPlanId(paypalPlanIds(env), subscription.plan_id) : null;
+  if (entitled && !granted) {
+    console.error('paypal: active subscription with unmapped plan id', subscriptionId, subscription.plan_id);
+  }
+
+  const plan =
+    granted ??
+    // Nothing to grant. Drop to free unless Stripe is separately entitling
+    // this account, in which case its subscription remains the authority.
+    (user.stripe_subscription_id ? user.plan : 'free');
+
+  await env.DB.prepare('UPDATE users SET plan = ?, paypal_subscription_id = ? WHERE id = ?')
+    .bind(plan, entitled ? subscriptionId : null, user.id)
+    .run();
+
+  if (granted) {
+    // Close the manual request loop so /account stops showing "pending" once
+    // the same upgrade has arrived through PayPal.
+    await env.DB.prepare("UPDATE upgrade_requests SET status = 'done' WHERE user_id = ? AND status = 'new'")
+      .bind(user.id)
+      .run();
+  }
+  console.log('paypal: plan synced', user.id, status, plan);
+}
+
+/**
+ * Re-read a subscription from PayPal and apply it.
+ *
+ * Always preferred over trusting the object inside a webhook: deliveries are
+ * retried for days and are not ordered, so an event's snapshot may describe a
+ * state two changes old, while a GET is the current truth. A subscription
+ * PayPal no longer has is treated as cancelled — it certainly is not paying.
+ */
+async function refreshPaypalSubscription(
+  env: Env,
+  creds: PaypalCreds,
+  subscriptionId: string,
+  fallbackUserId?: string,
+): Promise<'synced' | 'upstream_error'> {
+  const res = await paypalRequest(
+    creds,
+    'GET',
+    `/v1/billing/subscriptions/${encodeURIComponent(subscriptionId)}`,
+  );
+  if (res.ok) {
+    await syncPaypalSubscription(env, res.body);
+    return 'synced';
+  }
+  if (res.status === 404) {
+    await syncPaypalSubscription(env, {
+      id: subscriptionId,
+      status: 'CANCELLED',
+      ...(fallbackUserId ? { custom_id: fallbackUserId } : {}),
+    });
+    return 'synced';
+  }
+  console.error('paypal: subscription fetch failed', res.status, res.body);
+  return 'upstream_error';
+}
+
+/**
+ * Start a PayPal subscription for a signed-in account and return the URL to
+ * send the browser to for approval.
+ *
+ * The response is only a redirect target — it grants nothing. `custom_id`
+ * carries the user id into PayPal so that every later event can be attributed
+ * back to this account, which is the entire reason self-serve activation is
+ * possible at all.
+ */
+async function handlePaypalSubscribe(
+  request: Request,
+  env: Env,
+  user: UserRow,
+  origin: string,
+): Promise<Response> {
+  const creds = paypalCreds(env);
+  if (!creds || !paypalSubscriptionsEnabled(env)) {
+    return fail(503, 'billing_disabled', 'PayPal subscriptions are not switched on yet — use Request upgrade.');
+  }
+  const schemaGate = await requireBillingSchema(env);
+  if (schemaGate) return schemaGate;
+  if (!(await rateLimit(env, 'paypal_subscribe', user.id, 10, 60 * 60_000))) return TOO_MANY(3600);
+
+  const body = await readJson(request);
+  const plan = String(body?.plan ?? '');
+  if (!(plan in PLANS) || plan === 'free') return fail(400, 'bad_request', 'Unknown plan.');
+  if (user.plan === plan) return fail(400, 'already_on_plan', `You are already on ${planFor(plan).name}.`);
+  if (user.paypal_subscription_id) {
+    return fail(
+      400,
+      'already_subscribed',
+      'This account already has a PayPal subscription. Cancel it first, then subscribe to the new plan.',
+    );
+  }
+
+  const planId = paypalPlanIdFor(paypalPlanIds(env), plan as PlanId);
+  if (!planId) {
+    return fail(503, 'plan_missing', 'That plan has no PayPal plan configured yet — email hello@stampbench.com.');
+  }
+
+  const created = await paypalRequest(creds, 'POST', '/v1/billing/subscriptions', {
+    plan_id: planId,
+    // The only reliable link from a PayPal event back to an account.
+    custom_id: user.id,
+    subscriber: { email_address: user.email },
+    application_context: {
+      brand_name: 'Stampbench',
+      shipping_preference: 'NO_SHIPPING',
+      // Bills at approval instead of leaving the subscription APPROVED but
+      // unpaid, so activation is a matter of seconds rather than a day.
+      user_action: 'SUBSCRIBE_NOW',
+      payment_method: { payer_selected: 'PAYPAL', payee_preferred: 'IMMEDIATE_PAYMENT_REQUIRED' },
+      return_url: `${origin}/account?subscribed=paypal`,
+      cancel_url: `${origin}/pricing`,
+    },
+  });
+  if (!created.ok) {
+    console.error('paypal: subscription create failed', created.status, created.body);
+    return fail(502, 'billing_upstream', 'Could not start the PayPal subscription — try again shortly.');
+  }
+
+  const url = approvalUrl(created.body);
+  if (!url) {
+    console.error('paypal: no approval link on subscription', created.body);
+    return fail(502, 'billing_upstream', 'PayPal did not return an approval link — try again shortly.');
+  }
+  return json({ url });
+}
+
+/**
+ * Self-serve cancellation.
+ *
+ * PayPal has no hosted equivalent of Stripe's billing portal, so this is the
+ * exit. It has to exist and it has to work from our own UI: self-serve exit is
+ * a consumer-rights expectation, and the alternative is that every cancellation
+ * arrives as an email someone has to action by hand.
+ */
+async function handlePaypalCancel(env: Env, user: UserRow): Promise<Response> {
+  const creds = paypalCreds(env);
+  if (!creds) return fail(503, 'billing_disabled', 'PayPal billing is not configured.');
+  const schemaGate = await requireBillingSchema(env);
+  if (schemaGate) return schemaGate;
+  const subscriptionId = user.paypal_subscription_id;
+  if (!subscriptionId) return fail(400, 'no_subscription', 'No PayPal subscription on this account.');
+
+  const cancelled = await paypalRequest(
+    creds,
+    'POST',
+    `/v1/billing/subscriptions/${encodeURIComponent(subscriptionId)}/cancel`,
+    { reason: 'Cancelled by the customer from the Stampbench account page' },
+  );
+  // 404 = PayPal has no such subscription, 422 = it is already in a state that
+  // cannot be cancelled (usually already cancelled). Both mean the customer's
+  // intent is satisfied; only a genuine fault should keep them subscribed.
+  if (!cancelled.ok && cancelled.status !== 404 && cancelled.status !== 422) {
+    console.error('paypal: cancel failed', cancelled.status, cancelled.body);
+    return fail(
+      502,
+      'billing_upstream',
+      'Could not cancel with PayPal — try again, or cancel from your PayPal account under Automatic Payments.',
+    );
+  }
+
+  // Reflect the new state now rather than waiting for the webhook, so the page
+  // does not still say "subscribed" after a successful cancellation.
+  await refreshPaypalSubscription(env, creds, subscriptionId, user.id);
+  return json({ ok: true });
+}
+
+/**
+ * The PayPal entitlement authority. Everything that grants or removes a plan
+ * through PayPal arrives here — never from the browser, which can only ever
+ * *start* a subscription and cannot be trusted to report its outcome. The
+ * return_url is a navigation, not evidence: anyone can visit it directly.
+ */
+async function handlePaypalWebhook(request: Request, env: Env): Promise<Response> {
+  const creds = paypalCreds(env);
+  if (!creds || !env.PAYPAL_WEBHOOK_ID) {
+    return fail(503, 'billing_disabled', 'PayPal billing is not configured.');
+  }
+  const schemaGate = await requireBillingSchema(env);
+  if (schemaGate) return schemaGate;
+  const raw = await request.text();
+  if (raw.length > MAX_BODY) return fail(413, 'too_large', 'Payload too large.');
+
+  const verified = await paypalWebhookVerified(
+    creds,
+    env.PAYPAL_WEBHOOK_ID,
+    readSignatureHeaders(request.headers),
+    raw,
+  );
+  if (!verified) return fail(400, 'bad_signature', 'Signature verification failed.');
+
+  let event: PaypalJson;
+  try {
+    event = JSON.parse(raw) as PaypalJson;
+  } catch {
+    return fail(400, 'bad_request', 'Body is not JSON.');
+  }
+
+  const type = String(event.event_type ?? '');
+  if (!isSubscriptionEvent(type)) return json({ received: true, ignored: type });
+
+  const subscriptionId = subscriptionIdFromEvent(event);
+  if (!subscriptionId) {
+    console.error('paypal: subscription event without an id', type);
+    return json({ received: true });
+  }
+
+  try {
+    const outcome = await refreshPaypalSubscription(env, creds, subscriptionId);
+    // 500 asks PayPal to retry, which is right for a transient upstream or D1
+    // fault — the alternative is an entitlement that silently never applies.
+    if (outcome === 'upstream_error') return fail(500, 'internal', 'Could not read the subscription; please retry.');
+  } catch (e) {
+    console.error('paypal: webhook handler failed', type, e);
+    return fail(500, 'internal', 'Handler failed; please retry.');
+  }
+  return json({ received: true });
+}
+
 // ---------------------------------------------------------------- GDPR
 
 /**
@@ -935,13 +1605,16 @@ async function handleStripeWebhook(request: Request, env: Env): Promise<Response
  * and handing them out would only widen the blast radius of a leaked export.
  */
 async function handleExportAccount(env: Env, user: UserRow): Promise<Response> {
-  const [keys, usage, reports, upgrades] = await Promise.all([
+  const [keys, usage, reports, upgrades, invoices] = await Promise.all([
     env.DB.prepare('SELECT id, prefix, created_at, last_used FROM api_keys WHERE user_id = ?')
       .bind(user.id)
       .all(),
     env.DB.prepare('SELECT feature, period, count FROM usage WHERE user_id = ?').bind(user.id).all(),
     env.DB.prepare('SELECT id, payload, created_at FROM reports WHERE user_id = ?').bind(user.id).all(),
     env.DB.prepare('SELECT id, plan, status, created_at FROM upgrade_requests WHERE user_id = ?')
+      .bind(user.id)
+      .all(),
+    env.DB.prepare('SELECT id, number, customer, status, payload, created_at, updated_at FROM invoices WHERE user_id = ?')
       .bind(user.id)
       .all(),
   ]);
@@ -953,6 +1626,7 @@ async function handleExportAccount(env: Env, user: UserRow): Promise<Response> {
         plan: planFor(user.plan).id,
         createdAt: user.created_at,
         stripeCustomerId: user.stripe_customer_id ?? null,
+        paypalSubscriptionId: user.paypal_subscription_id ?? null,
       },
       apiKeys: keys.results ?? [],
       usage: usage.results ?? [],
@@ -961,6 +1635,18 @@ async function handleExportAccount(env: Env, user: UserRow): Promise<Response> {
         return { id: row.id, createdAt: row.created_at, payload: JSON.parse(row.payload) };
       }),
       upgradeRequests: upgrades.results ?? [],
+      savedInvoices: (invoices.results ?? []).map((r) => {
+        const row = r as { id: string; number: string; customer: string; status: string; payload: string; created_at: number; updated_at: number };
+        return {
+          id: row.id,
+          number: row.number,
+          customer: row.customer,
+          status: row.status,
+          createdAt: row.created_at,
+          updatedAt: row.updated_at,
+          draft: JSON.parse(row.payload),
+        };
+      }),
     },
     200,
     { 'Content-Disposition': 'attachment; filename="stampbench-account-export.json"' },
@@ -986,6 +1672,27 @@ async function handleDeleteAccount(request: Request, env: Env, user: UserRow): P
     return fail(400, 'confirm_required', 'Type your email address to confirm deletion.');
   }
 
+  // Same rule as Stripe below: a live PayPal subscription must not outlive the
+  // account it belongs to, or PayPal keeps charging someone who no longer has
+  // one. Refuse the deletion rather than orphan the subscription.
+  const paypal = paypalCreds(env);
+  if (user.paypal_subscription_id && paypal) {
+    const cancelled = await paypalRequest(
+      paypal,
+      'POST',
+      `/v1/billing/subscriptions/${encodeURIComponent(user.paypal_subscription_id)}/cancel`,
+      { reason: 'Stampbench account deleted' },
+    );
+    if (!cancelled.ok && cancelled.status !== 404 && cancelled.status !== 422) {
+      console.error('delete account: paypal cancel failed', cancelled.status, cancelled.body);
+      return fail(
+        502,
+        'billing_cancel_failed',
+        'Could not cancel your PayPal subscription, so the account was not deleted. Email hello@stampbench.com and we will do both by hand.',
+      );
+    }
+  }
+
   if (user.stripe_subscription_id && env.STRIPE_SECRET_KEY) {
     const cancelled = await stripeRequest(
       env,
@@ -1008,6 +1715,7 @@ async function handleDeleteAccount(request: Request, env: Env, user: UserRow): P
     env.DB.prepare('DELETE FROM reports WHERE user_id = ?').bind(user.id),
     env.DB.prepare('DELETE FROM usage WHERE user_id = ?').bind(user.id),
     env.DB.prepare('DELETE FROM upgrade_requests WHERE user_id = ?').bind(user.id),
+    env.DB.prepare('DELETE FROM invoices WHERE user_id = ?').bind(user.id),
     env.DB.prepare('DELETE FROM users WHERE id = ?').bind(user.id),
   ]);
 
@@ -1042,6 +1750,63 @@ async function handleAdminSetPlan(request: Request, env: Env): Promise<Response>
   return json({ ok: true, email, plan });
 }
 
+// ---------------------------------------------------------------- analytics
+
+/**
+ * Record one page view. Fire-and-forget from the asset path via
+ * ctx.waitUntil, so it never delays serving the page, and swallowing its own
+ * errors, so a counting hiccup can never turn a good page load into a 500.
+ * Aggregate only — see analytics.ts for the privacy contract.
+ */
+async function recordPageView(env: Env, path: string): Promise<void> {
+  try {
+    await env.DB.prepare(
+      `INSERT INTO page_views (day, path, count) VALUES (?, ?, 1)
+       ON CONFLICT(day, path) DO UPDATE SET count = count + 1`,
+    )
+      .bind(analyticsDay(new Date()), path)
+      .run();
+  } catch (e) {
+    console.error('page view count failed', e);
+  }
+}
+
+/**
+ * Operator-only traffic summary. Same X-Admin-Secret gate as set-plan; there
+ * is nothing personal in the response, only aggregate counts. `days` bounds
+ * the window (default 30, max 365).
+ */
+async function handleAdminAnalytics(request: Request, env: Env, url: URL): Promise<Response> {
+  const presented = request.headers.get('X-Admin-Secret') ?? '';
+  if (!env.ADMIN_SECRET || !timingSafeEqual(presented, env.ADMIN_SECRET)) {
+    return fail(401, 'unauthenticated', 'Bad admin secret.');
+  }
+  const days = Math.min(Math.max(Number(url.searchParams.get('days')) || 30, 1), 365);
+  const since = analyticsDay(new Date(Date.now() - (days - 1) * 86_400_000));
+
+  const totalRow = await env.DB.prepare('SELECT SUM(count) AS n FROM page_views WHERE day >= ?')
+    .bind(since)
+    .first<{ n: number | null }>();
+  const byDay = await env.DB.prepare(
+    'SELECT day, SUM(count) AS views FROM page_views WHERE day >= ? GROUP BY day ORDER BY day DESC',
+  )
+    .bind(since)
+    .all<{ day: string; views: number }>();
+  const topPaths = await env.DB.prepare(
+    'SELECT path, SUM(count) AS views FROM page_views WHERE day >= ? GROUP BY path ORDER BY views DESC LIMIT 50',
+  )
+    .bind(since)
+    .all<{ path: string; views: number }>();
+
+  return json({
+    since,
+    days,
+    totalViews: totalRow?.n ?? 0,
+    byDay: byDay.results ?? [],
+    topPaths: topPaths.results ?? [],
+  });
+}
+
 // ---------------------------------------------------------------- router
 
 async function handleApi(request: Request, env: Env): Promise<Response> {
@@ -1060,8 +1825,9 @@ async function handleApi(request: Request, env: Env): Promise<Response> {
     // `paypal` means the manual path can at least be paid immediately. The
     // two are independent, and the UI words itself differently for each.
     return json({
-      enabled: !!(env.STRIPE_SECRET_KEY && env.STRIPE_WEBHOOK_SECRET),
+      enabled: billingLaunchEnabled(env) && !!(env.STRIPE_SECRET_KEY && env.STRIPE_WEBHOOK_SECRET),
       paypal: paypalConfigured(env),
+      paypalSubscriptions: paypalSubscriptionsEnabled(env),
     });
   }
 
@@ -1069,6 +1835,13 @@ async function handleApi(request: Request, env: Env): Promise<Response> {
   // above the same-origin gate — and it must read the raw body, which is why
   // it does not go through readJson.
   if (path === '/api/stripe/webhook' && method === 'POST') return handleStripeWebhook(request, env);
+  // Same reasoning for PayPal: no Origin, and verification covers the exact
+  // bytes of the body.
+  if (path === '/api/paypal/webhook' && method === 'POST') return handlePaypalWebhook(request, env);
+  // Per-account payment hook (auto-invoicing): providers send no Origin, so
+  // this too must sit above the same-origin gate. The token IS the auth.
+  const hookMatch = path.match(/^\/api\/hooks\/payment\/(sbwh_[a-f0-9]{40})$/);
+  if (hookMatch && method === 'POST') return handlePaymentHook(request, env, hookMatch[1]!);
 
   // Hosted API — key-authed, no cookies, no CSRF concern.
   if (path === '/api/v1/validate' && method === 'POST') return handleHostedApi(request, env, 'validate');
@@ -1090,6 +1863,7 @@ async function handleApi(request: Request, env: Env): Promise<Response> {
   }
 
   if (path === '/api/admin/set-plan' && method === 'POST') return handleAdminSetPlan(request, env);
+  if (path === '/api/admin/analytics' && method === 'GET') return handleAdminAnalytics(request, env, url);
 
   // Everything below authenticates with the session cookie, so every
   // state-changing method needs a same-origin Origin — not just POST. A
@@ -1145,9 +1919,27 @@ async function handleApi(request: Request, env: Env): Promise<Response> {
   if (path === '/api/billing/portal' && method === 'POST') {
     return handleBillingPortal(env, user, url.origin);
   }
+  if (path === '/api/billing/paypal/subscribe' && method === 'POST') {
+    return handlePaypalSubscribe(request, env, user, url.origin);
+  }
+  if (path === '/api/billing/paypal/cancel' && method === 'POST') {
+    return handlePaypalCancel(env, user);
+  }
 
   if (path === '/api/account/export' && method === 'GET') return handleExportAccount(env, user);
   if (path === '/api/account' && method === 'DELETE') return handleDeleteAccount(request, env, user);
+
+  // The payment hook's settings surface (the hook itself is above the gate).
+  if (path === '/api/account/payment-hook' && method === 'GET') {
+    return json({ configured: Boolean(user.payment_hook_hash) });
+  }
+  if (path === '/api/account/payment-hook' && method === 'POST') {
+    return handleCreatePaymentHook(env, user, url.origin);
+  }
+  if (path === '/api/account/payment-hook' && method === 'DELETE') {
+    await env.DB.prepare('UPDATE users SET payment_hook_hash = NULL WHERE id = ?').bind(user.id).run();
+    return json({ ok: true });
+  }
 
   // Erasure for a single shared report, without deleting the whole account.
   // Scoped by user_id so a report id alone is not authority to destroy it.
@@ -1157,6 +1949,43 @@ async function handleApi(request: Request, env: Env): Promise<Response> {
       .bind(reportDelete[1], user.id)
       .run();
     if (!result.meta.changes) return fail(404, 'not_found', 'No such report on this account.');
+    return json({ ok: true });
+  }
+
+  // Account-saved invoices (see handleSaveInvoice for the ground rules).
+  if (path === '/api/invoices' && method === 'GET') {
+    const rows = await env.DB.prepare(
+      'SELECT id, number, customer, total, currency, market, status, updated_at FROM invoices WHERE user_id = ? ORDER BY updated_at DESC',
+    )
+      .bind(user.id)
+      .all<{ id: string; number: string; customer: string; total: string; currency: string; market: string; status: string; updated_at: number }>();
+    return json({
+      invoices: (rows.results ?? []).map((r) => ({
+        id: r.id,
+        number: r.number,
+        customer: r.customer,
+        total: r.total,
+        currency: r.currency,
+        market: r.market,
+        status: r.status,
+        updatedAt: r.updated_at,
+      })),
+    });
+  }
+  const invoiceMatch = path.match(/^\/api\/invoices\/([A-Za-z0-9_-]{6,64})$/);
+  if (invoiceMatch && method === 'GET') {
+    const row = await env.DB.prepare('SELECT payload, status, updated_at FROM invoices WHERE id = ? AND user_id = ?')
+      .bind(invoiceMatch[1], user.id)
+      .first<{ payload: string; status: string; updated_at: number }>();
+    if (!row) return fail(404, 'not_found', 'No such invoice on this account.');
+    return json({ invoice: { id: invoiceMatch[1], payload: row.payload, status: row.status, updatedAt: row.updated_at } });
+  }
+  if (invoiceMatch && method === 'PUT') return handleSaveInvoice(request, env, user, invoiceMatch[1]!);
+  if (invoiceMatch && method === 'DELETE') {
+    const result = await env.DB.prepare('DELETE FROM invoices WHERE id = ? AND user_id = ?')
+      .bind(invoiceMatch[1], user.id)
+      .run();
+    if (!result.meta.changes) return fail(404, 'not_found', 'No such invoice on this account.');
     return json({ ok: true });
   }
 
@@ -1173,13 +2002,27 @@ async function handleApi(request: Request, env: Env): Promise<Response> {
   }
   if (path === '/api/ai/explain' && method === 'POST') return handleAiExplain(request, env, user);
   if (path === '/api/ai/draft' && method === 'POST') return handleAiDraft(request, env, user);
+  if (path === '/api/ai/chat' && method === 'POST') return handleAiChat(request, env, user);
   if (path === '/api/upgrade' && method === 'POST') return handleUpgrade(request, env, user);
+  // Withdraw a manual upgrade request. Exists because requests made before
+  // self-serve billing was switched on would otherwise sit as "pending"
+  // forever — the subscription webhook clears them on activation, but a user
+  // who changed their mind (or wants the self-serve button instead) needs a
+  // way out that is not emailing the operator. Idempotent; own rows only.
+  if (path === '/api/upgrade/cancel' && method === 'POST') {
+    await env.DB.prepare(
+      "UPDATE upgrade_requests SET status = 'done' WHERE user_id = ? AND status = 'new'",
+    )
+      .bind(user.id)
+      .run();
+    return json({ ok: true });
+  }
 
   return fail(404, 'not_found', 'No such endpoint.');
 }
 
 export default {
-  async fetch(request: Request, env: Env): Promise<Response> {
+  async fetch(request: Request, env: Env, ctx: ExecutionContext): Promise<Response> {
     const url = new URL(request.url);
     if (url.pathname === '/api' || url.pathname.startsWith('/api/')) {
       try {
@@ -1189,6 +2032,21 @@ export default {
         return fail(500, 'internal', 'Something broke on our side — try again.');
       }
     }
-    return env.ASSETS.fetch(request);
+
+    const res = await env.ASSETS.fetch(request);
+
+    // Count real page loads only: a served (2xx) HTML navigation, never an
+    // asset, redirect or 404. The count runs after the response is returned,
+    // so it adds no latency, and its path is aggregate — see analytics.ts.
+    const path = countablePath(
+      request.url,
+      request.method,
+      request.headers.get('Accept'),
+      request.headers.get('User-Agent'),
+    );
+    if (path && res.ok && (res.headers.get('Content-Type') ?? '').includes('text/html')) {
+      ctx.waitUntil(recordPageView(env, path));
+    }
+    return res;
   },
 };

@@ -36,3 +36,13 @@ interface D1Database {
 interface Fetcher {
   fetch(input: RequestInfo | URL, init?: RequestInit): Promise<Response>;
 }
+
+/**
+ * The third argument to a Pages advanced-mode `fetch`. Only `waitUntil` is
+ * used — to record an aggregate page view after the response is already on
+ * its way, so counting never adds latency to serving a page.
+ */
+interface ExecutionContext {
+  waitUntil(promise: Promise<unknown>): void;
+  passThroughOnException(): void;
+}

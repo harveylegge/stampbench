@@ -13,3 +13,12 @@ coverage/
 .next-static/
 .static-excluded/
 apps/web/out/
+
+# Local wrangler pages dev state (throwaway D1 for worker E2E)
+.wrangler-dev/
+.wrangler/
+.claude/
+apps/web/.next-stale-*/
+build-readiness.log
+j*.txt
+wrangler.dev.toml

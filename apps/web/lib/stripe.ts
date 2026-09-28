@@ -1,11 +1,12 @@
 import 'server-only';
 import Stripe from 'stripe';
-import { env, features } from './env';
+import { assertProductionSecrets, env, features } from './env';
 import type { PlanId } from './plans';
 
 let client: Stripe | null = null;
 
 export function stripe(): Stripe {
+  assertProductionSecrets();
   if (!features.billing || !env.stripeSecretKey) {
     throw new Error('Stripe is not configured (STRIPE_SECRET_KEY missing).');
   }

@@ -4,6 +4,7 @@ import { db } from '@/lib/db';
 import { env, features } from '@/lib/env';
 import { stripe, planForPriceId } from '@/lib/stripe';
 import { log } from '@/lib/log';
+import { clientIp, rateLimit } from '@/lib/ratelimit';
 
 export const runtime = 'nodejs';
 
@@ -25,6 +26,16 @@ async function setPlanByCustomer(customerId: string, plan: string, renewsAt?: Da
 export async function POST(request: Request) {
   if (!features.billing || !env.stripeWebhookSecret) {
     return NextResponse.json({ error: 'billing not configured' }, { status: 503 });
+  }
+
+  const length = Number(request.headers.get('content-length') ?? 0);
+  if (length > 1024 * 1024) return NextResponse.json({ error: 'payload too large' }, { status: 413 });
+  const limited = await rateLimit(`stripe-webhook:${clientIp(request)}`, 120, 60_000);
+  if (!limited.allowed) {
+    return NextResponse.json(
+      { error: 'rate limited' },
+      { status: 429, headers: { 'Retry-After': String(Math.max(1, Math.ceil((limited.resetAt - Date.now()) / 1000))) } },
+    );
   }
 
   const signature = request.headers.get('stripe-signature');

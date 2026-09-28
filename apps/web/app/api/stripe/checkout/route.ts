@@ -6,6 +6,7 @@ import { stripe, priceIdFor } from '@/lib/stripe';
 import type { PlanId } from '@/lib/plans';
 import { apiError } from '@/lib/api';
 import { log } from '@/lib/log';
+import { guardMutation } from '@/lib/request-security';
 
 export const runtime = 'nodejs';
 
@@ -16,6 +17,8 @@ export async function POST(request: Request) {
   }
   const user = await getCurrentUser();
   if (!user) return apiError(401, 'unauthenticated', 'Sign in first.');
+  const blocked = await guardMutation(request, 'billing-checkout', { userId: user.id, limit: 5, windowMs: 10 * 60_000 });
+  if (blocked) return blocked;
 
   let plan: PlanId;
   try {

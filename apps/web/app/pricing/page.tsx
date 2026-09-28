@@ -1,127 +1,110 @@
 import type { Metadata } from 'next';
 import Link from 'next/link';
+import { Suspense } from 'react';
 
-import { PLANS } from '@/lib/plans';
-import { BillingNote } from './billing-note';
+import { PlansView } from './plans-view';
 
 export const metadata: Metadata = {
   title: 'Pricing',
   description:
-    'Stampbench pricing: free tier with 100 API calls/month, paid plans from £19/month. Unlimited local validation with the open-source library.',
+    'Stampbench pricing for businesses and developers. Five invoices a month free, unlimited from £29/month; hosted API plans from £29/month. Unlimited local validation with the open-source library.',
 };
+
+/**
+ * Two audiences, one price list.
+ *
+ * The plans and prices are unchanged — what changed is that the page no longer
+ * makes a freelancer read API quotas to work out whether £29 is for them. The
+ * audience switch lives in PlansView (it needs state); the FAQ below is shared,
+ * but each answer says plainly which audience it concerns.
+ */
 
 const faqs = [
   {
+    q: 'Do I need to pay to create invoices?',
+    a: 'Not for the first five a month. Creating, checking and downloading five invoices a month is free, with no account — it all runs in your browser. Paying lifts that limit and adds the tools for running on Stampbench month after month: recurring invoices, your customer book, marking invoices paid and chasing what is overdue, clean PDFs with no "Made with Stampbench" line, and backup that follows you between devices. Checking and repairing a file you already have stays free and unlimited, always.',
+    who: 'Business',
+  },
+  {
     q: 'What counts as a document?',
-    a: 'Each request to /api/v1/validate or /api/v1/generate counts as one document. Local validation with the open-source @stampbench/core library is unlimited and free forever — the quota only applies to the hosted API.',
+    a: 'Each request to /api/v1/validate or /api/v1/generate counts as one document. Local validation with the open-source @stampbench/core library is unlimited and free forever — the quota only applies to the hosted API. Creating invoices on this site does not consume it either.',
+    who: 'Developer',
   },
   {
     q: 'How do accounts and quotas work?',
     a: 'A free account comes with 100 hosted API calls, 10 shared reports and 5 future-ruleset checks per month. The open-source library, and validate, generate and fix in the playground, never need an account and are unlimited — quotas apply only to the hosted features.',
+    who: 'Developer',
   },
   {
     q: 'What does the Platform tier actually include?',
     a: 'Usage-based pricing beyond 100k documents, a signable DPA/AVV and EU data residency (rolling out), version pinning per integration, and a rule-update commitment: new KoSIT releases supported within days, contractually.',
+    who: 'Developer',
   },
   {
     q: 'Why pay when the library is free?',
     a: 'The hosted API gives you always-current rule sets without dependency upgrades, usage from any language (not just Node.js), shareable validation reports, and someone else maintaining the rule treadmill as XRechnung versions change.',
+    who: 'Developer',
+  },
+  {
+    q: 'Will my invoice be accepted? Is this legal advice?',
+    a: 'Stampbench checks your invoice against the published EN 16931 and XRechnung rules and documents its coverage precisely, but it is tooling rather than legal advice, and it cannot promise what any particular customer’s system will do. For certification-grade sign-off, also run the official KoSIT validator — Stampbench is built to make passing it straightforward.',
+    who: 'Both',
   },
   {
     q: 'Do you support Factur-X / ZUGFeRD, Peppol BIS, or FatturaPA?',
     a: 'Validation supports both syntaxes today, auto-detected: UBL and CII (the ZUGFeRD/Factur-X XML most German invoices arrive as). Generation is XRechnung UBL. Factur-X PDF generation, Peppol BIS and FatturaPA are next — Agency subscribers get early access.',
-  },
-  {
-    q: 'Is this legal advice? Will my invoice be accepted?',
-    a: 'Stampbench is developer tooling, not legal advice. We implement the published EN 16931 and XRechnung rules and document our coverage precisely; for certification-grade sign-off, also run the official KoSIT validator (we make passing it much easier).',
+    who: 'Developer',
   },
   {
     q: 'Can I cancel anytime?',
     a: 'Yes — plans are monthly. There is no billing portal yet: email us and your plan drops to Free at the end of the period. If you set up a recurring PayPal payment you can also cancel it yourself in PayPal at any time. Nothing renews behind your back.',
+    who: 'Both',
   },
   {
     q: 'What about annual billing or EUR pricing?',
     a: 'Both are coming. Email us and we will set you up manually in the meantime.',
+    who: 'Both',
   },
 ];
 
 export default function PricingPage() {
-  const order = ['free', 'starter', 'pro', 'scale'] as const;
   return (
-    <div className="mx-auto max-w-6xl px-4 py-16">
-      <h1 className="mb-3 text-center text-3xl font-semibold tracking-tight">
-        The library is free forever. Plans buy certainty.
-      </h1>
-      <p className="mx-auto mb-12 max-w-xl text-center text-muted">
-        Unlimited local validation with the open-source library, always. Paid plans sell what code
-        alone can&apos;t promise: always-current rules without upgrades, volume, client-project
-        leverage, and platform compliance posture.
-      </p>
+    <main className="pricing-editorial mx-auto max-w-6xl px-4 py-14 sm:py-20">
+      {/* PlansView reads ?for= via useSearchParams, which the static export
+          requires to sit under a Suspense boundary. */}
+      <Suspense fallback={<div className="min-h-[32rem]" />}>
+        <PlansView />
+      </Suspense>
 
-      <div className="mb-20 grid gap-4 md:grid-cols-4">
-        {order.map((id) => {
-          const p = PLANS[id];
-          const highlight = id === 'pro';
-          return (
-            <div
-              key={id}
-              className={`flex flex-col rounded-xl border p-6 ${
-                highlight ? 'border-accent bg-accent-dim/20' : 'border-border bg-surface'
-              }`}
-            >
-              <div className="mb-1 flex items-center justify-between">
-                <span className="font-medium">{p.name}</span>
-                {highlight && (
-                  <span className="rounded-full bg-accent px-2 py-0.5 text-[11px] font-medium text-white">
-                    Popular
-                  </span>
-                )}
-              </div>
-              <div className="mb-4">
-                <span className="text-3xl font-semibold">£{p.priceGbp}</span>
-                <span className="text-sm text-muted">/month</span>
-                {/* Reassurance where the hesitation actually happens — at the
-                    price, not buried in the FAQ at the bottom of the page. */}
-                <div className="mt-1 text-xs text-faint">
-                  {p.priceGbp === 0 ? 'Free forever — no card needed' : 'Cancel anytime'}
-                </div>
-              </div>
-              <ul className="mb-6 flex flex-col gap-2 text-sm text-muted">
-                {p.features.map((f) => (
-                  <li key={f} className="flex gap-2">
-                    <span className="text-success">✓</span>
-                    {f}
-                  </li>
-                ))}
-              </ul>
-              <Link
-                href={id === 'free' ? '/signup' : `/signup?plan=${id}`}
-                className={`mt-auto rounded-lg py-2 text-center text-sm font-medium transition ${
-                  highlight
-                    ? 'bg-accent text-white hover:bg-accent-hi'
-                    : 'border border-border bg-surface hover:border-border-hi'
-                }`}
-              >
-                {id === 'free' ? 'Start free' : `Choose ${p.name}`}
-              </Link>
-              {/* How payment happens, stated before signup rather than after. */}
-              {id !== 'free' && <BillingNote />}
-            </div>
-          );
-        })}
+      <div className="pricing-faq-head">
+        <p>THE SMALL PRINT / MADE CLEAR</p>
+        <h2>Questions, answered<br/><em>without the fine print.</em></h2>
       </div>
-
-      <h2 className="mb-6 text-center text-2xl font-semibold tracking-tight">
-        Frequently asked questions
-      </h2>
-      <div className="mx-auto grid max-w-4xl gap-4 sm:grid-cols-2">
+      <div className="pricing-faq-grid">
         {faqs.map((f) => (
-          <div key={f.q} className="rounded-xl border border-border bg-surface p-5">
-            <h3 className="mb-2 text-sm font-medium">{f.q}</h3>
+          <div key={f.q} className="pricing-faq-card">
+            <div className="mb-2 flex items-start justify-between gap-3">
+              <h3 className="text-sm font-medium">{f.q}</h3>
+              <span className="pricing-faq-tag">
+                {f.who}
+              </span>
+            </div>
             <p className="text-sm leading-relaxed text-muted">{f.a}</p>
           </div>
         ))}
       </div>
-    </div>
+
+      <p className="pricing-footnote">
+        Still deciding which side you are on?{' '}
+        <Link href="/invoice-generator" className="text-accent-hi hover:underline">
+          Create an invoice
+        </Link>{' '}
+        or{' '}
+        <Link href="/developers" className="text-accent-hi hover:underline">
+          look at the developer platform
+        </Link>
+        .
+      </p>
+    </main>
   );
 }

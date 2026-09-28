@@ -1,7 +1,7 @@
 import 'server-only';
 import Anthropic from '@anthropic-ai/sdk';
 import type { Violation } from '@stampbench/core';
-import { env, features } from './env';
+import { assertProductionSecrets, env, features } from './env';
 import { log } from './log';
 
 /**
@@ -53,6 +53,8 @@ export async function explainViolations(
   if (!features.liveAi) {
     return { explanation: deterministicExplanation(violations), source: 'fallback' };
   }
+
+  assertProductionSecrets();
 
   const client = new Anthropic({ apiKey: env.anthropicApiKey });
   // Hard cap the prompt as defense in depth: the route schema already bounds

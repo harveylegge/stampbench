@@ -22,6 +22,10 @@ export default function RegisterPage() {
             className="rounded-lg border border-border bg-surface px-3 py-2 outline-none transition focus:border-accent"
           />
         </label>
+        <label className="flex items-start gap-2 text-sm text-muted">
+          <input name="termsAccepted" value="yes" type="checkbox" required className="mt-1" />
+          <span>I agree to the <Link href="/terms" className="text-accent-hi underline">Terms</Link> and acknowledge the <Link href="/privacy" className="text-accent-hi underline">Privacy Policy</Link>. This is required for an account and is not marketing consent.</span>
+        </label>
         <label className="flex flex-col gap-1.5 text-sm">
           <span className="text-muted">Email</span>
           <input

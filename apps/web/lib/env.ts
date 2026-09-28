@@ -1,3 +1,5 @@
+import 'server-only';
+
 /**
  * Central environment access. Every optional integration degrades gracefully:
  * the app must build, run, and demo with ZERO secrets configured.
@@ -43,4 +45,22 @@ export const features = {
  */
 export function insecureProductionSecret(): boolean {
   return env.isProd && env.sessionSecret === 'dev-only-insecure-secret-change-me';
+}
+
+/** Validate private configuration at the first security-sensitive request.
+ * Keeping this out of client modules also prevents Next from inlining a secret
+ * into a browser bundle by accident.
+ */
+export function assertProductionSecrets(): void {
+  if (!env.isProd) return;
+  const problems: string[] = [];
+  if (insecureProductionSecret() || env.sessionSecret.length < 32) {
+    problems.push('SESSION_SECRET must be a unique random value of at least 32 characters');
+  }
+  if (!env.appUrl.startsWith('https://')) problems.push('NEXT_PUBLIC_APP_URL must use HTTPS');
+  if (!env.upstashUrl || !env.upstashToken) {
+    problems.push('UPSTASH_REDIS_REST_URL and UPSTASH_REDIS_REST_TOKEN are required');
+  }
+  if (!env.adminEmail) problems.push('ADMIN_EMAIL is required');
+  if (problems.length) throw new Error(`Unsafe production configuration: ${problems.join('; ')}`);
 }
