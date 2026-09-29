@@ -595,9 +595,9 @@ pre {
    cream canvas while restoring the darker ink and orange of the source art. */
 .editorial-art img{
   opacity:1;
-  filter:contrast(1.14) saturate(1.1) brightness(.98);
-  -webkit-mask-image:radial-gradient(ellipse 78% 83% at 50% 50%,#000 74%,transparent 100%);
-  mask-image:radial-gradient(ellipse 78% 83% at 50% 50%,#000 74%,transparent 100%);
+  filter:contrast(1.28) saturate(1.16) brightness(.97);
+  -webkit-mask-image:radial-gradient(ellipse 82% 88% at 50% 50%,#000 80%,transparent 100%);
+  mask-image:radial-gradient(ellipse 82% 88% at 50% 50%,#000 80%,transparent 100%);
 }
 .invoice-ledger-head h1{line-height:1.02}
 .invoice-ledger-head h1 em,
@@ -607,3 +607,16 @@ pre {
   line-height:1.08;
 }
 .pricing-faq-head h2{line-height:1.08}
+
+/* My invoices opens as an everyday business tool. Advanced keeps the export
+   and compliance controls available without crowding the common workflow. */
+.invoice-view-switch{display:grid;grid-template-columns:1fr 1fr;margin-bottom:22px;border:1px solid #cfc7b5;background:#f7f2e5}
+.invoice-view-switch button{display:grid;grid-template-columns:1fr auto;gap:7px;padding:17px 19px;text-align:left;color:#5f594d;background:transparent;border:0;cursor:pointer;transition:background .2s,color .2s}
+.invoice-view-switch button+button{border-left:1px solid #cfc7b5}
+.invoice-view-switch button span{font:650 8px/1 var(--font-jbmono),monospace;letter-spacing:.15em}
+.invoice-view-switch button strong{grid-row:1/3;grid-column:2;align-self:center;font-size:14px;color:#282820}
+.invoice-view-switch button small{font-size:11px}
+.invoice-view-switch button.is-active{background:#282820;color:#ddd6c7}
+.invoice-view-switch button.is-active strong{color:#fff}
+.invoice-view-switch button.is-active span{color:#e34a2c}
+@media(max-width:640px){.invoice-view-switch{grid-template-columns:1fr}.invoice-view-switch button+button{border-left:0;border-top:1px solid #cfc7b5}}

@@ -61,6 +61,7 @@ function isoDay(ms: number): string {
 
 export function InvoicesView() {
   const router = useRouter();
+  const [view, setView] = useState<'business' | 'advanced'>('business');
   // null = storage not read yet (the pre-hydration render), so the empty
   // state does not flash at someone whose list is about to appear.
   const [invoices, setInvoices] = useState<SavedInvoice[] | null>(null);
@@ -108,6 +109,21 @@ export function InvoicesView() {
 
   /** The last 12 months, per currency, for the chart under the summary. */
   const monthly = useMemo(() => (invoices ? monthlySeries(invoices, new Date()) : []), [invoices]);
+
+  const businessCounts = useMemo(() => {
+    if (!invoices) return { paid: 0, waiting: 0, overdue: 0 };
+    return invoices.reduce(
+      (counts, entry) => {
+        if (entry.draft.document.typeCode === '381') return counts;
+        const status = invoiceStatus(entry, isoDayOf(new Date()));
+        if (status === 'paid') counts.paid += 1;
+        else if (status === 'overdue') counts.overdue += 1;
+        else counts.waiting += 1;
+        return counts;
+      },
+      { paid: 0, waiting: 0, overdue: 0 },
+    );
+  }, [invoices]);
 
   /** Push what's new, pull what's missing, refresh the list. */
   async function runSync() {
@@ -243,11 +259,28 @@ export function InvoicesView() {
         </Link>
       </div>
 
-      <div className="invoice-ledger-index" aria-label="Invoice archive overview">
-        <div><small>DOCUMENTS</small><strong>{invoices?.length ?? '—'}</strong><span>in this archive</span></div>
-        <div><small>STORAGE</small><strong>LOCAL</strong><span>private to this browser</span></div>
-        <div><small>CHECKING</small><strong>AUTOMATIC</strong><span>before every download</span></div>
+      <div className="invoice-view-switch" aria-label="Choose invoice view">
+        <button className={view === 'business' ? 'is-active' : ''} onClick={() => setView('business')} aria-pressed={view === 'business'}>
+          <span>BUSINESS</span><strong>Simple view</strong><small>Invoices, payments and PDFs</small>
+        </button>
+        <button className={view === 'advanced' ? 'is-active' : ''} onClick={() => setView('advanced')} aria-pressed={view === 'advanced'}>
+          <span>ADVANCED</span><strong>Developer view</strong><small>XML, compliance and controls</small>
+        </button>
       </div>
+
+      {view === 'business' ? (
+        <div className="invoice-ledger-index" aria-label="Invoice overview">
+          <div><small>ALL INVOICES</small><strong>{invoices?.length ?? '—'}</strong><span>saved here</span></div>
+          <div><small>WAITING</small><strong>{businessCounts.waiting}</strong><span>for payment</span></div>
+          <div><small>PAID</small><strong>{businessCounts.paid}</strong><span>completed</span></div>
+        </div>
+      ) : (
+        <div className="invoice-ledger-index" aria-label="Technical invoice overview">
+          <div><small>DOCUMENTS</small><strong>{invoices?.length ?? '—'}</strong><span>in this archive</span></div>
+          <div><small>STORAGE</small><strong>LOCAL</strong><span>private to this browser</span></div>
+          <div><small>CHECKING</small><strong>AUTOMATIC</strong><span>before every download</span></div>
+        </div>
+      )}
 
       {/* Compliance, as reassurance rather than as a rules dump.
           This is the business experience's answer to "am I actually
@@ -255,7 +288,7 @@ export function InvoicesView() {
           away for anyone who wants to audit the claim. Showing the rule
           families here instead would be the developer product leaking into a
           screen whose reader has not asked for it. */}
-      <div className="invoice-ledger-check mb-6 flex flex-wrap items-start justify-between gap-3">
+      {view === 'advanced' && <div className="invoice-ledger-check mb-6 flex flex-wrap items-start justify-between gap-3">
         <div className="text-sm">
           <div className="flex items-center gap-2 font-medium">
             <span className="text-success" aria-hidden>
@@ -274,7 +307,7 @@ export function InvoicesView() {
         >
           View compliance details →
         </Link>
-      </div>
+      </div>}
 
       {/* Reaching for a paid tool. Says which one and what it costs, then gets
           out of the way — it is dismissible because this page is where people
@@ -576,16 +609,16 @@ export function InvoicesView() {
                         >
                           Open
                         </button>
-                        <button
+                        {view === 'advanced' && <button
                           onClick={() => duplicate(entry)}
                           className="text-muted transition hover:text-text"
                         >
                           Duplicate
-                        </button>
+                        </button>}
                         {/* The schedule control. A select rather than a
                             button-cycle: four cadences and "off" is a choice,
                             not a toggle. */}
-                        <select
+                        {view === 'advanced' && <select
                           value={rule?.cadence ?? 'off'}
                           onChange={(e) => setRepeat(entry, e.target.value)}
                           aria-label={`Repeat ${draft.document.number}`}
@@ -597,20 +630,20 @@ export function InvoicesView() {
                               {c.label}
                             </option>
                           ))}
-                        </select>
-                        <button
+                        </select>}
+                        {view === 'advanced' && <button
                           onClick={() => downloadXml(entry)}
                           className="text-muted transition hover:text-text"
                         >
                           XML
-                        </button>
+                        </button>}
                         <button
                           onClick={() => void downloadPdf(entry)}
                           className="text-muted transition hover:text-text"
                         >
                           PDF
                         </button>
-                        {armedDelete === entry.id ? (
+                        {view === 'advanced' && (armedDelete === entry.id ? (
                           <span className="inline-flex items-center gap-3">
                             <button
                               onClick={() => {
@@ -640,7 +673,7 @@ export function InvoicesView() {
                           >
                             Delete
                           </button>
-                        )}
+                        ))}
                       </div>
                     </div>
 
