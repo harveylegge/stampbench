@@ -37,7 +37,6 @@ export function EditorialHero({ copy }: { copy: Copy }) {
       </div>
       <div className="cream-home-sections">
         <section className="cream-two-doors" aria-labelledby="two-doors-title">
-          <p className="editorial-kicker"><i />CHOOSE YOUR BENCH</p>
           <h2 id="two-doors-title">One careful engine.<br /><em>Two simple ways in.</em></h2>
           <div className="cream-door-grid">
             <Link href="/invoice-generator"><small>01 / FOR YOUR BUSINESS</small><h3>Create the invoice.</h3><p>Fill in familiar details. Stampbench checks the structure, totals and required fields before download.</p><span>Open the workbench ↗</span></Link>

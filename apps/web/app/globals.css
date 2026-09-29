@@ -590,3 +590,20 @@ pre {
 .skip-link{position:fixed;z-index:100;left:16px;top:12px;transform:translateY(-160%);background:#282820;color:#fff;padding:10px 14px;font-weight:650;transition:transform .15s}.skip-link:focus{transform:translateY(0)}
 :where(a,button,input,select,textarea,summary):focus-visible{outline:3px solid #c03a1f;outline-offset:3px}
 .signup-card .signup-consent{display:flex;align-items:flex-start;gap:10px;letter-spacing:0;font-size:11px;line-height:1.55;color:#5f594d}.signup-card .signup-consent input{width:17px;height:17px;flex:0 0 17px;margin-top:1px;accent-color:#c03a1f}.signup-card .signup-consent a{color:#c83f26;text-decoration:underline;text-underline-offset:2px}
+
+/* Final hero and display-type polish. Keep the illustration integrated with the
+   cream canvas while restoring the darker ink and orange of the source art. */
+.editorial-art img{
+  opacity:1;
+  filter:contrast(1.14) saturate(1.1) brightness(.98);
+  -webkit-mask-image:radial-gradient(ellipse 78% 83% at 50% 50%,#000 74%,transparent 100%);
+  mask-image:radial-gradient(ellipse 78% 83% at 50% 50%,#000 74%,transparent 100%);
+}
+.invoice-ledger-head h1{line-height:1.02}
+.invoice-ledger-head h1 em,
+.pricing-faq-head h2 em{
+  display:inline-block;
+  padding-bottom:.12em;
+  line-height:1.08;
+}
+.pricing-faq-head h2{line-height:1.08}
