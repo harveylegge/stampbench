@@ -607,6 +607,11 @@ pre {
   line-height:1.08;
 }
 .pricing-faq-head h2{line-height:1.08}
+.pricing-faq-head h2 em{
+  display:block;
+  margin-top:.12em;
+  line-height:1.12;
+}
 
 /* My invoices opens as an everyday business tool. Advanced keeps the export
    and compliance controls available without crowding the common workflow. */
