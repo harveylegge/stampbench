@@ -609,7 +609,21 @@ pre {
 .pricing-faq-head h2{line-height:1.08}
 .pricing-faq-head h2 em{
   display:block;
-  margin-top:.12em;
+  margin-top:.28em;
+  padding-bottom:.14em;
+  line-height:1.16;
+}
+
+/* Large serif follow-up lines need their own line box. Georgia's tall ascenders
+   otherwise intrude into the sans-serif line above at responsive sizes. */
+.cream-two-doors h2 em,
+.cream-process h2 em,
+.cream-close h2 em,
+.developer-hero h1 em,
+.autopilot-head h2 em{
+  display:block;
+  margin-top:.14em;
+  padding-bottom:.1em;
   line-height:1.12;
 }
 
