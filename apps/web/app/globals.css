@@ -612,6 +612,7 @@ pre {
   margin-top:.28em;
   padding-bottom:.14em;
   line-height:1.16;
+  letter-spacing:0;
 }
 
 /* Large serif follow-up lines need their own line box. Georgia's tall ascenders
@@ -625,6 +626,7 @@ pre {
   margin-top:.14em;
   padding-bottom:.1em;
   line-height:1.12;
+  letter-spacing:0;
 }
 
 /* My invoices opens as an everyday business tool. Advanced keeps the export
