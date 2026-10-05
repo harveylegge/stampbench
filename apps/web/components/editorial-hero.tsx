@@ -1,6 +1,7 @@
 import Link from 'next/link';
 import type { Copy } from '@/lib/copy';
 import { HolographicProof } from '@/components/holographic-proof';
+import { WorkflowProof } from '@/components/workflow-proof';
 
 export function EditorialHero({ copy }: { copy: Copy }) {
   const de = copy.locale === 'de';
@@ -36,6 +37,7 @@ export function EditorialHero({ copy }: { copy: Copy }) {
           ))}
         </div>
       </div>
+      <WorkflowProof />
       <div className="cream-home-sections">
         <section className="cream-two-doors" aria-labelledby="two-doors-title">
           <h2 id="two-doors-title">One careful engine.<br /><em>Two simple ways in.</em></h2>
