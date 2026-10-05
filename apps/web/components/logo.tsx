@@ -1,3 +1,5 @@
+import { useId } from 'react';
+
 /**
  * The Stampbench mark: an S built from two interlocking staple shapes, from
  * the 2026-09 cream redesign. The top staple is always brand orange; the bottom
@@ -11,6 +13,7 @@ const PURPLE_FROM = '#F06443';
 const PURPLE_TO = '#DC482A';
 
 export function StampbenchMark({ size = 24, className }: { size?: number; className?: string }) {
+  const gradientId = `sb-mark-${useId().replace(/:/g, '')}`;
   return (
     <svg
       width={size}
@@ -21,7 +24,7 @@ export function StampbenchMark({ size = 24, className }: { size?: number; classN
       className={className}
     >
       <defs>
-        <linearGradient id="sb-mark-purple" x1="13" y1="13" x2="51" y2="36" gradientUnits="userSpaceOnUse">
+        <linearGradient id={gradientId} x1="13" y1="13" x2="51" y2="36" gradientUnits="userSpaceOnUse">
           <stop stopColor={PURPLE_FROM} />
           <stop offset="1" stopColor={PURPLE_TO} />
         </linearGradient>
@@ -29,7 +32,7 @@ export function StampbenchMark({ size = 24, className }: { size?: number; classN
       {/* top staple */}
       <path
         d="M52 25 V19 Q52 13 46 13 H18 Q12 13 12 19 V31 Q12 37 18 37 H40"
-        stroke="url(#sb-mark-purple)"
+        stroke={`url(#${gradientId})`}
         strokeWidth="5.5"
         strokeLinecap="round"
         strokeLinejoin="round"
