@@ -2,7 +2,6 @@ import Link from 'next/link';
 import type { Copy } from '@/lib/copy';
 import { WorkflowProof } from '@/components/workflow-proof';
 import { StampbenchMark } from '@/components/logo';
-import { InteractiveProofCard } from '@/components/interactive-proof-card';
 
 export function EditorialHero({ copy }: { copy: Copy }) {
   const de = copy.locale === 'de';
@@ -26,7 +25,6 @@ export function EditorialHero({ copy }: { copy: Copy }) {
             </div>
             <small>JOIN THE APP WAITLIST · KEEP USING THE WEB WORKBENCH FREE</small>
           </div>
-          <InteractiveProofCard />
         </div>
       </div>
       <div className="editorial-standards" aria-label={de ? 'Unterstützte Standards' : 'Supported standards'}>
