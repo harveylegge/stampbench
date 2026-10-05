@@ -2,35 +2,37 @@ import Link from 'next/link';
 import type { Copy } from '@/lib/copy';
 import { HolographicProof } from '@/components/holographic-proof';
 import { WorkflowProof } from '@/components/workflow-proof';
+import { StampbenchMark } from '@/components/logo';
 
 export function EditorialHero({ copy }: { copy: Copy }) {
   const de = copy.locale === 'de';
   return (
     <section className="editorial-home editorial-home-motion" aria-labelledby="editorial-title">
-      <div className="editorial-grid">
-        <div className="editorial-motion-bg" aria-hidden="true">
-          <video autoPlay muted loop playsInline preload="metadata">
-            <source src="https://d8j0ntlcm91z4.cloudfront.net/user_38xzZboKViGWJOttwIXH07lWA1P/hf_20260809_012548_ef22562c-c0ae-4816-ad9d-f8922af4e6a7.mp4" type="video/mp4" />
-          </video>
-          <div className="editorial-motion-wash" />
-          <div className="editorial-motion-label"><span>LIVE MATERIAL / 01</span><span>MOVE IN COLOUR</span></div>
+      <div className="basalt-hero">
+        <div className="aurora-field" aria-hidden><i /><i /><i /><b /></div>
+        <nav className="basalt-nav" aria-label="Homepage navigation">
+          <Link className="basalt-brand" href="/"><StampbenchMark size={20} /><strong>Stampbench</strong></Link>
+          <div><Link href="/invoice-generator">Workbench</Link><Link href="/developers">Developers</Link><Link href="/pricing">Pricing</Link><Link href="/trust">Standards</Link></div>
+          <span><Link href="/signin">Log in</Link><Link className="basalt-nav-cta" href="/signup">Create account</Link></span>
+        </nav>
+        <div className="basalt-copy">
+          <p className="basalt-chip">✦ BUILT FOR WORK THAT NEEDS TO GET PAID</p>
+          <h1 id="editorial-title">Everything you invoice,<br /><em>one careful check</em> away.</h1>
+          <p>Create, validate and keep compliant invoices in one focused workbench—without learning the rulebook.</p>
+          <div className="basalt-actions"><Link href="/invoice-generator">Create a free invoice <span>↗</span></Link><Link href="/developers">Build with the API <span>↗</span></Link></div>
+          <small>FIVE INVOICES A MONTH · FREE · NO ACCOUNT NEEDED</small>
         </div>
-        <div className="editorial-copy">
-          <p className="editorial-kicker"><i />{de ? 'WENIGER PAPIERKRAM. MEHR MÖGLICH.' : 'LESS PAPERWORK. MORE POSSIBILITY.'}</p>
-          <h1 id="editorial-title">{de ? <>Gute Arbeit.<br />Richtig <em>abgerechnet.</em></> : <>Good work.<br />Properly <em>invoiced.</em></>}</h1>
-          <p className="editorial-lede">{de ? 'Sie machen die Arbeit. Wir helfen, die Rechnung richtig zu machen.' : 'You do the work. We help you get the invoice right.'}<br />{de ? 'E-Rechnungen erstellen, prüfen und reparieren – ohne Komplexität.' : 'Create, check and fix e-invoices, without the complexity.'}</p>
-          <div className="editorial-actions">
-            <Link className="editorial-primary" href={de ? '/de/invoice-generator' : '/invoice-generator'}>{de ? 'Kostenlose Rechnung erstellen' : 'Create a free invoice'} <span>↗</span></Link>
-            <Link className="editorial-link" href={de ? '/de/developers' : '/developers'}>{de ? 'Für Entwickler' : 'For developers'} <span>↗</span></Link>
-          </div>
-          <p className="editorial-fine">{de ? 'Fünf Rechnungen pro Monat kostenlos. Kein Konto nötig.' : 'Five invoices a month, free. No account needed.'}</p>
+        <div className="invoice-command" aria-label="Example Stampbench invoice check">
+          <div className="command-search"><span>⌕</span><b>check invoice SB-001</b><i /><small>WORKBENCH</small></div>
+          <ul>
+            <li className="active"><span>✓</span><b>Invoice ready to send</b><kbd>PASS</kbd></li>
+            <li><span>↗</span><b>EN 16931 structure</b><kbd>CHECKED</kbd></li>
+            <li><span>£</span><b>Totals and required fields</b><kbd>VALID</kbd></li>
+            <li><span>↓</span><b>Download PDF + structured file</b><kbd>READY</kbd></li>
+          </ul>
+          <footer><span>↑↓ REVIEW&nbsp;&nbsp; ↵ OPEN&nbsp;&nbsp; ESC CLOSE</span><b><StampbenchMark size={13} /> STAMPBENCH</b></footer>
         </div>
-        <div className="editorial-art">
-          {/* eslint-disable-next-line @next/next/no-img-element -- static brand illustration */}
-          <img src="/brand/hero-axonometric-cutout.png" alt={de ? 'Gezeichnete Rechnungen, Stempel und Büroklammer' : 'Architectural drawing of invoices, an approval stamp and paperclip'} />
-          <div className="editorial-guides" aria-hidden><i /><i /><i /></div>
-          <p><b>+</b><span>{de ? 'ETWAS MEHR ORDNUNG.' : 'A LITTLE ORDER.'}<br />{de ? 'VIEL WENIGER VERWALTUNG.' : 'A LOT LESS ADMIN.'}</span></p>
-        </div>
+        <Link className="basalt-more" href="/invoice-generator">Open the workbench →</Link>
       </div>
       <div className="editorial-standards" aria-label={de ? 'Unterstützte Standards' : 'Supported standards'}>
         <div className="editorial-standards-track">
