@@ -1,5 +1,6 @@
 import Link from 'next/link';
 import type { Copy } from '@/lib/copy';
+import { HolographicProof } from '@/components/holographic-proof';
 
 export function EditorialHero({ copy }: { copy: Copy }) {
   const de = copy.locale === 'de';
@@ -43,6 +44,7 @@ export function EditorialHero({ copy }: { copy: Copy }) {
             <Link href="/developers"><small>02 / FOR YOUR SOFTWARE</small><h3>Build on the engine.</h3><p>Use the TypeScript library, CLI or hosted API with clear rule IDs and source locations.</p><span>Explore the platform ↗</span></Link>
           </div>
         </section>
+        <HolographicProof />
         <section className="cream-process" aria-labelledby="process-title">
           <div><p className="editorial-kicker"><i />HOW IT MOVES</p><h2 id="process-title">From work done<br /><em>to invoice ready.</em></h2></div>
           <ol><li><b>01</b><span><strong>Add the details.</strong>Customer, work, totals and payment terms.</span></li><li><b>02</b><span><strong>Check the standard.</strong>Clear findings without compliance jargon.</span></li><li><b>03</b><span><strong>Download and keep moving.</strong>PDF plus the structured file systems need.</span></li></ol>

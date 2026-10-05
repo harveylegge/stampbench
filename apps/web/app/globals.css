@@ -641,3 +641,23 @@ pre {
 .invoice-view-switch button.is-active strong{color:#fff}
 .invoice-view-switch button.is-active span{color:#e34a2c}
 @media(max-width:640px){.invoice-view-switch{grid-template-columns:1fr}.invoice-view-switch button+button{border-left:0;border-top:1px solid #cfc7b5}}
+
+/* A physical compliance card: movement follows the pointer, while the foil is
+   built from Stampbench's drafting lines and restrained orange ink. */
+.proof-motion{display:grid;grid-template-columns:.78fr 1.22fr;gap:70px;align-items:center;padding:100px 0;border-top:1px solid #d6d1c4}
+.proof-motion-copy h2{margin:25px 0 23px;font-size:clamp(44px,5vw,70px);font-weight:500;line-height:1.03;letter-spacing:-.055em}
+.proof-motion-copy h2 em{display:block;margin-top:.14em;padding-bottom:.08em;color:#c03a1f;font-family:Georgia,serif;font-weight:400;line-height:1.1;letter-spacing:0}
+.proof-motion-copy>p:last-child{max-width:430px;color:#6d6d63;line-height:1.75}
+.proof-stage{display:grid;place-items:center;min-height:650px;padding:65px 30px 35px;background:#22231e;overflow:hidden;perspective:1100px}
+.proof-stage>p{margin-top:38px;color:#8f8f84;font:600 8px/1 var(--font-jbmono),monospace;letter-spacing:.22em}.proof-stage>p span{color:#df492b}
+.proof-card{--card-x:0deg;--card-y:0deg;--glow-x:50%;--glow-y:42%;position:relative;width:min(360px,80vw);aspect-ratio:.69;padding:28px;color:#f4eedf;background:linear-gradient(145deg,#2b2d27,#171814 70%);border:1px solid #77766b55;box-shadow:0 34px 70px #0009,0 0 0 1px #fff08 inset;overflow:hidden;transform:rotateX(var(--card-x)) rotateY(var(--card-y));transform-style:preserve-3d;transition:transform .16s ease-out;isolation:isolate}
+.proof-card:focus-visible{outline:3px solid #df492b;outline-offset:7px}
+.proof-card:before{content:'';position:absolute;inset:0;z-index:-1;background:repeating-radial-gradient(circle at var(--glow-x) var(--glow-y),transparent 0 10px,#d94a2a22 11px,#6e9a8d1c 12px,transparent 14px 20px);opacity:.85}
+.proof-card:after{content:'';position:absolute;inset:-45%;z-index:-1;background:linear-gradient(115deg,transparent 38%,#e7502a30 45%,#c9be7a22 49%,#7da39b2d 54%,transparent 62%);transform:translate(calc((var(--glow-x) - 50%) * .2),calc((var(--glow-y) - 50%) * .2));mix-blend-mode:screen}
+.proof-card-foil{position:absolute;inset:0;background:radial-gradient(circle at var(--glow-x) var(--glow-y),#fff3 0,transparent 31%);mix-blend-mode:screen;pointer-events:none}
+.proof-card-top,.proof-card-foot{display:flex;justify-content:space-between;position:relative;z-index:1}.proof-card-top b{font-size:18px}.proof-card-top span,.proof-card-foot{font:600 8px/1 var(--font-jbmono),monospace;letter-spacing:.15em;color:#aaa99e}
+.proof-card-mark{position:absolute;inset:22% 17% 34%;display:grid;place-items:center;border:1px solid #bcb8a870;transform:translateZ(28px)}
+.proof-card-mark i{position:absolute;background:#a8a59642}.proof-card-mark i:nth-child(1),.proof-card-mark i:nth-child(2){left:14%;right:14%;height:1px}.proof-card-mark i:nth-child(1){top:28%}.proof-card-mark i:nth-child(2){bottom:28%}.proof-card-mark i:nth-child(3),.proof-card-mark i:nth-child(4){top:14%;bottom:14%;width:1px}.proof-card-mark i:nth-child(3){left:30%}.proof-card-mark i:nth-child(4){right:30%}.proof-card-mark span{display:grid;place-items:center;width:92px;height:92px;border:1px solid #db4a2dcc;border-radius:50%;color:#e34a2c;font:42px/1 Georgia,serif;box-shadow:0 0 35px #df492b33}
+.proof-card-copy{position:absolute;left:28px;bottom:62px;z-index:1;transform:translateZ(18px)}.proof-card-copy small{display:block;color:#aaa99e;font:600 7px/1 var(--font-jbmono),monospace;letter-spacing:.18em}.proof-card-copy strong{display:block;margin-top:8px;font:400 35px/1 Georgia,serif}.proof-card-copy p{margin-top:8px;color:#aaa99e;font-size:10px}.proof-card-foot{position:absolute;left:28px;right:28px;bottom:25px}
+@media(max-width:800px){.proof-motion{grid-template-columns:1fr;gap:35px;padding:70px 0}.proof-stage{min-height:570px}.proof-card{width:min(340px,82vw)}}
+@media(prefers-reduced-motion:reduce){.proof-card{transform:none!important;transition:none}.proof-card:before{opacity:.45}}
