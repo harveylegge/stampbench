@@ -6,8 +6,15 @@ import { WorkflowProof } from '@/components/workflow-proof';
 export function EditorialHero({ copy }: { copy: Copy }) {
   const de = copy.locale === 'de';
   return (
-    <section className="editorial-home" aria-labelledby="editorial-title">
+    <section className="editorial-home editorial-home-motion" aria-labelledby="editorial-title">
       <div className="editorial-grid">
+        <div className="editorial-motion-bg" aria-hidden="true">
+          <video autoPlay muted loop playsInline preload="metadata">
+            <source src="/brand/stampbench-hero-motion.mp4" type="video/mp4" />
+          </video>
+          <div className="editorial-motion-wash" />
+          <div className="editorial-motion-label"><span>LIVE MATERIAL / 01</span><span>MOVE IN COLOUR</span></div>
+        </div>
         <div className="editorial-copy">
           <p className="editorial-kicker"><i />{de ? 'WENIGER PAPIERKRAM. MEHR MÖGLICH.' : 'LESS PAPERWORK. MORE POSSIBILITY.'}</p>
           <h1 id="editorial-title">{de ? <>Gute Arbeit.<br />Richtig <em>abgerechnet.</em></> : <>Good work.<br />Properly <em>invoiced.</em></>}</h1>
