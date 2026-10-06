@@ -6,6 +6,30 @@ export function WorkbenchPass() {
   const stageRef = useRef<HTMLDivElement>(null);
   const videoRef = useRef<HTMLVideoElement>(null);
   const [personalised, setPersonalised] = useState(false);
+  const [canPlayVideo, setCanPlayVideo] = useState(false);
+
+  useEffect(() => {
+    const reducedMotion = window.matchMedia('(prefers-reduced-motion: reduce)');
+    const reducedData = window.matchMedia('(prefers-reduced-data: reduce)');
+    const connection = (navigator as Navigator & {
+      connection?: { saveData?: boolean; addEventListener?: (type: string, listener: () => void) => void; removeEventListener?: (type: string, listener: () => void) => void };
+    }).connection;
+
+    const syncVideoPreference = () => {
+      setCanPlayVideo(!reducedMotion.matches && !reducedData.matches && !connection?.saveData);
+    };
+
+    reducedMotion.addEventListener('change', syncVideoPreference);
+    reducedData.addEventListener('change', syncVideoPreference);
+    connection?.addEventListener?.('change', syncVideoPreference);
+    syncVideoPreference();
+
+    return () => {
+      reducedMotion.removeEventListener('change', syncVideoPreference);
+      reducedData.removeEventListener('change', syncVideoPreference);
+      connection?.removeEventListener?.('change', syncVideoPreference);
+    };
+  }, []);
 
   useEffect(() => {
     const stage = stageRef.current;
@@ -15,20 +39,37 @@ export function WorkbenchPass() {
     const hero = stage.closest<HTMLElement>('.basalt-hero');
     const reducedMotion = window.matchMedia('(prefers-reduced-motion: reduce)');
 
+    let bounds = stage.getBoundingClientRect();
+    let pointerX = 0.5;
+    let pointerY = 0.5;
+    let animationFrame = 0;
+
+    const measureStage = () => {
+      bounds = stage.getBoundingClientRect();
+    };
+
+    const drawPointer = () => {
+      animationFrame = 0;
+      stage.style.setProperty('--pass-rx', `${(0.5 - pointerY) * 8}deg`);
+      stage.style.setProperty('--pass-ry', `${(pointerX - 0.5) * 10}deg`);
+      stage.style.setProperty('--pass-shift-x', `${(pointerX - 0.5) * 12}px`);
+      stage.style.setProperty('--pass-shift-y', `${(pointerY - 0.5) * 8}px`);
+      stage.style.setProperty('--pass-light-x', `${pointerX * 100}%`);
+      stage.style.setProperty('--pass-light-y', `${pointerY * 100}%`);
+    };
+
     const followPointer = (event: PointerEvent) => {
       if (event.pointerType === 'touch' || reducedMotion.matches) return;
-      const bounds = stage.getBoundingClientRect();
-      const x = Math.max(0, Math.min(1, (event.clientX - bounds.left) / bounds.width));
-      const y = Math.max(0, Math.min(1, (event.clientY - bounds.top) / bounds.height));
-      stage.style.setProperty('--pass-rx', `${(0.5 - y) * 12}deg`);
-      stage.style.setProperty('--pass-ry', `${(x - 0.5) * 17}deg`);
-      stage.style.setProperty('--pass-shift-x', `${(x - 0.5) * 18}px`);
-      stage.style.setProperty('--pass-shift-y', `${(y - 0.5) * 12}px`);
-      stage.style.setProperty('--pass-light-x', `${x * 100}%`);
-      stage.style.setProperty('--pass-light-y', `${y * 100}%`);
+      pointerX = Math.max(0, Math.min(1, (event.clientX - bounds.left) / bounds.width));
+      pointerY = Math.max(0, Math.min(1, (event.clientY - bounds.top) / bounds.height));
+      if (!animationFrame) animationFrame = window.requestAnimationFrame(drawPointer);
     };
 
     const resetPointer = () => {
+      if (animationFrame) window.cancelAnimationFrame(animationFrame);
+      animationFrame = 0;
+      pointerX = 0.5;
+      pointerY = 0.5;
       stage.style.setProperty('--pass-rx', '0deg');
       stage.style.setProperty('--pass-ry', '0deg');
       stage.style.setProperty('--pass-shift-x', '0px');
@@ -49,20 +90,26 @@ export function WorkbenchPass() {
       if (entry.isIntersecting) void video.play().catch(() => undefined);
       else video.pause();
     }, { rootMargin: '160px 0px' });
+    const resizeObserver = new ResizeObserver(measureStage);
 
     observer.observe(stage);
+    resizeObserver.observe(stage);
     hero?.addEventListener('pointermove', followPointer, { passive: true });
     hero?.addEventListener('pointerleave', resetPointer);
+    window.addEventListener('scroll', measureStage, { passive: true });
     reducedMotion.addEventListener('change', syncMotionPreference);
     syncMotionPreference();
 
     return () => {
       observer.disconnect();
+      resizeObserver.disconnect();
+      if (animationFrame) window.cancelAnimationFrame(animationFrame);
       hero?.removeEventListener('pointermove', followPointer);
       hero?.removeEventListener('pointerleave', resetPointer);
+      window.removeEventListener('scroll', measureStage);
       reducedMotion.removeEventListener('change', syncMotionPreference);
     };
-  }, []);
+  }, [canPlayVideo]);
 
   const togglePersonalised = () => setPersonalised((current) => !current);
 
@@ -84,21 +131,25 @@ export function WorkbenchPass() {
         }
       }}
     >
-      <video
-        ref={videoRef}
-        className="workbench-pass-film"
-        autoPlay
-        muted
-        loop
-        playsInline
-        poster="/media/workbench-pass-poster.webp"
-        aria-hidden="true"
-      >
-        <source src="/media/workbench-pass.webm" type="video/webm" />
-        <source src="/media/workbench-pass.mp4" type="video/mp4" />
-      </video>
+      <div className="workbench-pass-film-shell" aria-hidden="true">
+        {canPlayVideo ? (
+          <video
+            ref={videoRef}
+            className="workbench-pass-film"
+            autoPlay
+            muted
+            loop
+            playsInline
+            poster="/media/workbench-pass-poster.webp"
+          >
+            <source media="(max-width: 760px)" src="/media/workbench-pass-mobile.webm" type="video/webm" />
+            <source media="(max-width: 760px)" src="/media/workbench-pass-mobile.mp4" type="video/mp4" />
+            <source src="/media/workbench-pass.webm" type="video/webm" />
+            <source src="/media/workbench-pass.mp4" type="video/mp4" />
+          </video>
+        ) : null}
+      </div>
       <div className="workbench-pass-atmosphere" aria-hidden="true" />
-      <div className="workbench-pass-registration" aria-hidden="true"><i /><i /><i /><i /></div>
 
       <div className="workbench-pass-motion" aria-hidden="true">
         <div className="workbench-pass-card">

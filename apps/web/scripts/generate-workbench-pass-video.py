@@ -23,8 +23,10 @@ from PIL import Image, ImageDraw, ImageFilter
 
 FPS = 24
 FRAMES = 180
-SIZE = 720
-SUPERSAMPLE = 1.5
+# 2160px square gives the model more than 2× pixel density at its largest
+# on-page size, keeping curves and colour transitions crisp on Retina displays.
+SIZE = 2160
+SUPERSAMPLE = 1.0
 RENDER_SIZE = int(SIZE * SUPERSAMPLE)
 
 ROOT = Path(__file__).resolve().parents[1]
@@ -81,7 +83,7 @@ def draw_frame(frame_index: int) -> Image.Image:
     shadow = shadow.filter(ImageFilter.GaussianBlur(size * 0.055))
     image = Image.alpha_composite(image, shadow)
 
-    u_count, v_count = 116, 42
+    u_count, v_count = 240, 96
     u = np.linspace(0, 2 * math.pi, u_count, endpoint=False)
     v = np.linspace(0, 2 * math.pi, v_count, endpoint=False)
     uu, vv = np.meshgrid(u, v, indexing="ij")
@@ -131,7 +133,9 @@ def draw_frame(frame_index: int) -> Image.Image:
                 normal = -normal
             lambert = max(0.0, float(np.dot(normal, light)))
             facing = max(0.0, float(normal[2]))
-            groove = 0.5 + 0.5 * math.sin(v[j] * 5.0 + u[i] * 1.4 + phase * 1.4)
+            broad_groove = 0.5 + 0.5 * math.sin(v[j] * 5.0 + u[i] * 1.4 + phase * 1.4)
+            fine_groove = 0.5 + 0.5 * math.sin(v[j] * 11.0 - u[i] * 2.1 - phase * 1.8)
+            groove = max(0.0, min(1.0, broad_groove * 0.78 + fine_groove * 0.22))
             brightness = 0.20 + lambert * 0.61 + facing * 0.15
             brightness -= (1.0 - groove) * 0.13
             colour = orange_surface(brightness, groove, facing)
@@ -149,6 +153,10 @@ def draw_frame(frame_index: int) -> Image.Image:
     for _, coords, colour in sorted(quads, key=lambda item: item[0]):
         draw.polygon(coords, fill=colour + (255,))
 
+    # A tiny sub-pixel soften joins the denser mesh without erasing its folded
+    # paper ridges. At 2160px this is still sharper than the old 720px source.
+    surface = surface.filter(ImageFilter.GaussianBlur(size * 0.00055))
+
     # Fine warm highlights move across the folds and stop the form feeling flat.
     sheen = Image.new("RGBA", (size, size), (0, 0, 0, 0))
     sheen_draw = ImageDraw.Draw(sheen)
@@ -163,7 +171,7 @@ def draw_frame(frame_index: int) -> Image.Image:
 
     if frame_index == 45:
         image.convert("RGB").resize((SIZE, SIZE), Image.Resampling.LANCZOS).save(
-            OUTPUT / "workbench-pass-poster.webp", "WEBP", quality=90, method=6
+            OUTPUT / "workbench-pass-poster.webp", "WEBP", quality=94, method=6
         )
     return image.convert("RGB").resize((SIZE, SIZE), Image.Resampling.LANCZOS)
 
@@ -171,6 +179,8 @@ def draw_frame(frame_index: int) -> Image.Image:
 def encode(ffmpeg: str) -> None:
     mp4 = OUTPUT / "workbench-pass.mp4"
     webm = OUTPUT / "workbench-pass.webm"
+    mobile_mp4 = OUTPUT / "workbench-pass-mobile.mp4"
+    mobile_webm = OUTPUT / "workbench-pass-mobile.webm"
     process = subprocess.Popen(
         [
             ffmpeg,
@@ -195,7 +205,7 @@ def encode(ffmpeg: str) -> None:
             "-preset",
             "slow",
             "-crf",
-            "24",
+            "20",
             "-pix_fmt",
             "yuv420p",
             "-movflags",
@@ -206,13 +216,17 @@ def encode(ffmpeg: str) -> None:
             "-c:v",
             "libvpx-vp9",
             "-crf",
-            "34",
+            "29",
             "-b:v",
             "0",
             "-pix_fmt",
             "yuv420p",
             "-row-mt",
             "1",
+            "-deadline",
+            "good",
+            "-cpu-used",
+            "3",
             str(webm),
         ],
         stdin=subprocess.PIPE,
@@ -225,6 +239,24 @@ def encode(ffmpeg: str) -> None:
     process.stdin.close()
     if process.wait() != 0:
         raise RuntimeError("ffmpeg failed while writing the Workbench pass video")
+
+    # Keep the 2160px master for high-density desktop displays, then derive a
+    # lighter 1440px source for phones so the hero stays crisp without making
+    # small screens decode the full desktop loop.
+    mobile_commands = (
+        [
+            ffmpeg, "-y", "-i", str(mp4), "-an", "-vf", "scale=1440:1440:flags=lanczos",
+            "-c:v", "libx264", "-preset", "slow", "-crf", "22", "-pix_fmt", "yuv420p",
+            "-movflags", "+faststart", str(mobile_mp4),
+        ],
+        [
+            ffmpeg, "-y", "-i", str(mp4), "-an", "-vf", "scale=1440:1440:flags=lanczos",
+            "-c:v", "libvpx-vp9", "-crf", "31", "-b:v", "0", "-pix_fmt", "yuv420p",
+            "-row-mt", "1", "-deadline", "good", "-cpu-used", "3", str(mobile_webm),
+        ],
+    )
+    for command in mobile_commands:
+        subprocess.run(command, check=True)
 
 
 def main() -> None:
