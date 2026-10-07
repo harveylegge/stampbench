@@ -7,7 +7,7 @@
  *   1. **Exact arithmetic.** Every amount goes through `@stampbench/core`'s
  *      money module in integer minor units. The subtotal a user reads on
  *      screen and the BT-106 in the XML are computed by the same code from
- *      the same integers, so they cannot disagree by a cent — and a cent is
+ *      the same integers, so they cannot disagree by a cent: and a cent is
  *      what BR-CO-13 rejects a document for.
  *
  *   2. **Nothing is invented.** An empty field stays empty. The builder never
@@ -76,21 +76,21 @@ export interface CategoryTotal {
 export interface DraftTotals {
   lines: LineTotal[];
   categories: CategoryTotal[];
-  /** BT-106 — sum of line net amounts. */
+  /** BT-106: sum of line net amounts. */
   net: Money;
-  /** BT-107 — document-level allowances (the discount). */
+  /** BT-107: document-level allowances (the discount). */
   allowances: Money;
-  /** BT-108 — document-level charges (shipping). */
+  /** BT-108: document-level charges (shipping). */
   charges: Money;
-  /** BT-109 — total without VAT, after allowances and charges. */
+  /** BT-109: total without VAT, after allowances and charges. */
   taxable: Money;
-  /** BT-110 — total VAT. */
+  /** BT-110: total VAT. */
   tax: Money;
-  /** BT-112 — total with VAT. */
+  /** BT-112: total with VAT. */
   gross: Money;
-  /** BT-113 — already paid. */
+  /** BT-113: already paid. */
   paid: Money;
-  /** BT-115 — balance due. */
+  /** BT-115: balance due. */
   balance: Money;
 }
 
@@ -106,7 +106,7 @@ export interface DraftTotals {
  */
 /**
  * A line's numeric VAT rate, as the totals grouping sees it: undefined for a
- * category that carries no rate at all (O — outside scope), 0 for a zero rate,
+ * category that carries no rate at all (O: outside scope), 0 for a zero rate,
  * otherwise the typed number. Both the line grouping and the document-level
  * adjustment inheritance below must agree on this, or a discount lands in a
  * different VAT group from the lines it discounts and the on-screen breakdown
@@ -170,7 +170,7 @@ export function lineNetAmount(line: DraftLine): Money {
 }
 
 /**
- * Totals for display and for the document — the same numbers, once.
+ * Totals for display and for the document: the same numbers, once.
  *
  * VAT is computed per category group rather than per line, which is what
  * BR-S-08/09 and their siblings check: the tax on a group is the group's
@@ -326,7 +326,7 @@ export function toInvoiceModel(draft: InvoiceDraft): Invoice {
     contractReference: text(draft.document.contractReference),
     // Note: the delivery date (BT-72, BG-13) is deliberately absent. The
     // semantic model does not carry delivery information today, so putting it
-    // here would silently drop it from the XML while the preview showed it —
+    // here would silently drop it from the XML while the preview showed it:
     // the builder's field says as much rather than pretending otherwise.
     paymentTerms: text(draft.document.paymentTerms),
     seller: toParty(draft.seller),
@@ -337,7 +337,7 @@ export function toInvoiceModel(draft: InvoiceDraft): Invoice {
   const note = text(draft.document.note);
   if (note) invoice.notes = [note];
 
-  // BG-13. Both halves are optional on their own — a delivery date with no
+  // BG-13. Both halves are optional on their own: a delivery date with no
   // address is ordinary, and so is a ship-to with no date.
   const deliveryAddress = draft.shipToEnabled ? toAddress(draft.shipTo) : undefined;
   const deliveryName = draft.shipToEnabled ? text(draft.shipTo.name) : undefined;
@@ -381,7 +381,7 @@ export function toInvoiceModel(draft: InvoiceDraft): Invoice {
 
   // Exemption reasons attach to the VAT breakdown the engine just built, so
   // they survive regrouping. Only categories that actually require one get a
-  // reason, and only if the user supplied it — an unsupplied reason is left
+  // reason, and only if the user supplied it: an unsupplied reason is left
   // missing so validation reports it rather than the builder inventing text.
   for (const group of withTotals.vatBreakdown ?? []) {
     const category = getVatCategory(group.categoryCode);
@@ -395,7 +395,7 @@ export function toInvoiceModel(draft: InvoiceDraft): Invoice {
 
 export interface GeneratedDocument {
   invoice: Invoice;
-  /** Canonical JSON — always available, for every format. */
+  /** Canonical JSON: always available, for every format. */
   json: string;
   /** UBL 2.1, when the chosen format has an XML representation. */
   xml?: string;
@@ -429,8 +429,8 @@ export interface RequirementCheck {
  * has it yet.
  *
  * Every entry corresponds to a rule that is genuinely enforced by
- * `@stampbench/core` — the VAT-category `-02` family, the BR-DE requirements
- * of the German CIUS — so this is a preview of the verdict rather than a
+ * `@stampbench/core`: the VAT-category `-02` family, the BR-DE requirements
+ * of the German CIUS: so this is a preview of the verdict rather than a
  * separate opinion about invoices. It exists because finding out that reverse
  * charge needs the buyer's VAT identifier *after* pressing Generate is a worse
  * experience than being told while filling the form in, and because it makes
@@ -492,7 +492,7 @@ export function requirementChecks(draft: InvoiceDraft): RequirementCheck[] {
       },
       {
         rule: 'BR-DE-15',
-        label: 'Buyer reference (BT-10) — the Leitweg-ID for public buyers',
+        label: 'Buyer reference (BT-10): the Leitweg-ID for public buyers',
         met: filled(draft.document.buyerReference),
       },
     );
@@ -504,7 +504,7 @@ export function requirementChecks(draft: InvoiceDraft): RequirementCheck[] {
 /**
  * Blocking problems the builder can see before the engine runs.
  *
- * Not a substitute for validation — it is the subset that produces a
+ * Not a substitute for validation: it is the subset that produces a
  * confusing result rather than a clear violation. An invoice with no lines
  * validates to a pile of arithmetic errors that all mean "there is nothing
  * here"; saying so up front is kinder and just as honest.
@@ -513,7 +513,7 @@ export function preflight(draft: InvoiceDraft): string[] {
   const problems: string[] = [];
   if (draft.lines.length === 0) problems.push('Add at least one line item.');
   if (draft.lines.every((l) => !text(l.description) && !text(l.unitPrice))) {
-    problems.push('The line items are empty — add a description and a unit price.');
+    problems.push('The line items are empty: add a description and a unit price.');
   }
   if (!text(draft.document.number)) problems.push('An invoice number (BT-1) is required.');
   if (!text(draft.document.issueDate)) problems.push('An issue date (BT-2) is required.');

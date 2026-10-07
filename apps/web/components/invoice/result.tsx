@@ -54,7 +54,7 @@ function handoffToPlayground(xml: string): void {
  *
  * `tech` is the page-level toggle: off, the card is one sentence and a
  * reassurance; on, it also carries the ruleset, the rule count and the spec
- * version — the evidence that makes "valid" a checkable claim rather than a
+ * version: the evidence that makes "valid" a checkable claim rather than a
  * green tick. Nothing is computed differently between the two.
  */
 function Verdict({ result, tech }: { result: ValidationResult; tech: boolean }) {
@@ -83,7 +83,7 @@ function Verdict({ result, tech }: { result: ValidationResult; tech: boolean }) 
 
       {result.warningCount > 0 && (
         <p className="mt-3 text-sm text-warning">
-          {result.warningCount} warning{result.warningCount === 1 ? '' : 's'} — these will not stop the
+          {result.warningCount} warning{result.warningCount === 1 ? '' : 's'}: these will not stop the
           invoice, but they are worth reading.
         </p>
       )}
@@ -125,7 +125,7 @@ function Violations({ result, tech }: { result: ValidationResult; tech: boolean 
               {violation.severity === 'error' ? 'Must fix' : 'Worth checking'}
             </span>
             {/* The rule id is what you quote to a customer's IT department or
-                to support, so it is never far away — but it is a code, and a
+                to support, so it is never far away: but it is a code, and a
                 code above the sentence explaining the problem buries the
                 sentence. */}
             {tech && (
@@ -171,7 +171,7 @@ function RepairPanel({
         <h3 className="mb-1 font-medium tracking-tight">These need data, not arithmetic</h3>
         <p className="mb-4 max-w-2xl text-sm leading-relaxed text-muted">
           Stampbench computed every total and the VAT breakdown from your lines, so the arithmetic rules
-          cannot fail on a document it built — which means what is left above is missing business data.
+          cannot fail on a document it built: which means what is left above is missing business data.
           Go back to the editor and supply it. Repair can only write values it can derive, and it will
           never guess a VAT number or a buyer reference.
         </p>
@@ -187,7 +187,7 @@ function RepairPanel({
     <div className="rounded-xl border border-border bg-surface p-5">
       <h3 className="mb-2 font-medium tracking-tight">
         {fix.applied.length > 0
-          ? `${fix.applied.length} fix${fix.applied.length === 1 ? '' : 'es'} available — errors ${fix.errorsBefore} → ${fix.errorsAfter}`
+          ? `${fix.applied.length} fix${fix.applied.length === 1 ? '' : 'es'} available: errors ${fix.errorsBefore} → ${fix.errorsAfter}`
           : 'Nothing could be fixed automatically'}
       </h3>
 
@@ -208,7 +208,7 @@ function RepairPanel({
       {fix.unfixable.length > 0 && (
         <div className="mb-4">
           <p className="mb-1.5 text-sm text-muted">
-            Left alone ({fix.unfixable.length}) — these need a decision, not arithmetic:
+            Left alone ({fix.unfixable.length}): these need a decision, not arithmetic:
           </p>
           <ul className="flex flex-col gap-1 text-sm">
             {fix.unfixable.map((entry, index) => (
@@ -391,7 +391,7 @@ export function GenerationResult({
       const pdf = await invoicePdf(draft, { branded: plan === null || plan === 'free' });
       await saveFile(pdf.filename, pdf.blob, PDF_FILE);
     } catch {
-      setPdfError('Could not build the PDF here — use Print and pick "Save as PDF" as the destination.');
+      setPdfError('Could not build the PDF here: use Print and pick "Save as PDF" as the destination.');
     } finally {
       setPdfBusy(false);
     }
@@ -439,13 +439,13 @@ export function GenerationResult({
 
       {/* Downloads. Two buttons, both named for what the person receives: the
           copy they will recognise, and the file their customer's system reads.
-          "XML", "UBL" and "JSON" are formats, not outcomes — they live under
+          "XML", "UBL" and "JSON" are formats, not outcomes: they live under
           the fold with the rest of the machinery. */}
       <div className="rounded-xl border border-border bg-surface p-5">
         <h3 className="mb-1 font-medium tracking-tight">Download your invoice</h3>
         <p className="mb-4 max-w-2xl text-sm leading-relaxed text-muted">
           Send both to your customer if you are not sure which they need. Everything is produced here
-          in your browser — nothing was uploaded.
+          in your browser: nothing was uploaded.
         </p>
         <div className="flex flex-wrap gap-2">
           <button onClick={() => void onDownloadPdf()} disabled={pdfBusy} className={BUTTON_PRIMARY}>
@@ -466,7 +466,7 @@ export function GenerationResult({
         <p className="mt-3 text-xs leading-relaxed text-faint">
           The PDF is the readable copy. The e-invoice file is the structured version your customer’s
           accounting software reads field by field
-          {xml ? ' — it is what the compliance check above was run on.' : '.'}
+          {xml ? ': it is what the compliance check above was run on.' : '.'}
         </p>
         {pdfError && <p className="mt-3 text-sm text-danger">{pdfError}</p>}
         {paidPlan === false && (
@@ -475,7 +475,7 @@ export function GenerationResult({
             <Link href="/pricing" className="text-accent-hi hover:underline">
               Paid plans
             </Link>{' '}
-            remove it — and back up every invoice you ever create.
+            remove it: and back up every invoice you ever create.
           </p>
         )}
 
@@ -525,13 +525,13 @@ export function GenerationResult({
           ← Back to the editor
         </button>
         <Link href="/my-invoices" className="text-sm text-muted transition hover:text-text">
-          Saved to <span className="font-medium text-accent-hi">My invoices</span> — in this browser
+          Saved to <span className="font-medium text-accent-hi">My invoices</span>: in this browser
           only
         </Link>
       </div>
 
       {/* The one bridge from the business experience to the developer one.
-          Quiet, factual, and only shown while the technical view is off — a
+          Quiet, factual, and only shown while the technical view is off: a
           developer who has already flipped the switch is looking at the API
           panel instead. */}
       {!tech && xml && format.validationProfile && (

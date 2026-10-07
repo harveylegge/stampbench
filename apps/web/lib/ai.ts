@@ -16,7 +16,7 @@ Rules:
 - Explain what each violated rule means in practice and exactly how to fix it, referencing the field names the developer will see (both the business term like BT-10 and the human name like "buyer reference").
 - Be concrete: show example values where helpful (e.g. a Leitweg-ID looks like "04011000-1234512345-06").
 - Order fixes by importance: blocking errors first, then warnings.
-- Keep it tight — a short intro sentence, then a numbered fix list. No filler, no disclaimers.
+- Keep it tight: a short intro sentence, then a numbered fix list. No filler, no disclaimers.
 - If violations reference German requirements, briefly note why Germany requires it when that helps understanding.
 - You are advising on developer tooling output, not giving legal advice; do not add legal disclaimers, the product UI already carries one.`;
 
@@ -36,7 +36,7 @@ function deterministicExplanation(violations: Violation[]): string {
   let i = 1;
   for (const v of [...errors, ...warnings]) {
     const terms = v.terms?.length ? ` (${v.terms.join(', ')})` : '';
-    lines.push(`${i}. **${v.ruleId}**${terms} — ${v.message}`);
+    lines.push(`${i}. **${v.ruleId}**${terms}: ${v.message}`);
     i++;
   }
   lines.push(
@@ -74,7 +74,7 @@ export async function explainViolations(
       model: 'claude-opus-5',
       max_tokens: 1500,
       betas: ['server-side-fallback-2026-07-01'],
-      // @ts-expect-error — server-side fallbacks param is newer than the SDK typings
+      // @ts-expect-error: server-side fallbacks param is newer than the SDK typings
       fallbacks: 'default',
       system: SYSTEM_PROMPT,
       messages: [{ role: 'user', content: userContent }],

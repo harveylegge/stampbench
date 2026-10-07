@@ -22,7 +22,7 @@ async function setPlanByCustomer(customerId: string, plan: string, renewsAt?: Da
   }
 }
 
-/** POST /api/stripe/webhook — Stripe subscription lifecycle → plan sync. */
+/** POST /api/stripe/webhook: Stripe subscription lifecycle → plan sync. */
 export async function POST(request: Request) {
   if (!features.billing || !env.stripeWebhookSecret) {
     return NextResponse.json({ error: 'billing not configured' }, { status: 503 });
@@ -61,7 +61,7 @@ export async function POST(request: Request) {
         const active = sub.status === 'active' || sub.status === 'trialing';
         const periodEnd = sub.items.data[0]?.current_period_end;
         if (active && !plan) {
-          // Active subscription on a price we don't recognise — surface loudly
+          // Active subscription on a price we don't recognise: surface loudly
           // rather than silently leaving the plan unchanged.
           log.error('billing.webhook_unmapped_price', { customerId, priceId, subId: sub.id });
         } else if (plan && active) {

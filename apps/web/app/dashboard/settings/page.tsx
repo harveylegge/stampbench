@@ -17,7 +17,7 @@ export default async function SettingsPage() {
           <dt className="text-muted">Email</dt>
           <dd>{user.email}</dd>
           <dt className="text-muted">Name</dt>
-          <dd>{user.name ?? '—'}</dd>
+          <dd>{user.name ?? 'Not set'}</dd>
           <dt className="text-muted">Member since</dt>
           <dd>{user.createdAt.toLocaleDateString()}</dd>
           <dt className="text-muted">Role</dt>

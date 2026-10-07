@@ -90,7 +90,7 @@ describe('markets', () => {
     for (const id of MARKET_IDS) {
       for (const capability of CAPABILITIES) {
         const cell = MARKETS[id].capabilities[capability.id];
-        // 'context' means "yes, but only when…" — without the qualifier it
+        // 'context' means "yes, but only when…": without the qualifier it
         // reads as a plain yes, which would be the overstatement we exist to
         // avoid.
         if (cell.status === 'context') expect(cell.note, `${id}/${capability.id}`).toBeTruthy();
@@ -152,13 +152,13 @@ describe('markets', () => {
 
   it('turns away a dropped PDF instead of filling the box with binary', () => {
     // The homepage advertises "CII · ZUGFeRD / Factur-X", and ZUGFeRD *is* a
-    // PDF — so someone will drop one here. File.text() does not reject on a
+    // PDF: so someone will drop one here. File.text() does not reject on a
     // PDF: it resolves with mojibake, so the old catch never fired and the
     // user got a raw parse error that reads like a broken product.
     const pdf = describeUnreadableDrop({ name: 'rechnung.pdf', type: 'application/pdf' });
     expect(pdf).toMatch(/ZUGFeRD or Factur-X/);
     expect(pdf).toMatch(/embedded inside/);
-    // Caught by extension too — a PDF saved with no MIME type is still a PDF.
+    // Caught by extension too: a PDF saved with no MIME type is still a PDF.
     expect(describeUnreadableDrop({ name: 'Rechnung.PDF', type: '' })).toBeTruthy();
     expect(describeUnreadableDrop({ name: 'scan.png', type: 'image/png' })).toMatch(/PNG/);
     // And real invoice XML still goes straight through.
@@ -169,7 +169,7 @@ describe('markets', () => {
   it('keeps the rule families adding up to the totals quoted elsewhere', () => {
     // The showcase says "EN 16931 · 40 rules" while this card breaks the same
     // engine into three families. If they do not sum, the page contradicts
-    // itself — on the one page whose pitch is that every number is checkable.
+    // itself: on the one page whose pitch is that every number is checkable.
     const [core, vat, german] = RULE_FAMILIES;
     expect(core + vat).toBe(RULE_COUNTS.en16931);
     expect(core + vat + german).toBe(RULE_COUNTS.xrechnung);

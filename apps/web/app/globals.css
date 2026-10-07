@@ -1,14 +1,14 @@
 @import "tailwindcss";
 
 /*
- * Paper and ink. The palette of the documents this product exists to check —
+ * Paper and ink. The palette of the documents this product exists to check:
  * and of the stamp in the name. Deliberately sober: the buyers are companies
  * and public-sector suppliers, and the design should read like something a
  * procurement office could trust, not a crypto landing page.
  */
 @theme {
   /* Warm paper, not screen-grey: the page ground is cream so the white
-     cards — and the bench photo — sit on it like sheets on a desk. Every
+     cards: and the bench photo: sit on it like sheets on a desk. Every
      neutral below is warmed to match; lightness stays where it was, so all
      the original contrast ratios still hold. */
   --color-bg: #f1ead8;
@@ -63,7 +63,7 @@ button,a,input,textarea,select,summary{outline-offset:3px}button:focus-visible,a
 
 /* Code blocks are wider than a phone. A grid child's default min-width:auto
    refuses to shrink below its <pre>'s content width, which pushes the whole
-   page wider than the viewport — horizontal swiping on every mobile page.
+   page wider than the viewport: horizontal swiping on every mobile page.
    Forcing min-width:0 lets each block's own overflow-x scrolling take over. */
 .grid > * {
   min-width: 0;
@@ -73,7 +73,7 @@ pre {
 }
 
 /* Scroll reveal: sections fade in slightly as they enter the viewport.
-   Only sections the observer has explicitly veiled are ever hidden — a
+   Only sections the observer has explicitly veiled are ever hidden: a
    section that mounts later (the account dashboard renders after its
    session fetch) has no observer watching it, so it must stay visible.
    Without JS nothing is veiled, and reduced-motion users skip it all. */
@@ -94,8 +94,8 @@ pre {
 .assistant-launch{border-radius:2px;box-shadow:3px 3px 0 #9e311b}.assistant-launch:before,.assistant-launch:after{content:'';position:absolute;background:#f1ead8}.assistant-launch:before{width:8px;height:1px;left:-5px;top:8px}.assistant-launch:after{height:8px;width:1px;left:8px;top:-5px}.assistant-panel{border-radius:2px;box-shadow:7px 7px 0 #d2c9b7}.assistant-header:before{content:'AI / PAID TOOL';margin-right:auto;color:#b93620;font:600 8px/1 var(--font-jbmono),monospace;letter-spacing:.14em}.assistant-header>span{margin-left:12px}.assistant-panel textarea{border-radius:2px}.assistant-panel a,.assistant-panel button{border-radius:2px}
 
 /* The check panel's transient "checking" label exists only to be animated
-   out of the way. Anywhere the animation does not run — a narrow screen,
-   reduced motion, no CSS animation support at all — it must not be on the
+   out of the way. Anywhere the animation does not run: a narrow screen,
+   reduced motion, no CSS animation support at all: it must not be on the
    page, or the verdict reads "Checking… 2 problems found" side by side.
    Hidden by default and switched on only inside the motion block below, so
    the fallback is the finished state rather than a half-played one. */
@@ -110,7 +110,7 @@ pre {
  * missing: a hero that settles in on load, cards that lift a millimetre under
  * the cursor, a button that acknowledges a press. Every one is inside the
  * no-preference query, so reduced-motion users get a completely static site,
- * and the default (no-JS, no-CSS) state is always the visible/resting one —
+ * and the default (no-JS, no-CSS) state is always the visible/resting one:
  * nothing here can leave content stuck hidden.
  */
 @media (prefers-reduced-motion: no-preference) {
@@ -133,7 +133,7 @@ pre {
   /* Failsafe: the entrance hides its children via the animation's `from`
      frame, so a tab opened in the background pauses them at opacity 0 until
      focused. Native visibility-resume handles that the instant the user
-     looks — but this guarantees the invariant the whole site holds to
+     looks: but this guarantees the invariant the whole site holds to
      ("content is never left invisible"): once JS has run, the animation is
      cancelled and the resting state restored no matter what. */
   html.sb-rise-safe .sb-rise > * {
@@ -148,7 +148,7 @@ pre {
   .sb-rise > *:nth-child(n + 7) { animation-delay: 420ms; }
 
   /* Hover lift for cards and tiles. Pairs with the existing border/shadow
-     hover the elements already carry — this just adds the vertical nudge. */
+     hover the elements already carry: this just adds the vertical nudge. */
   .sb-lift {
     transition:
       transform 0.2s ease-out,
@@ -194,8 +194,8 @@ pre {
    *
    * A sweep crosses the document, the verdict flips from "checking" to the
    * count, and each finding lands with its rule id a beat behind it. That
-   * sequence is the product's actual argument — a document is checked, and
-   * what comes back is anchored and named — so it is worth animating, where
+   * sequence is the product's actual argument: a document is checked, and
+   * what comes back is anchored and named: so it is worth animating, where
    * a decorative globe or particle field would be worth nothing.
    *
    * Desktop only, by explicit choice: on a phone the panel is most of the
@@ -280,7 +280,7 @@ pre {
     }
 
     /* Findings land one after another, each rule chip a beat behind its
-       card — the order the engine actually reports them in. */
+       card: the order the engine actually reports them in. */
     @keyframes sb-finding-in {
       from {
         opacity: 0;
@@ -316,7 +316,7 @@ pre {
 
     /* The invoice waiting to be dragged into the engine on the homepage.
        A drag is the one interaction on this site with no standing convention
-       to lean on — nothing else here is grabbable — so the object has to say
+       to lean on: nothing else here is grabbable: so the object has to say
        so itself. Two millimetres, slowly, and only until someone takes hold
        of it: the class comes off the moment the file is touched. */
     @keyframes sb-nudge {
@@ -335,11 +335,11 @@ pre {
   }
 }
 
-/* Primary buttons glow purple under the cursor (Harvey, 2026-08-20 — the
+/* Primary buttons glow purple under the cursor (Harvey, 2026-08-20: the
    "Night Shift" hover kept on the daylight theme). Scoped to accent-filled
    buttons only: sb-press also rides secondary buttons and cards, where a
    purple halo under a white surface would read as a smudge. Outside the
-   reduced-motion block on purpose — a glow is color, not motion; only its
+   reduced-motion block on purpose: a glow is color, not motion; only its
    fade (in .sb-press's transition list) is motion-gated. */
 .sb-press.bg-accent:hover {
   box-shadow: 0 0 42px rgb(91 43 214 / 0.45);
@@ -348,7 +348,7 @@ pre {
 /* Subtle grid backdrop for hero sections. The grid + fade mask live on a
    ::before layer so the mask never applies to the section's actual content
    (a mask on the section itself would fade the text and buttons out too). */
-/* Hero glow — replaced the old template grid. Purple blooms only (the warm
+/* Hero glow: replaced the old template grid. Purple blooms only (the warm
    paper glows were cut 2026-08-20): brand purple behind the headline, a
    fainter purple right. Deliberately loud since 2026-08-20 (Harvey's call):
    the blooms are meant to be seen moving, not sensed. */
@@ -356,7 +356,7 @@ pre {
   position: relative;
   /* The bloom layers overscan the section (negative insets below) and, since
      2026-08-20's amplification, far enough past the viewport to widen the
-     document — horizontal swiping on every phone. Clip x only: the vertical
+     document: horizontal swiping on every phone. Clip x only: the vertical
      bleed into neighboring sections is part of the effect and costs nothing. */
   overflow-x: clip;
 }
@@ -408,7 +408,7 @@ pre {
  * Periods are deliberately co-prime-ish (2.1s against 3.1s) so the two
  * layers do not fall into a visible common rhythm, and `alternate` means each
  * ends where it began without a seam. (Originally 21s/31s; sped up 10x on
- * request, 2026-08-20.) Only `transform` and `opacity` are animated — both
+ * request, 2026-08-20.) Only `transform` and `opacity` are animated: both
  * composite on the GPU, so six large blurred gradients cost nothing per
  * frame. Animating `background-position` instead would repaint the whole
  * hero every frame, which is exactly where this effect gets expensive on
@@ -448,7 +448,7 @@ pre {
 
 /* Printing an invoice.
    "Download PDF" on the generator is the browser's own print-to-PDF driven by
-   these rules — a real, offline, dependency-free PDF, rather than shipping a
+   these rules: a real, offline, dependency-free PDF, rather than shipping a
    rendering library to be able to claim the feature. Everything except the
    invoice itself is removed, and the document is laid out for A4. */
 @media print {
@@ -461,7 +461,7 @@ pre {
   }
   /* Hide everything, then re-show the invoice and its descendants. Hiding by
      `visibility` rather than `display` leaves the ancestor boxes in place, so
-     the absolutely-positioned invoice below still has a containing block —
+     the absolutely-positioned invoice below still has a containing block:
      the reliable version of "print only this element". */
   body * {
     visibility: hidden;
@@ -667,7 +667,7 @@ pre {
 @media(max-width:800px){.proof-motion{grid-template-columns:1fr;gap:35px;padding:70px 0}.proof-stage{min-height:570px}.proof-card{width:min(340px,82vw)}}
 @media(prefers-reduced-motion:reduce){.proof-card{transform:none!important;transition:none}.proof-card:before{opacity:.45}}
 
-/* Workflow compatibility and invoice handoff — a factual integration strip,
+/* Workflow compatibility and invoice handoff: a factual integration strip,
    followed by a cream motion study inspired by physical document handling. */
 .workflow-proof{background:#f1ead8;border-bottom:1px solid #d6d1c4}.workflow-trust{padding:34px 0 26px;border-bottom:1px solid #d6d1c4;text-align:center;overflow:hidden}.workflow-trust>p{font-size:12px;letter-spacing:.08em}.workflow-trust>small{display:block;margin-top:17px;color:#898579;font:600 7px/1 var(--font-jbmono),monospace;letter-spacing:.14em}.workflow-rail{margin-top:25px;overflow:hidden;-webkit-mask-image:linear-gradient(90deg,transparent,#000 10%,#000 90%,transparent);mask-image:linear-gradient(90deg,transparent,#000 10%,#000 90%,transparent)}.workflow-track{display:flex;width:max-content;animation:workflow-run 34s linear infinite}.workflow-set{display:flex;align-items:center;gap:58px;padding-right:58px}.workflow-set span{display:flex;align-items:center;gap:10px;color:#4f5048;font-size:16px;font-weight:600;white-space:nowrap;filter:grayscale(1)}.workflow-set i{display:grid;place-items:center;min-width:25px;height:25px;color:#77756b;font:700 11px/1 var(--font-jbmono),monospace;font-style:normal}.workflow-set span:nth-child(3) i{font-size:9px}.workflow-set span:nth-child(4) i{font-size:19px}@keyframes workflow-run{to{transform:translateX(-50%)}}
 .workflow-story{display:grid;grid-template-columns:.8fr 1.2fr;gap:70px;align-items:center;width:min(1180px,calc(100% - 48px));margin:auto;padding:100px 0}.workflow-story-copy h2{margin:25px 0 22px;font-size:clamp(44px,5vw,70px);font-weight:500;line-height:1.03;letter-spacing:-.055em}.workflow-story-copy h2 em{display:block;margin-top:.14em;color:#c03a1f;font:400 1em/1.1 Georgia,serif;letter-spacing:0}.workflow-story-copy>p:not(.editorial-kicker){max-width:430px;color:#6d6d63;line-height:1.7}.workflow-story-copy>div{display:flex;gap:25px;margin-top:35px;color:#777267;font:600 8px/1 var(--font-jbmono),monospace;letter-spacing:.12em}.invoice-motion{--flow-x:0px;--flow-y:0px;position:relative;min-height:590px;border:1px solid #cbc4b4;background:#eee6d3;overflow:hidden;isolation:isolate}.motion-grid{position:absolute;inset:0;background-image:linear-gradient(#aaa28e24 1px,transparent 1px),linear-gradient(90deg,#aaa28e24 1px,transparent 1px);background-size:52px 52px}.motion-source{position:absolute;left:7%;top:45%;display:flex;gap:5px;color:#8a8477;font:22px/1 var(--font-jbmono),monospace;animation:source-pulse 4s ease-in-out infinite}.motion-source i{color:#c03a1f;font-size:9px;font-style:normal;letter-spacing:.12em;align-self:center}.motion-sheet{position:absolute;left:40%;top:50%;width:235px;height:310px;border:1px solid #9e9787;background:#faf6ea}.sheet-shadow{transform:translate(calc(-50% + var(--flow-x)),calc(-50% + var(--flow-y))) rotate(6deg);background:#d8d0bf;box-shadow:0 24px 40px #50473522;transition:transform .2s}.sheet-main{padding:24px;transform:translate(calc(-50% + var(--flow-x)),calc(-50% + var(--flow-y)));box-shadow:0 18px 32px #50473520;transition:transform .2s;animation:invoice-breathe 5s ease-in-out infinite}.sheet-main header,.sheet-main footer{display:flex;justify-content:space-between;align-items:end}.sheet-main header{padding-bottom:17px;border-bottom:1px solid #cfc7b5}.sheet-main small{font:600 7px/1 var(--font-jbmono),monospace;letter-spacing:.15em}.sheet-main header b{font-size:11px}.motion-lines{margin-top:38px}.motion-lines i{display:block;height:1px;margin:18px 0;background:#cfc7b5}.motion-lines i:nth-child(2){width:74%}.motion-lines i:nth-child(3){width:88%}.motion-lines i:nth-child(4){width:55%}.sheet-main footer{position:absolute;left:24px;right:24px;bottom:25px}.sheet-main footer strong{font:25px/1 Georgia,serif}.sheet-main>em{position:absolute;right:23px;top:75px;display:grid;place-items:center;width:53px;height:53px;border:1px solid #c03a1f;border-radius:50%;color:#c03a1f;font:28px/1 Georgia,serif;font-style:normal}.motion-stamp{position:absolute;left:48%;top:17%;padding:7px 9px;border:2px solid #c03a1f;color:#c03a1f;font:700 8px/1 var(--font-jbmono),monospace;letter-spacing:.14em;transform:rotate(-7deg);animation:stamp-drop 5s ease-in-out infinite}.motion-output{position:absolute;right:5%;width:92px;padding:13px 11px;border:1px solid #bdb5a3;background:#f7f1e3;box-shadow:5px 5px 0 #d2cab8;animation:output-float 5s ease-in-out infinite}.motion-output b{display:block;font-size:14px}.motion-output small{display:block;margin-top:5px;color:#797468;font-size:6px;letter-spacing:.12em}.output-pdf{top:27%;animation-delay:.1s}.output-ubl{top:46%;animation-delay:.25s}.output-cii{top:65%;animation-delay:.4s}.invoice-motion>p{position:absolute;left:28px;bottom:23px;color:#7d786d;font:600 7px/1 var(--font-jbmono),monospace;letter-spacing:.16em}.invoice-motion>p span{color:#c03a1f}@keyframes source-pulse{0%,100%{opacity:.45;transform:translateX(0)}50%{opacity:1;transform:translateX(8px)}}@keyframes invoice-breathe{0%,100%{margin-top:0}50%{margin-top:-7px}}@keyframes stamp-drop{0%,28%{opacity:0;transform:translateY(-28px) rotate(-7deg) scale(1.12)}40%,85%{opacity:1;transform:translateY(0) rotate(-7deg) scale(1)}100%{opacity:0}}@keyframes output-float{0%,42%{opacity:0;transform:translateX(-18px)}55%,90%{opacity:1;transform:translateX(0)}100%{opacity:0;transform:translateX(8px)}}
@@ -696,6 +696,7 @@ body:has(.basalt-hero)>header{display:none}.editorial-home:has(.basalt-hero){bac
 @media(max-width:760px){.basalt-layout{margin:65px auto 0;justify-content:center}.basalt-layout .basalt-copy{align-items:center}}
 
 /* Defined Stampbench-orange light moving over the cream paper canvas. */
+.basalt-nav{position:relative;width:min(1180px,100%);padding:10px 0 11px;border:0;border-top:1px solid #82796542;border-bottom:1px solid #82796561;border-radius:0;background:linear-gradient(90deg,transparent,#f7f0e1a8 18%,#f7f0e1a8 82%,transparent);box-shadow:none}.basalt-nav:after{content:"";position:absolute;left:0;bottom:-1px;width:58px;height:2px;background:#c03a1f}.basalt-nav-workbench,.basalt-nav-cta{border-radius:3px!important}.basalt-nav-cta{box-shadow:inset 0 1px #ff9b816b,2px 2px 0 #8e281b24!important}
 .aurora-field{inset:-2%;background:linear-gradient(145deg,#f3ebd9 0%,#f1ead8 46%,#eee3cc 100%);transform:translate3d(var(--hero-haze-x,0px),var(--hero-haze-y,0px),0) scale(1.04);transform-origin:center;will-change:transform}
 .aurora-field i{opacity:.43!important;filter:blur(54px) saturate(1.08);mix-blend-mode:multiply}
 .aurora-field i:nth-child(1){left:-12vw;top:3vh;width:72vw;height:19vw;background:linear-gradient(90deg,#b93520a8 0%,#df552b9c 26%,#f47c3894 58%,#ffc06765 100%)}
@@ -716,14 +717,14 @@ body:has(.basalt-hero)>header{display:none}.editorial-home:has(.basalt-hero){bac
 .workbench-pass-motion{position:absolute;z-index:2;left:50%;top:50%;width:min(450px,95%);aspect-ratio:85.6/53.98;transform:translate3d(calc(-50% + var(--card-x)),calc(-50% + var(--card-y)),var(--passport-lift)) rotateZ(-3deg) rotateX(calc(var(--card-rx) - var(--passport-hover-tilt))) rotateY(var(--card-ry));transform-style:preserve-3d;will-change:transform;animation:workbench-pass-float 5.8s ease-in-out infinite}
 .workbench-pass-card{position:absolute;inset:0;transform-style:preserve-3d;transition:transform .78s cubic-bezier(.2,.76,.18,1)}
 .workbench-pass-stage.is-personalised .workbench-pass-card{transform:rotateY(180deg)}
-.workbench-pass-face{position:absolute;inset:0;border:1px solid #ffffff14;border-radius:18px;background:linear-gradient(145deg,#1e1e1c 0%,#121312 70%);box-shadow:0 34px 60px #602a1d42;color:#eee8db;overflow:hidden;text-rendering:geometricPrecision;-webkit-font-smoothing:antialiased;-webkit-backface-visibility:hidden;backface-visibility:hidden}
-.workbench-pass-face:before{content:"";position:absolute;inset:0;background:linear-gradient(125deg,#ffffff0c 0%,transparent 28%,#e9542d08 54%,transparent 76%);pointer-events:none}
+.workbench-pass-face{position:absolute;inset:0;border:1px solid #ffffff17;border-radius:4px;background:linear-gradient(145deg,#1e1e1c 0%,#121312 70%);box-shadow:0 34px 60px #602a1d42;color:#eee8db;overflow:hidden;clip-path:polygon(0 0,calc(100% - 18px) 0,100% 18px,100% 100%,0 100%);text-rendering:geometricPrecision;-webkit-font-smoothing:antialiased;-webkit-backface-visibility:hidden;backface-visibility:hidden}
+.workbench-pass-face:before{content:"";position:absolute;inset:0;background:linear-gradient(125deg,#ffffff0c 0%,transparent 28%,#e9542d08 54%,transparent 76%);pointer-events:none}.workbench-pass-face:after{content:"";position:absolute;z-index:3;top:0;right:0;width:18px;height:18px;background:linear-gradient(225deg,#c03a1f 0 48%,#ffffff18 50% 54%,transparent 56%);pointer-events:none}
 .workbench-pass-shine{position:absolute;z-index:0;inset:-35%;background:radial-gradient(circle at var(--pass-light-x) var(--pass-light-y),#fff2 0,transparent 29%);mix-blend-mode:screen;transition:background-position .2s ease;pointer-events:none}
 .workbench-pass-face header{position:relative;z-index:1;display:flex;align-items:center;justify-content:space-between;height:42px;padding:0 17px;border-bottom:1px solid #ffffff12;color:#d0c9bd;font:650 8px/1 var(--font-jbmono),monospace;letter-spacing:.12em}
 .workbench-pass-face header span{display:flex;align-items:center;gap:7px}.workbench-pass-face header i{display:block;width:7px;height:7px;border:1px solid #eb5736}.workbench-pass-face header small{font:inherit}
 .pass-checking{position:relative;z-index:1;display:flex;align-items:center;gap:10px;height:47px;padding:0 18px;border-bottom:1px solid #ffffff0c;color:#fffaf0;font-size:14px;font-weight:620}.pass-checking i{display:block;width:13px;height:13px;border:1px solid #ffffff31;border-top-color:#ec5b38;border-radius:50%;animation:workbench-pass-spin .85s linear infinite}
 .workbench-pass-front ol{position:relative;z-index:1;display:grid;grid-template-columns:repeat(3,1fr);margin:0;padding:11px 13px 12px;list-style:none}
-.workbench-pass-front li{display:grid;grid-template-columns:auto 1fr;gap:5px 7px;align-items:center;min-width:0;padding:9px;border-right:1px solid #ffffff0d;color:#e0dacd}.workbench-pass-front li:last-child{border-right:0}.workbench-pass-front li span{font:650 7.5px/1 var(--font-jbmono),monospace;color:#aaa49a}.workbench-pass-front li b{font-size:10px;font-weight:600;white-space:nowrap}.workbench-pass-front li em{grid-column:1/-1;display:grid;width:20px;height:20px;margin-top:3px;place-items:center;border:1px solid #d34c31;border-radius:50%;color:#f16b4a;font-style:normal;font-size:11px;opacity:.25;transform:scale(.78);animation:workbench-pass-check 5.4s cubic-bezier(.18,.78,.2,1) infinite}.workbench-pass-front li:nth-child(2) em{animation-delay:.28s}.workbench-pass-front li:nth-child(3) em{animation-delay:.56s}
+.workbench-pass-front li{display:grid;grid-template-columns:auto 1fr;gap:5px 7px;align-items:center;min-width:0;padding:9px;border-right:1px solid #ffffff0d;color:#e0dacd}.workbench-pass-front li:last-child{border-right:0}.workbench-pass-front li span{font:650 7.5px/1 var(--font-jbmono),monospace;color:#aaa49a}.workbench-pass-front li b{font-size:9.5px;font-weight:600;white-space:nowrap}.workbench-pass-front li em{grid-column:1/-1;display:grid;width:20px;height:20px;margin-top:3px;place-items:center;border:1px solid #d34c31;border-radius:2px;color:#f16b4a;font-style:normal;font-size:11px;opacity:.25;transform:scale(.78);animation:workbench-pass-check 5.4s cubic-bezier(.18,.78,.2,1) infinite}.workbench-pass-front li:nth-child(2) em{animation-delay:.28s}.workbench-pass-front li:nth-child(3) em{animation-delay:.56s}
 .workbench-pass-face footer{position:absolute;z-index:1;right:0;bottom:0;left:0;display:flex;align-items:center;justify-content:space-between;height:46px;padding:0 17px;border-top:1px solid #ffffff12;background:#1b1b19;color:#aaa59c;font:650 7px/1 var(--font-jbmono),monospace;letter-spacing:.1em}.workbench-pass-front footer strong{padding:7px 9px;border:1px solid #c5472f;background:#c03a1f16;color:#ff8a6e;font:650 7.5px/1 var(--font-jbmono),monospace}
 .workbench-pass-back{transform:rotateY(180deg);background:linear-gradient(145deg,#20211e 0%,#111210 72%)}
 .pass-identity{position:relative;z-index:1;padding:22px 19px 12px}.pass-identity small{display:block;color:#ff8061;font:650 7.5px/1 var(--font-jbmono),monospace;letter-spacing:.13em}.pass-identity strong{display:block;margin-top:11px;font-size:21px;letter-spacing:-.035em}.pass-identity span{display:block;margin-top:5px;color:#c1bbb0;font-size:9.5px}

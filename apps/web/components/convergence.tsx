@@ -4,7 +4,7 @@ import { useCallback, useEffect, useRef, useState } from 'react';
 import type { Copy } from '@/lib/copy';
 
 /**
- * Two doors, one engine — the homepage's only argument that is shown rather
+ * Two doors, one engine: the homepage's only argument that is shown rather
  * than asserted, and the one the visitor performs themselves.
  *
  * A business fills in a form on the left; a developer posts JSON on the right.
@@ -20,7 +20,7 @@ import type { Copy } from '@/lib/copy';
  * file in yourself and seeing the rule ids fall out at the moment you pass them
  * is the difference between being told the engine is deterministic and
  * operating something deterministic. Scrubbing back up rewinds it, which is
- * itself the point — the same input gives the same result every time.
+ * itself the point: the same input gives the same result every time.
  *
  * The sequence still plays itself if nobody grabs the file within a couple of
  * seconds. An interaction the visitor never discovers is not a feature, it is
@@ -32,7 +32,7 @@ import type { Copy } from '@/lib/copy';
  * It does **not** finish on a green tick. The arithmetic error repairs itself
  * because a VAT total has exactly one right answer; the missing buyer
  * reference is handed back, because it does not. An animation that healed both
- * would contradict "never invent compliance data" — the principle this product
+ * would contradict "never invent compliance data": the principle this product
  * is built on and which the rest of the site states plainly.
  *
  * There is **no audience toggle** inside it. The two cards above are already
@@ -107,7 +107,7 @@ export function Convergence({ copy }: { copy: Copy }) {
   const [intro, setIntro] = useState(-1);
   const [progress, setProgress] = useState(0);
   const [dragging, setDragging] = useState(false);
-  /** Whether a person has taken hold of the file — suppresses the self-run. */
+  /** Whether a person has taken hold of the file: suppresses the self-run. */
   const [taken, setTaken] = useState(false);
 
   const hostRef = useRef<HTMLDivElement>(null);
@@ -130,7 +130,7 @@ export function Convergence({ copy }: { copy: Copy }) {
     timers.current = [];
   }, []);
 
-  /** Ease the file to a resting point — the end of a drag, or the self-run. */
+  /** Ease the file to a resting point: the end of a drag, or the self-run. */
   const glide = useCallback(
     (to: number, ms: number) => {
       cancelAnimationFrame(frame.current);
@@ -153,7 +153,7 @@ export function Convergence({ copy }: { copy: Copy }) {
 
     // Reduced motion gets the finished diagram, immediately. Someone who has
     // asked the OS for less movement has not asked for a faster version of the
-    // movement — they have asked to read the result. The file stays draggable:
+    // movement: they have asked to read the result. The file stays draggable:
     // a drag is a gesture the visitor chose to make, not motion done at them.
     const reduced = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
     if (reduced) {
@@ -225,7 +225,7 @@ export function Convergence({ copy }: { copy: Copy }) {
     event.currentTarget.releasePointerCapture(event.pointerId);
     const at = value.current;
     // Past halfway the engine takes it; short of that it returns to the top,
-    // which is the honest outcome — a document that never went in has no
+    // which is the honest outcome: a document that never went in has no
     // verdict, and inventing one here would be the same lie the engine refuses
     // to tell about a missing buyer reference.
     glide(at >= COMMIT ? 1 : 0, at >= COMMIT ? 420 : 280);
@@ -254,10 +254,10 @@ export function Convergence({ copy }: { copy: Copy }) {
   const held = dragging || (taken && progress > 0 && progress < 1);
 
   return (
-    /* Hidden below `lg` on purpose — see the note at the top of the file. */
+    /* Hidden below `lg` on purpose: see the note at the top of the file. */
     <div ref={hostRef} className="mx-auto hidden max-w-4xl px-4 lg:block">
       {/* The sequence is a picture with a control in it, so the description
-          lives here as text rather than as a label on a role="img" wrapper —
+          lives here as text rather than as a label on a role="img" wrapper:
           that would have swallowed the button along with the diagram. Every
           purely decorative block below is hidden individually instead. */}
       <p className="sr-only">{t.summary}</p>
@@ -296,7 +296,7 @@ export function Convergence({ copy }: { copy: Copy }) {
       </div>
 
       {/* The same file from both doors, said twice because that repetition is
-          the argument, not an oversight — and then converging into the one
+          the argument, not an oversight: and then converging into the one
           copy the visitor actually handles. */}
       <div className="grid grid-cols-2 gap-8" aria-hidden>
         {['l', 'r'].map((side) => (
@@ -406,7 +406,7 @@ export function Convergence({ copy }: { copy: Copy }) {
                 {/* A ruled line where the finding will be. The panel reserves
                     its full height from the start so nothing below it jumps,
                     and an empty box that size reads as broken rather than as
-                    waiting — the rules are known before the document arrives,
+                    waiting: the rules are known before the document arrives,
                     only the answers are not. */}
                 <span
                   className={`absolute left-6 top-1/2 h-[3px] -translate-y-1/2 rounded-full bg-border transition-opacity duration-200 ${

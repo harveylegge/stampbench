@@ -8,8 +8,8 @@
  *
  * Every function either returns the parsed payload or throws ApiError with
  * `code` for the cases the UI branches on:
- *   'unauthenticated' — no/expired session → send the visitor to /signin
- *   'quota'           — feature limit reached → upsell to /account
+ *   'unauthenticated': no/expired session → send the visitor to /signin
+ *   'quota': feature limit reached → upsell to /account
  */
 
 import type { FeatureId, PlanId } from './plans';
@@ -73,7 +73,7 @@ async function call<T>(path: string, init?: RequestInit): Promise<T> {
   return data as T;
 }
 
-/** null when nobody is signed in — the one 401 that is not exceptional. */
+/** null when nobody is signed in: the one 401 that is not exceptional. */
 export async function me(): Promise<Me | null> {
   try {
     return await call<Me>('/api/auth/me');
@@ -86,7 +86,7 @@ export async function me(): Promise<Me | null> {
 /**
  * True when the JS-readable session marker is present. The real session
  * cookie is HttpOnly; this marker exists so per-pageview chrome (the nav)
- * can skip the /api/auth/me round-trip for anonymous visitors entirely —
+ * can skip the /api/auth/me round-trip for anonymous visitors entirely:
  * a traffic spike must not turn into a worker invocation per page view.
  */
 export function probablySignedIn(): boolean {
@@ -96,7 +96,7 @@ export function probablySignedIn(): boolean {
 let planPromise: Promise<PlanId | null> | null = null;
 
 /**
- * The signed-in account's plan, or null when signed out — cached for the page
+ * The signed-in account's plan, or null when signed out: cached for the page
  * view so plan-gated touches (PDF branding, backup copy) do not each cost a
  * worker call. An error is not cached: the next asker retries.
  */
@@ -130,7 +130,7 @@ export function listKeys(): Promise<{ keys: ApiKeySummary[] }> {
   return call('/api/keys');
 }
 
-/** The full key appears only in this response — it is stored hashed. */
+/** The full key appears only in this response: it is stored hashed. */
 export function createKey(): Promise<{ key: string; id: string; prefix: string }> {
   return call('/api/keys', { method: 'POST', body: JSON.stringify({}) });
 }
@@ -141,7 +141,7 @@ export function revokeKey(id: string): Promise<{ ok: true }> {
 
 /**
  * Store a validation report and get a shareable id for /report?id=…
- * Meters 'share'. Payload is the JSON the report page renders — keep it
+ * Meters 'share'. Payload is the JSON the report page renders: keep it
  * self-contained (violations, filename, timestamp, verdict).
  */
 export function shareReport(payload: unknown): Promise<{ id: string; url: string }> {
@@ -166,8 +166,8 @@ export function regressCredit(): Promise<{ ok: true; remaining: number }> {
  *
  * Returns `payUrl` when PayPal is configured, so the account page can offer
  * payment immediately rather than making someone wait for an email. Paying
- * does not activate the plan on its own — a human still confirms the money
- * arrived — so the UI must not imply otherwise.
+ * does not activate the plan on its own: a human still confirms the money
+ * arrived: so the UI must not imply otherwise.
  */
 export function requestUpgrade(
   plan: Exclude<PlanId, 'free'>,
@@ -176,7 +176,7 @@ export function requestUpgrade(
 }
 
 /**
- * Withdraw a pending manual upgrade request — the escape hatch for requests
+ * Withdraw a pending manual upgrade request: the escape hatch for requests
  * made before self-serve billing existed, which would otherwise pin the
  * account page on "we will email you" forever.
  */
@@ -188,7 +188,7 @@ export function cancelUpgradeRequest(): Promise<{ ok: true }> {
  * Start Stripe Checkout for an existing signed-in account and get the hosted
  * URL to send the browser to.
  *
- * The response is only a redirect target — it grants nothing. The plan changes
+ * The response is only a redirect target: it grants nothing. The plan changes
  * when Stripe's signed webhook says the payment settled, never because the
  * browser came back from a success URL, which anyone could visit directly.
  */
@@ -206,7 +206,7 @@ export function billingPortal(): Promise<{ url: string }> {
  * browser to.
  *
  * Like Stripe Checkout, the returned URL grants nothing on its own. The plan
- * changes when PayPal's verified webhook says the subscription activated —
+ * changes when PayPal's verified webhook says the subscription activated:
  * never because the browser came back from the return URL, which anyone could
  * visit directly. Expect a short gap between approval and activation.
  */
@@ -217,7 +217,7 @@ export function startPaypalSubscription(plan: Exclude<PlanId, 'free'>): Promise<
 /**
  * Cancel the account's PayPal subscription.
  *
- * PayPal has no hosted billing portal, so this is the self-serve exit — it has
+ * PayPal has no hosted billing portal, so this is the self-serve exit: it has
  * to live in our own UI rather than being a link into PayPal's account pages.
  */
 export function cancelPaypalSubscription(): Promise<{ ok: true }> {
@@ -268,13 +268,13 @@ export function deleteAccountInvoice(id: string): Promise<{ ok: true }> {
   return call(`/api/invoices/${encodeURIComponent(id)}`, { method: 'DELETE' });
 }
 
-/** GDPR Art. 20 — everything held about the account, as JSON. */
+/** GDPR Art. 20: everything held about the account, as JSON. */
 export function exportAccount(): Promise<Record<string, unknown>> {
   return call('/api/account/export');
 }
 
 /**
- * GDPR Art. 17 — irreversible erasure. `confirm` must equal the account email;
+ * GDPR Art. 17: irreversible erasure. `confirm` must equal the account email;
  * the server re-checks, so this is not merely a UI guard.
  */
 export function deleteAccount(confirm: string): Promise<{ ok: true; deleted: true }> {
@@ -303,7 +303,7 @@ export interface AiDraftLine {
 
 /**
  * Turn a plain-English description into line items. Same credit jar as the
- * explainer. Deliberately returns *only* commercial content — the server never
+ * explainer. Deliberately returns *only* commercial content: the server never
  * emits a tax rate, a VAT id, an address or a date, so there is nothing here
  * that could quietly become a compliance claim.
  */
@@ -323,7 +323,7 @@ export interface ChatTurn {
 }
 
 /**
- * One turn of the Stampbench assistant. Paid plans only — the worker refuses
+ * One turn of the Stampbench assistant. Paid plans only: the worker refuses
  * free-plan sessions with code 'plan' (402), which the widget renders as its
  * locked state rather than an error. Same credit jar as explain/draft.
  */
@@ -333,7 +333,7 @@ export function aiChat(messages: ChatTurn[]): Promise<{ reply: string }> {
 
 // ------------------------------------------------------- payment hook
 // Auto-invoicing: one secret inbound webhook URL per account. The URL is
-// returned exactly once on creation — it is stored hashed, like an API key.
+// returned exactly once on creation: it is stored hashed, like an API key.
 
 export function paymentHookStatus(): Promise<{ configured: boolean }> {
   return call('/api/account/payment-hook');

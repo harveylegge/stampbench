@@ -1,8 +1,8 @@
 /**
  * Pins the assistant's pure parts: chat-request validation (workers/api/src/
  * assistant.ts) and the paid-only entitlement flags. The plan gate is the
- * feature's whole premise — Free keeps its five explain/draft credits but
- * never reaches the assistant — so the flag table is asserted per plan.
+ * feature's whole premise: Free keeps its five explain/draft credits but
+ * never reaches the assistant: so the flag table is asserted per plan.
  */
 import { describe, expect, it } from 'vitest';
 

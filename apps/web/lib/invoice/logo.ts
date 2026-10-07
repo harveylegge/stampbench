@@ -4,7 +4,7 @@
  * The naive version of this feature reads the file, notices it is 8 MB and
  * tells the user off. But 8 MB is what a phone camera or an untouched export
  * from a design tool weighs, and "your logo is too big" is a demand that the
- * user go and find image-editing software — to put a picture on an invoice.
+ * user go and find image-editing software: to put a picture on an invoice.
  *
  * So the file is scaled down here instead. A logo is printed about two inches
  * wide, which is ~600px even at 300 DPI, and almost anything reduced to that
@@ -13,7 +13,7 @@
  * person uses.
  *
  * The budget exists because the draft lives in localStorage, which is a few
- * megabytes shared with the rest of the origin — a logo that ate it would
+ * megabytes shared with the rest of the origin: a logo that ate it would
  * silently stop the invoice itself from being saved.
  */
 
@@ -40,13 +40,13 @@ export function describeSize(bytes: number): string {
 
 /**
  * Reasons to refuse a file without opening it. Returns null when the file is
- * worth trying — which, after scaling, is nearly everything.
+ * worth trying: which, after scaling, is nearly everything.
  */
 export function logoRejection(file: { type: string; size: number; name: string }): string | null {
   const looksLikeImage = file.type.startsWith('image/') || /\.(png|jpe?g|webp|svg|gif|avif)$/i.test(file.name);
-  if (!looksLikeImage) return 'That file is not an image — a PNG, JPEG, SVG or WebP works.';
+  if (!looksLikeImage) return 'That file is not an image: a PNG, JPEG, SVG or WebP works.';
   if (file.type && !ACCEPTED.includes(file.type)) {
-    return `${file.type} images are not supported here — try a PNG, JPEG, SVG or WebP.`;
+    return `${file.type} images are not supported here: try a PNG, JPEG, SVG or WebP.`;
   }
   if (file.size > MAX_LOGO_INPUT_BYTES) {
     return `That image is ${describeSize(file.size)}, which is too large to open in the browser. ${describeSize(MAX_LOGO_INPUT_BYTES)} is the ceiling.`;
@@ -54,7 +54,7 @@ export function logoRejection(file: { type: string; size: number; name: string }
   return null;
 }
 
-/** Roughly how many bytes a data URL occupies — base64 is 4 bytes per 3. */
+/** Roughly how many bytes a data URL occupies: base64 is 4 bytes per 3. */
 export function dataUrlBytes(dataUrl: string): number {
   const comma = dataUrl.indexOf(',');
   const payload = comma === -1 ? dataUrl : dataUrl.slice(comma + 1);
@@ -86,7 +86,7 @@ export type LogoResult = { dataUrl: string; note?: string } | { error: string };
  *
  * Encodings are tried best-first: WebP keeps transparency at a fraction of
  * PNG's size, PNG is exact for the flat colour most logos are made of, and
- * JPEG is the fallback for photographs — with a white background, since a
+ * JPEG is the fallback for photographs: with a white background, since a
  * photograph has no transparency to keep and JPEG cannot store it anyway.
  * A browser that cannot encode a format hands back a PNG, which the size
  * check below sorts out on its own.
@@ -103,7 +103,7 @@ export async function prepareLogo(file: File): Promise<LogoResult> {
     if (file.type === 'image/svg+xml') {
       if (dataUrlBytes(original) <= MAX_LOGO_BYTES) return { dataUrl: original };
       return {
-        error: `That SVG is ${describeSize(file.size)} — SVGs are kept as-is, so it needs to be under ${describeSize(MAX_LOGO_BYTES)}. Exporting it as a PNG usually fixes it.`,
+        error: `That SVG is ${describeSize(file.size)}: SVGs are kept as-is, so it needs to be under ${describeSize(MAX_LOGO_BYTES)}. Exporting it as a PNG usually fixes it.`,
       };
     }
 
@@ -133,7 +133,7 @@ export async function prepareLogo(file: File): Promise<LogoResult> {
       return {
         dataUrl: best,
         ...(resized
-          ? { note: `Scaled to ${width}×${height} and reduced to ${describeSize(dataUrlBytes(best))} for storage — the printed logo is unaffected.` }
+          ? { note: `Scaled to ${width}×${height} and reduced to ${describeSize(dataUrlBytes(best))} for storage: the printed logo is unaffected.` }
           : {}),
       };
     }
@@ -151,13 +151,13 @@ export async function prepareLogo(file: File): Promise<LogoResult> {
       if (dataUrlBytes(jpeg) <= MAX_LOGO_BYTES) {
         return {
           dataUrl: jpeg,
-          note: `Scaled to ${width}×${height} and saved as JPEG (${describeSize(dataUrlBytes(jpeg))}) — transparency, if there was any, is now white.`,
+          note: `Scaled to ${width}×${height} and saved as JPEG (${describeSize(dataUrlBytes(jpeg))}): transparency, if there was any, is now white.`,
         };
       }
     }
 
     return {
-      error: `Even scaled down, that image is over ${describeSize(MAX_LOGO_BYTES)}. A simpler logo — flat colours, fewer details — will compress far smaller.`,
+      error: `Even scaled down, that image is over ${describeSize(MAX_LOGO_BYTES)}. A simpler logo: flat colours, fewer details: will compress far smaller.`,
     };
   } catch (e) {
     return { error: e instanceof Error ? e.message : 'That image could not be used.' };

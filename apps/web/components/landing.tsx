@@ -10,7 +10,7 @@ import { StatsBoard } from '@/components/stats-board';
  * German share one layout.
  *
  * Structure (2026-08 audience pass): Stampbench serves two audiences whose
- * needs are opposite — a freelancer who wants an invoice, and an engineer who
+ * needs are opposite: a freelancer who wants an invoice, and an engineer who
  * wants e-invoicing infrastructure. The previous page tried to speak to both
  * at once, which meant naming EN 16931, UBL and CII above the fold and asking
  * a plumber to care. So the page now asks *which visitor are you* before it
@@ -19,7 +19,7 @@ import { StatsBoard } from '@/components/stats-board';
  *
  * What is deliberately NOT here any more: the CLI transcripts, the
  * official-validator comparison, the three engineering pillars and the
- * local-first pitch. None of it was removed — all of it moved to /developers,
+ * local-first pitch. None of it was removed: all of it moved to /developers,
  * where it is the whole page instead of half a homepage. A business visitor
  * should never have to scroll past a terminal to reach an invoice.
  *
@@ -36,7 +36,7 @@ export function Landing({ copy }: { copy: Copy }) {
           The vertical rhythm is measured in vh rather than fixed rems, so the
           whole stack above the demo compresses on a short laptop and breathes
           on a big monitor. That is what lets the top of the demo panel sit
-          just under the fold on most screens without anything being resized —
+          just under the fold on most screens without anything being resized:
           the spacing adapts instead of the content. */}
       <section className="hero-glow relative">
         <div className="sb-rise relative mx-auto max-w-5xl px-4 pb-[clamp(0.75rem,2vh,2.5rem)] pt-[clamp(1.5rem,5vh,5rem)] text-center">
@@ -53,7 +53,7 @@ export function Landing({ copy }: { copy: Copy }) {
               min() keeps 5rem on anything from a laptop upwards and only
               steps down on genuinely short windows, where two stacked lines
               of 80px headline would own half the screen. The stacked spans
-              are deliberate — at this size the accent phrase is a line, not
+              are deliberate: at this size the accent phrase is a line, not
               a word, and letting it break mid-phrase reads as an accident. */}
           <h1 className="mb-[clamp(0.75rem,1.6vh,1.25rem)] text-[2rem] font-[650] leading-[1.05] tracking-[-0.03em] sm:text-6xl md:text-[min(5rem,9vh)]">
             <span className="block">{copy.hero.titleTop}</span>
@@ -76,13 +76,13 @@ export function Landing({ copy }: { copy: Copy }) {
       </section>
 
       {/* One engine, shown rather than asserted. The tabbed demo is the whole
-          product loop — make it, check it, fix it, automate it — and it is the
+          product loop: make it, check it, fix it, automate it: and it is the
           honest answer to "are these two products or one?".
           It sits directly under the two doors on purpose, with only a single
           line of framing above it: the page used to make this same point four
           times over (a note under the cards, an eyebrow, a heading and a
           paragraph) which cost ~250px and pushed the demo entirely below the
-          fold. The explanation is not lost — it moved underneath the panel,
+          fold. The explanation is not lost: it moved underneath the panel,
           where it reads as a caption to something already seen. */}
       <section className="pb-16 pt-[clamp(0.75rem,2.5vh,2rem)]">
         <div className="mx-auto mb-[clamp(0.75rem,2vh,1.5rem)] max-w-6xl px-4">
@@ -92,8 +92,8 @@ export function Landing({ copy }: { copy: Copy }) {
         </div>
 
 
-        {/* The bench. The product demo sits on a photographed stamp bench —
-            oak, papers, purple ink pad — instead of an abstract backdrop. It
+        {/* The bench. The product demo sits on a photographed stamp bench:
+            oak, papers, purple ink pad: instead of an abstract backdrop. It
             is the one image on the page and it is literally the brand name. */}
         <div className="mx-auto max-w-6xl px-4">
           <div className="relative overflow-hidden rounded-3xl ring-1 ring-border">
@@ -124,7 +124,7 @@ export function Landing({ copy }: { copy: Copy }) {
 
         {/* The proof of the heading at the top of this section.
             It sits *below* the demo rather than above it for two reasons: the
-            bench panel earns the fold, and this sequence plays on arrival — a
+            bench panel earns the fold, and this sequence plays on arrival: a
             visitor scrolling to it should meet it whole, not find a half-empty
             frame peeking over the fold waiting for a threshold to trip. */}
         <div className="mt-14">
@@ -132,7 +132,7 @@ export function Landing({ copy }: { copy: Copy }) {
         </div>
       </section>
 
-      {/* Trust bar — formats and licence, not certifications. Each acronym
+      {/* Trust bar: formats and licence, not certifications. Each acronym
           carries its gloss: an initialism with no gloss is a wall to the
           audience that most needs reassuring. It now sits below the demo
           rather than above it, where it also does the job of separating the
@@ -149,12 +149,12 @@ export function Landing({ copy }: { copy: Copy }) {
       </div>
 
       {/* The market question. Both audiences ask it, and the honest answer
-          ("here is where we have nothing for you") belongs high, not buried —
+          ("here is where we have nothing for you") belongs high, not buried:
           which is why it is now answered on the page rather than behind a
           click through to a market page. */}
       <MarketMap copy={copy.markets} />
 
-      {/* Proof — for a compliance product, evidence IS the pitch */}
+      {/* Proof: for a compliance product, evidence IS the pitch */}
       <section className="border-t border-border bg-surface/40 py-20">
         <div className="mx-auto max-w-6xl px-4">
           <h2 className="mb-3 text-2xl font-semibold tracking-tight">{copy.proof.heading}</h2>

@@ -77,7 +77,7 @@ export default function DocsPage() {
         {/* The one line that saves a small-business visitor from reading an
             API reference to find out it was never for them. */}
         <p className="mt-4 rounded-xl border border-border bg-surface p-4 text-sm leading-relaxed text-muted">
-          Just need to send an invoice? You do not need any of this —{' '}
+          Just need to send an invoice? You do not need any of this: {' '}
           <Link href="/invoice-generator" className="font-medium text-accent-hi hover:underline">
             create one with the invoice builder
           </Link>{' '}
@@ -87,7 +87,7 @@ export default function DocsPage() {
         <H2 id="quickstart">Quickstart</H2>
         <p className="text-sm leading-relaxed text-muted">
           <strong className="text-text">1. Install the library.</strong> Validation, generation and
-          repair run locally — no key, no account, no network:
+          repair run locally: no key, no account, no network:
         </p>
         <Code>{`npm install @stampbench/core`}</Code>
         <Code>{`import { validateXml } from '@stampbench/core';
@@ -157,7 +157,7 @@ $result = json_decode(curl_exec($ch), true);`,
           ]}
         />
         <p className="text-sm leading-relaxed text-faint">
-          These are plain HTTPS calls, not SDKs — the only published package is{' '}
+          These are plain HTTPS calls, not SDKs: the only published package is{' '}
           <code className="font-mono">@stampbench/core</code> for JavaScript and TypeScript. Any
           language that can post JSON can use the API.
         </p>
@@ -195,13 +195,13 @@ Affected documents:
 5 checked · 3 regressions · 0 improvements · 2 unchanged pass · 0 unchanged fail`}</Code>
         <p className="text-sm leading-relaxed text-muted">
           It exits <code className="font-mono">1</code> when anything regresses, so you can drop it
-          into CI and fail the build the day a new rule set is published — long before it is
+          into CI and fail the build the day a new rule set is published: long before it is
           enforced. Add <code className="font-mono">--json</code> for a machine-readable report
           (per-document transitions plus rules ranked by how many documents they break).
         </p>
         <p className="text-sm leading-relaxed text-muted">
           The same machinery works in the library, including against a rule set you register
-          yourself — a newly published specification, or your own house rules:
+          yourself: a newly published specification, or your own house rules:
         </p>
         <Code>{`import { compareRulesets, registerRuleset, getRuleset } from '@stampbench/core';
 
@@ -240,7 +240,7 @@ registerRuleset({
         <p className="text-sm leading-relaxed text-muted">
           Validates an e-invoice against EN 16931 plus (by default) the German XRechnung profile.
           Both syntaxes are auto-detected: <strong className="text-text">UBL</strong> and{' '}
-          <strong className="text-text">CII</strong> (ZUGFeRD / Factur-X XML — what German
+          <strong className="text-text">CII</strong> (ZUGFeRD / Factur-X XML: what German
           companies mostly receive). Accepts raw XML
           (<code className="font-mono">Content-Type: application/xml</code>) or JSON:
         </p>
@@ -266,7 +266,7 @@ registerRuleset({
 }`}</Code>
         <p className="text-sm leading-relaxed text-muted">
           Query/body parameter <code className="font-mono">profile</code>:{' '}
-          <code className="font-mono">xrechnung</code> (default, 56 rules — the European core plus
+          <code className="font-mono">xrechnung</code> (default, 56 rules: the European core plus
           the German BR-DE rules) or <code className="font-mono">en16931</code> (40 rules, the
           European core alone). <code className="font-mono">meta.rulesRun</code> in the response
           always states which of the two actually ran, so a verdict is never ambiguous about the
@@ -322,7 +322,7 @@ registerRuleset({
           <Link href="/account" className="text-accent-hi hover:underline">
             account page
           </Link>{' '}
-          and point your payment provider — or anything that can POST JSON — at it. A payment that
+          and point your payment provider: or anything that can POST JSON: at it. A payment that
           names one of your invoice numbers marks that invoice paid; anything else becomes a draft
           invoice in your saved list, ready to complete. The URL is the authentication: treat it
           like a password, and rotate it from the account page if it leaks.
@@ -335,7 +335,7 @@ registerRuleset({
           <code className="font-mono text-xs">invoice.paid</code>) and{' '}
           <strong className="text-text">PayPal</strong> events (
           <code className="font-mono text-xs">PAYMENT.CAPTURE.COMPLETED</code>,{' '}
-          <code className="font-mono text-xs">PAYMENT.SALE.COMPLETED</code>) are understood as-is —
+          <code className="font-mono text-xs">PAYMENT.SALE.COMPLETED</code>) are understood as-is:
           add the URL as a webhook endpoint in their dashboards. From anywhere else, send the
           generic shape; only <code className="font-mono text-xs">amount</code> and{' '}
           <code className="font-mono text-xs">currency</code> are required:
@@ -343,11 +343,11 @@ registerRuleset({
         <Code>{`{
   "amount": "149.50",          // major units; number or string
   "currency": "GBP",           // ISO 4217
-  "invoiceNumber": "INV-2026-000042",  // optional — matches & marks paid
+  "invoiceNumber": "INV-2026-000042",  // optional: matches & marks paid
   "payerName": "Acme GmbH",    // optional
   "payerEmail": "ap@acme.de",  // optional
-  "description": "August retainer",    // optional — becomes the line item
-  "id": "pay_8f3k2",           // optional — makes retries idempotent
+  "description": "August retainer",    // optional: becomes the line item
+  "id": "pay_8f3k2",           // optional: makes retries idempotent
   "date": "2026-08-25"         // optional
 }
 
@@ -355,12 +355,12 @@ registerRuleset({
 { "ok": true, "action": "created" }     // or "marked_paid", "already_paid",
                                         // "duplicate", "ignored"`}</Code>
         <p className="text-sm leading-relaxed text-muted">
-          Deliveries are idempotent — a retried event with the same id lands as{' '}
+          Deliveries are idempotent: a retried event with the same id lands as{' '}
           <code className="font-mono text-xs">duplicate</code> rather than a second invoice.
           Unrecognised event types answer <code className="font-mono text-xs">200</code> with{' '}
           <code className="font-mono text-xs">{'"action": "ignored"'}</code> so providers do not
           retry them forever. Auto-created invoices arrive marked paid, with the payment amount as
-          a single zero-VAT line and a note saying where they came from — review the details and
+          a single zero-VAT line and a note saying where they came from: review the details and
           VAT before sending one to a customer.
         </p>
 
@@ -375,7 +375,7 @@ registerRuleset({
               </tr>
             </thead>
             <tbody className="text-muted">
-              <tr className="border-t border-border"><td className="px-4 py-2">Anonymous</td><td className="px-4 py-2">10 / hour / IP</td><td className="px-4 py-2">—</td></tr>
+              <tr className="border-t border-border"><td className="px-4 py-2">Anonymous</td><td className="px-4 py-2">10 / hour / IP</td><td className="px-4 py-2">: </td></tr>
               <tr className="border-t border-border"><td className="px-4 py-2">Free</td><td className="px-4 py-2">100</td><td className="px-4 py-2">10 / min</td></tr>
               <tr className="border-t border-border"><td className="px-4 py-2">Developer</td><td className="px-4 py-2">5,000</td><td className="px-4 py-2">60 / min</td></tr>
               <tr className="border-t border-border"><td className="px-4 py-2">Agency</td><td className="px-4 py-2">25,000</td><td className="px-4 py-2">120 / min</td></tr>
@@ -398,7 +398,7 @@ registerRuleset({
         <H2 id="library">The open-source library</H2>
         <p className="text-sm leading-relaxed text-muted">
           <code className="font-mono text-accent-hi">@stampbench/core</code> (MIT) runs the same
-          validation and generation locally — unlimited, offline, free forever:
+          validation and generation locally: unlimited, offline, free forever:
         </p>
         <Code>{`npm install @stampbench/core
 
@@ -418,13 +418,13 @@ if (!result.valid) console.table(result.violations);`}</Code>
 
         <H2 id="rules">Rules coverage</H2>
         <p className="text-sm leading-relaxed text-muted">
-          Stampbench implements a documented, growing subset of the official rule sets — currently:
+          Stampbench implements a documented, growing subset of the official rule sets: currently:
         </p>
         <ul className="my-3 list-disc pl-5 text-sm leading-relaxed text-muted">
           <li>EN 16931 structural rules: BR-01…BR-16, per-line BR-21…BR-27, BR-CO-04</li>
           <li>Totals &amp; VAT arithmetic: BR-CO-10, -13, -14, -15, -16, -17, -18, -25</li>
           <li>
-            VAT category families — BR-S, BR-Z, BR-E, BR-AE, BR-K, BR-G, BR-O: breakdown
+            VAT category families: BR-S, BR-Z, BR-E, BR-AE, BR-K, BR-G, BR-O: breakdown
             presence, rate constraints, per-category taxable/VAT arithmetic, exemption reasons
           </li>
           <li>XRechnung (German CIUS): BR-DE-1…9, BR-DE-15, BR-DE-16, BR-DE-17, BR-DE-21, plus credit-transfer/IBAN checks</li>
@@ -433,10 +433,10 @@ if (!result.valid) console.table(result.violations);`}</Code>
         <p className="text-sm leading-relaxed text-muted">
           Syntax coverage: <strong className="text-text">UBL and CII</strong> (ZUGFeRD/Factur-X
           XML) for validation, UBL for generation. Every result is version-pinned to the spec
-          release it was checked against (EN 16931-1:2017, XRechnung 3.0 — see{' '}
+          release it was checked against (EN 16931-1:2017, XRechnung 3.0: see{' '}
           <code className="font-mono">meta.specVersions</code>). Stampbench is developer tooling,
-          not legal advice — for certification-grade sign-off, also run the official KoSIT
-          validator in CI. Our goal is that by the time you run it, it passes — and we publish our
+          not legal advice: for certification-grade sign-off, also run the official KoSIT
+          validator in CI. Our goal is that by the time you run it, it passes: and we publish our
           divergence from the KoSIT validator rather than asking you to take that on faith.
         </p>
       </article>

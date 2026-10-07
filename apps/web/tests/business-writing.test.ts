@@ -1,6 +1,6 @@
 /**
  * The template-based business tools: chase emails, the roast rules and the
- * hours importer. All pure — text in, text out — with the money arithmetic
+ * hours importer. All pure: text in, text out: with the money arithmetic
  * (statutory interest, summed hours) pinned hardest, because those are the
  * numbers that end up quoted at other people.
  */
@@ -137,11 +137,11 @@ describe('chaseEmail', () => {
 // ------------------------------------------------------------------- roast
 
 const SOLID_INVOICE = `Invoice INV-2026-000123
-Issued 2026-08-01 · Due 2026-08-31 — payment within 30 days
-Consulting: API integration, 14 hours @ £95 — £1,330.00
+Issued 2026-08-01 · Due 2026-08-31: payment within 30 days
+Consulting: API integration, 14 hours @ £95: £1,330.00
 VAT (20%): £266.00
 Total due: £1,596.00 GBP
-Pay by bank transfer — sort code 12-34-56, account 12345678.
+Pay by bank transfer: sort code 12-34-56, account 12345678.
 Late payments incur statutory interest.`;
 
 const HORROR_INVOICE = `hi! so sorry to bother you, whenever you get a chance,
@@ -187,7 +187,7 @@ describe('roastInvoice', () => {
 Fälligkeitsdatum: 15.09.2026 · Umsatzsteuer 19%
 Gesamtsumme: 1.190,00 €
 Bitte zahlen Sie per Überweisung.
-DE89 3704 0044 0532 0130 00 — Volksbank Berlin`;
+DE89 3704 0044 0532 0130 00: Volksbank Berlin`;
     const ids = roastInvoice(german).findings.map((f) => f.id);
     expect(ids).not.toContain('no-payment-details');
     expect(ids).not.toContain('no-due-date');
@@ -196,7 +196,7 @@ DE89 3704 0044 0532 0130 00 — Volksbank Berlin`;
   });
 
   it('recognises month-first dates and slash invoice numbers', () => {
-    const american = `Invoice No. INV/2026/001 — issued Aug 21, 2026, due September 20, 2026
+    const american = `Invoice No. INV/2026/001: issued Aug 21, 2026, due September 20, 2026
 Consulting retainer: $2,000. Total due: $2,000 USD by wire transfer (routing 021000021).`;
     const ids = roastInvoice(american).findings.map((f) => f.id);
     expect(ids).not.toContain('no-dates');

@@ -20,20 +20,20 @@ import type { VatCategoryCode } from './tax';
 export interface DraftParty {
   name: string;
   tradingName: string;
-  /** BT-31 / BT-48 — VAT identifier. */
+  /** BT-31 / BT-48: VAT identifier. */
   vatId: string;
-  /** BT-32 — seller tax registration (German Steuernummer, US EIN, …). */
+  /** BT-32: seller tax registration (German Steuernummer, US EIN, …). */
   taxRegistrationId: string;
-  /** BT-30 / BT-47 — company register identifier. */
+  /** BT-30 / BT-47: company register identifier. */
   companyId: string;
-  /** BT-34 / BT-49 — electronic address (Peppol id, Leitweg-ID, email). */
+  /** BT-34 / BT-49: electronic address (Peppol id, Leitweg-ID, email). */
   electronicAddress: string;
   electronicAddressScheme: string;
   street: string;
   additionalStreet: string;
   city: string;
   postCode: string;
-  /** BT-39 / BT-54 — state, province, county. */
+  /** BT-39 / BT-54: state, province, county. */
   subdivision: string;
   countryCode: string;
   contactName: string;
@@ -45,64 +45,64 @@ export interface DraftLine {
   /** Stable React key. Never leaves the builder. */
   key: string;
   description: string;
-  /** Free text — parsed as a decimal on the way out. */
+  /** Free text: parsed as a decimal on the way out. */
   quantity: string;
   /** UN/ECE Rec 20 code (C62 = piece, HUR = hour, DAY, KGM, MTR…). */
   unitCode: string;
   unitPrice: string;
-  /** BT-155 — seller's article number. */
+  /** BT-155: seller's article number. */
   sku: string;
   vatCategory: VatCategoryCode;
   vatRate: string;
 }
 
 export interface DraftDocument {
-  /** BT-1 — invoice number. */
+  /** BT-1: invoice number. */
   number: string;
-  /** BT-2 — issue date, ISO. */
+  /** BT-2: issue date, ISO. */
   issueDate: string;
-  /** BT-9 — due date, ISO. */
+  /** BT-9: due date, ISO. */
   dueDate: string;
-  /** BT-5 — currency code. */
+  /** BT-5: currency code. */
   currency: string;
-  /** BT-3 — 380 invoice, 381 credit note, 384 corrected. */
+  /** BT-3: 380 invoice, 381 credit note, 384 corrected. */
   typeCode: string;
-  /** BT-10 — buyer reference (the Leitweg-ID for German public buyers). */
+  /** BT-10: buyer reference (the Leitweg-ID for German public buyers). */
   buyerReference: string;
-  /** BT-13 — purchase order reference. */
+  /** BT-13: purchase order reference. */
   orderReference: string;
-  /** BT-12 — contract reference. */
+  /** BT-12: contract reference. */
   contractReference: string;
-  /** BT-72 — actual delivery date. */
+  /** BT-72: actual delivery date. */
   deliveryDate: string;
-  /** BT-20 — payment terms text. */
+  /** BT-20: payment terms text. */
   paymentTerms: string;
-  /** BT-22 — invoice note. */
+  /** BT-22: invoice note. */
   note: string;
 }
 
 export interface DraftPayment {
-  /** BT-81 — UNCL 4461 payment means code. */
+  /** BT-81: UNCL 4461 payment means code. */
   meansTypeCode: string;
-  /** BT-85 — account holder name. */
+  /** BT-85: account holder name. */
   accountName: string;
   /**
-   * BT-84 — the payment account identifier. An IBAN in the SEPA area, a
+   * BT-84: the payment account identifier. An IBAN in the SEPA area, a
    * domestic account number in the UK and US; EN 16931 does not require it to
    * be an IBAN, so all three are legitimate values for the same field.
    */
   accountId: string;
   /**
-   * BT-86 — the payment service provider identifier: a BIC in the SEPA area,
+   * BT-86: the payment service provider identifier: a BIC in the SEPA area,
    * a sort code in the UK, an ABA routing number in the US.
    */
   providerId: string;
-  /** BT-83 — remittance information / payment reference. */
+  /** BT-83: remittance information / payment reference. */
   remittance: string;
 }
 
 /**
- * A document-level adjustment — EN 16931's BG-20 (allowance) and BG-21
+ * A document-level adjustment: EN 16931's BG-20 (allowance) and BG-21
  * (charge). "Discount" and "Shipping" are the two everybody actually uses, so
  * they get names in the UI, but both land in `allowancesCharges` and flow
  * through BT-107/BT-108 and the VAT breakdown like any other.
@@ -136,7 +136,7 @@ export interface InvoiceDraft {
   tax: { rate: string };
   discount: DraftAdjustment;
   shipping: DraftAdjustment;
-  /** BT-113 — already paid, which makes the balance due (BT-115) meaningful. */
+  /** BT-113: already paid, which makes the balance due (BT-115) meaningful. */
   amountPaid: string;
   /**
    * A logo, as a data URL. Print-only: EN 16931 has no field for it, so it
@@ -288,7 +288,7 @@ export function emptyDraft(market: MarketId, now: Date, sequence = 1): InvoiceDr
  * The next number in whatever series this one belongs to.
  *
  * Increments the last run of digits and keeps its padding, so INV-2026-000421
- * becomes INV-2026-000422 rather than INV-2026-000421-copy — a duplicate is
+ * becomes INV-2026-000422 rather than INV-2026-000421-copy: a duplicate is
  * the next invoice in the series, not a labelled photocopy. A number with no
  * digits gets "-2". `taken` lets the caller skip past numbers that already
  * exist in their history.
@@ -311,7 +311,7 @@ export function bumpInvoiceNumber(number: string, taken: ReadonlySet<string> = n
 /**
  * A fresh invoice built from an existing one: next number in the series,
  * today's dates with the original's payment window preserved, and the "already
- * paid" amount cleared — the new invoice has not been paid, whatever happened
+ * paid" amount cleared: the new invoice has not been paid, whatever happened
  * to the old one. Everything else (parties, lines, bank details, tax setup)
  * carries over, because that is the entire point of duplicating.
  */

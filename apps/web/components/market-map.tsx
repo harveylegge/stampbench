@@ -11,7 +11,7 @@ import { MARKETS, PAGE_MARKETS, RULE_COUNTS, marketHref, type MarketId } from '@
  * "Where does your business operate?", answered in place.
  *
  * The four cards this replaced asked the question and then made you leave the
- * page to hear the answer — a navigation to /markets/uk for what is, in the
+ * page to hear the answer: a navigation to /markets/uk for what is, in the
  * end, six lines of fact. Here the answer arrives next to the question, and
  * the market page becomes what you click when the summary is not enough
  * rather than the only way to see anything at all.
@@ -20,7 +20,7 @@ import { MARKETS, PAGE_MARKETS, RULE_COUNTS, marketHref, type MarketId } from '@
  * things the panel cannot say as quickly.
  *
  * Germany is drawn *inside* the EU landmass, and picking the EU shades it
- * darker rather than punching a hole through it — that is the actual
+ * darker rather than punching a hole through it: that is the actual
  * relationship. XRechnung is a customisation of EN 16931, not an alternative
  * to it, and the nesting says so without a sentence. And the US is cut off by
  * the left edge of the frame rather than floated in the ocean, which is the
@@ -28,11 +28,11 @@ import { MARKETS, PAGE_MARKETS, RULE_COUNTS, marketHref, type MarketId } from '@
  * there, across the Atlantic.
  *
  * Every fact in the panel is read out of lib/markets.ts, the single source of
- * truth for what the engine covers and — more importantly — what it does not.
+ * truth for what the engine covers and: more importantly: what it does not.
  * Nothing here may hard-code a capability: the product rests on never
  * overstating coverage, and a marketing panel that drifted from the ruleset
  * registry is exactly how that promise breaks. The two rows that always read
- * "—" are here for the same reason. A summary listing only the ticks would be
+ * "Not set" are here for the same reason. A summary listing only the ticks would be
  * a different document.
  *
  * The map needs JavaScript, so the links to every market page are repeated as
@@ -47,14 +47,14 @@ type FactTone = 'yes' | 'partial' | 'no';
 const TONE: Record<FactTone, { glyph: string; className: string }> = {
   yes: { glyph: '✓', className: 'text-success' },
   partial: { glyph: '~', className: 'text-warning' },
-  no: { glyph: '—', className: 'text-faint' },
+  no: { glyph: 'Not set', className: 'text-faint' },
 };
 
 /**
  * The summary for one market, derived rather than written.
  *
  * `domestic` and `xrechnung` are the only two capabilities that vary between
- * markets — everything else is a property of the engine and therefore
+ * markets: everything else is a property of the engine and therefore
  * identical everywhere, which is itself worth showing.
  */
 function factsFor(id: MarketId, t: MarketsCopy['panel']) {
@@ -119,8 +119,8 @@ const LAND: { id: MarketId; d: string; label: string; at: [number, number] }[] =
     label: 'EU',
     at: [330, 108],
     // Iberia, France, the Low Countries, Jutland, the Baltic coast, the eastern
-    // plain, the Black Sea, Greece, the Adriatic and Italy — one coastline, in
-    // that order — then Sicily and the Nordics as their own islands of the
+    // plain, the Black Sea, Greece, the Adriatic and Italy: one coastline, in
+    // that order: then Sicily and the Nordics as their own islands of the
     // same region.
     d:
       'M155 169 L185 165 L193 154 L176 130 L195 122 L210 111 L225 96 L241 78 L248 63 L255 85 ' +
@@ -213,7 +213,7 @@ export function MarketMap({ copy }: { copy: MarketsCopy }) {
                 const isSelected = selected === land.id;
                 // Germany is drawn inside the EU landmass, so when the EU is
                 // the selection it has to read as part of the highlighted
-                // region rather than as a hole punched through it — while
+                // region rather than as a hole punched through it: while
                 // staying visibly its own thing, which is the entire reason it
                 // is a separate region at all.
                 const insideSelection = land.id === 'germany' && selected === 'eu';
@@ -239,7 +239,7 @@ export function MarketMap({ copy }: { copy: MarketsCopy }) {
                     {/* An invisible target a few units wider than the country.
                         Without it the only clickable pixels are the filled
                         shape itself, which means aiming at the UK and landing
-                        in the Irish Sea does nothing at all — and the UK is
+                        in the Irish Sea does nothing at all: and the UK is
                         two small islands with water down the middle, so that
                         is not a rare miss. The fat transparent stroke widens
                         every coastline outward without changing a pixel of

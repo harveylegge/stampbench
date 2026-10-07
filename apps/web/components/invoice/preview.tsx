@@ -18,7 +18,7 @@ import type { DraftTotals } from '@/lib/invoice/build';
  * Every figure below comes from the same `DraftTotals` the XML is built from.
  *
  * "Download PDF" is the browser's own print-to-PDF, driven by the print
- * stylesheet in globals.css. That is a real, offline, dependency-free PDF —
+ * stylesheet in globals.css. That is a real, offline, dependency-free PDF:
  * as against shipping a rendering library to claim the feature.
  */
 function money(units: { units: number; scale: number }, currency: string, locale: string) {
@@ -39,7 +39,7 @@ function AddressBlock({ party, heading }: { party: DraftParty; heading: string }
     <div>
       <div className="mb-1.5 text-[11px] font-medium uppercase tracking-[0.12em] text-faint">{heading}</div>
       <div className="text-sm leading-relaxed">
-        <div className="font-medium text-text">{party.name || <span className="text-faint">—</span>}</div>
+        <div className="font-medium text-text">{party.name || <span className="text-faint">: </span>}</div>
         {party.tradingName && <div className="text-muted">t/a {party.tradingName}</div>}
         {lines.map((line) => (
           <div key={line} className="text-muted">
@@ -96,7 +96,7 @@ export function InvoicePreview({ draft, totals }: { draft: InvoiceDraft; totals:
           <div className="text-xl font-semibold tracking-tight">
             {draft.document.typeCode === '381' ? 'Credit note' : 'Invoice'}
           </div>
-          <div className="font-mono text-sm text-muted">{draft.document.number || '—'}</div>
+          <div className="font-mono text-sm text-muted">{draft.document.number || 'Not set'}</div>
         </div>
       </header>
 
@@ -143,17 +143,17 @@ export function InvoicePreview({ draft, totals }: { draft: InvoiceDraft; totals:
               return (
                 <tr key={line.key} className="border-b border-border/60 align-top">
                   <td className="py-2.5 pr-3">
-                    <div className="text-text">{line.description || <span className="text-faint">—</span>}</div>
+                    <div className="text-text">{line.description || <span className="text-faint">: </span>}</div>
                     {line.sku && <div className="font-mono text-xs text-faint">{line.sku}</div>}
                   </td>
-                  <td className="px-3 py-2.5 text-right tabular-nums text-muted">{line.quantity || '—'}</td>
-                  <td className="px-3 py-2.5 text-right tabular-nums text-muted">{line.unitPrice || '—'}</td>
+                  <td className="px-3 py-2.5 text-right tabular-nums text-muted">{line.quantity || 'Not set'}</td>
+                  <td className="px-3 py-2.5 text-right tabular-nums text-muted">{line.unitPrice || 'Not set'}</td>
                   <td className="px-3 py-2.5 text-right text-muted">
                     {category.rate === 'absent' ? category.code : `${line.vatRate || 0}%`}
                     <span className="ml-1 font-mono text-[11px] text-faint">{category.code}</span>
                   </td>
                   <td className="py-2.5 pl-3 text-right tabular-nums text-text">
-                    {total ? money(total.net, currency, locale) : '—'}
+                    {total ? money(total.net, currency, locale) : 'Not set'}
                   </td>
                 </tr>
               );
@@ -213,7 +213,7 @@ export function InvoicePreview({ draft, totals }: { draft: InvoiceDraft; totals:
             <p className="mt-2 text-xs leading-relaxed text-faint">
               {getVatCategory(totals.categories[0]!.categoryCode).label}
               {draft.exemptionReasons[totals.categories[0]!.categoryCode]
-                ? ` — ${draft.exemptionReasons[totals.categories[0]!.categoryCode]}`
+                ? `: ${draft.exemptionReasons[totals.categories[0]!.categoryCode]}`
                 : ''}
             </p>
           )}

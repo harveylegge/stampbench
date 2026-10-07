@@ -5,7 +5,7 @@ import { AccountView } from './account-view';
 
 export const metadata: Metadata = {
   title: 'Account',
-  // Every visitor sees their own data here — nothing for a crawler.
+  // Every visitor sees their own data here: nothing for a crawler.
   robots: { index: false, follow: false },
 };
 

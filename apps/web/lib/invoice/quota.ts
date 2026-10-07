@@ -4,8 +4,8 @@
  * How many invoices this browser has created in the current calendar month.
  *
  * Deliberately a *separate* localStorage key from `sb_invoice_history`, not a
- * count derived from it. The history is the user's own list — they can delete
- * entries from it, and rightly expect deleting an invoice to be a real delete —
+ * count derived from it. The history is the user's own list: they can delete
+ * entries from it, and rightly expect deleting an invoice to be a real delete:
  * so deriving the cap from its length would mean "delete an invoice, get
  * another one free", which is not a cap at all. This counter only ever moves
  * forward, and resets on the month boundary like every other quota in the
@@ -16,7 +16,7 @@
  * product rather than two subtly different windows.
  *
  * Storage access is wrapped throughout: Safari in private mode throws on
- * localStorage, and there the counter degrades to "this session only" — the
+ * localStorage, and there the counter degrades to "this session only": the
  * same deal the draft and the history already accept. Failing open is correct
  * here; a storage error must never make the app refuse to build an invoice.
  */
@@ -83,7 +83,7 @@ export function invoicesUsedThisMonth(): number {
  * Record one created invoice and return the new count.
  *
  * Called at the moment an invoice is actually produced, not when the generator
- * is opened — editing a draft for an hour costs nothing, and re-exporting an
+ * is opened: editing a draft for an hour costs nothing, and re-exporting an
  * invoice already counted must not charge for it twice (the caller passes the
  * invoice through `alreadyCounted` for that).
  */

@@ -110,7 +110,7 @@ describe('isSubscriptionEvent', () => {
     expect(isSubscriptionEvent('PAYMENT.SALE.COMPLETED')).toBe(true);
   });
 
-  it('ignores CREATED — a subscription exists before anyone has approved it', () => {
+  it('ignores CREATED: a subscription exists before anyone has approved it', () => {
     expect(isSubscriptionEvent('BILLING.SUBSCRIPTION.CREATED')).toBe(false);
   });
 
@@ -207,8 +207,8 @@ describe('verificationRequestBody', () => {
 
   it('embeds the delivery body byte-for-byte', () => {
     // The signature covers the exact bytes PayPal sent. Parsing and
-    // re-serialising renormalises numbers and escapes — 1.50 becomes 1.5,
-    // é becomes é — and every genuine delivery then fails verification.
+    // re-serialising renormalises numbers and escapes: 1.50 becomes 1.5,
+    // é becomes é: and every genuine delivery then fails verification.
     const raw = '{"id":"WH-1","amount":1.50,"note":"caf\\u00e9","big":10000000000000000000}';
     const built = verificationRequestBody(headers, 'WH-ID-9', raw);
     expect(built).toContain(`"webhook_event":${raw}`);

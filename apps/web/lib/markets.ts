@@ -1,17 +1,17 @@
 /**
- * Markets — the single source of truth for "where does your business operate?"
+ * Markets: the single source of truth for "where does your business operate?"
  *
  * Stampbench is invoice infrastructure that happens to have unusually deep
  * German coverage, not a German validator. This file is what keeps that
  * distinction honest: every market declares which ruleset actually runs for it
  * and, just as importantly, which capabilities are *not* implemented. Nothing
- * here may claim coverage the engine does not have — a market page that
+ * here may claim coverage the engine does not have: a market page that
  * overstates is worse than no market page, because the whole product rests on
  * never overstating (see /trust).
  *
  * The engine has exactly two profiles today:
  *
- *   en16931   40 rules  EN 16931-1:2017 core — the European semantic standard
+ *   en16931   40 rules  EN 16931-1:2017 core: the European semantic standard
  *   xrechnung 56 rules  the above plus 16 German BR-DE rules (XRechnung 3.0)
  *
  * So a market's "capability" is really the answer to two questions: which of
@@ -31,7 +31,7 @@ export type MarketId = (typeof MARKET_IDS)[number];
 /** The profile ids the engine accepts. Mirrors `Profile` in @stampbench/core. */
 export type MarketProfile = 'en16931' | 'xrechnung';
 
-/** Rule counts per profile — asserted against the engine by test. */
+/** Rule counts per profile: asserted against the engine by test. */
 export const RULE_COUNTS: Record<MarketProfile, number> = {
   en16931: 40,
   xrechnung: 56,
@@ -51,9 +51,9 @@ export const RULESETS: Record<MarketProfile, { id: string; label: string; spec: 
 /**
  * How a capability stands in a given market.
  *
- * 'yes'      — implemented and it applies here today.
- * 'context'  — implemented, but only relevant in a specific named situation.
- * 'no'       — not implemented. Said plainly, never softened into a maybe.
+ * 'yes': implemented and it applies here today.
+ * 'context': implemented, but only relevant in a specific named situation.
+ * 'no': not implemented. Said plainly, never softened into a maybe.
  */
 export type CapabilityStatus = 'yes' | 'context' | 'no';
 
@@ -73,7 +73,7 @@ export type CapabilityId = (typeof CAPABILITY_IDS)[number];
 export interface CapabilityRow {
   id: CapabilityId;
   name: string;
-  /** What the capability actually does — no adjectives, just behaviour. */
+  /** What the capability actually does: no adjectives, just behaviour. */
   detail: string;
 }
 
@@ -105,7 +105,7 @@ export const CAPABILITIES: CapabilityRow[] = [
   {
     id: 'xrechnung',
     name: 'German XRechnung profile',
-    detail: `A further ${RULE_COUNTS.xrechnung - RULE_COUNTS.en16931} BR-DE rules on top of the European core — the Leitweg-ID, buyer reference and contact requirements German public buyers enforce.`,
+    detail: `A further ${RULE_COUNTS.xrechnung - RULE_COUNTS.en16931} BR-DE rules on top of the European core: the Leitweg-ID, buyer reference and contact requirements German public buyers enforce.`,
   },
   {
     id: 'tooling',
@@ -197,18 +197,18 @@ export const MARKETS: Record<MarketId, Market> = {
     profile: 'en16931',
     headline: 'Stampbench for UK businesses',
     stance:
-      'Stampbench does not implement a UK-specific ruleset, and we will not pretend otherwise. What it gives a UK business today is the European semantic standard — EN 16931 — plus the format-agnostic tooling around it: reading both invoice XML syntaxes, repairing what is arithmetically wrong, generating documents whose totals cannot be wrong, and the CLI, API and CI integration.',
+      'Stampbench does not implement a UK-specific ruleset, and we will not pretend otherwise. What it gives a UK business today is the European semantic standard: EN 16931: plus the format-agnostic tooling around it: reading both invoice XML syntaxes, repairing what is arithmetically wrong, generating documents whose totals cannot be wrong, and the CLI, API and CI integration.',
     primaryUse:
-      'If a customer, a public body or their portal asks you for an EN 16931-compliant e-invoice, this is the ruleset that checks it — before they reject it.',
+      'If a customer, a public body or their portal asks you for an EN 16931-compliant e-invoice, this is the ruleset that checks it: before they reject it.',
     capabilities: {
       ...ENGINE_BASELINE,
       xrechnung: {
         status: 'context',
-        note: 'Available when you invoice a German buyer — switch the market to Germany and the same document is checked against 56 rules instead of 40.',
+        note: 'Available when you invoice a German buyer: switch the market to Germany and the same document is checked against 56 rules instead of 40.',
       },
       domestic: {
         status: 'no',
-        note: 'There is no UK ruleset in the engine. If a UK customisation of EN 16931 is published, the ruleset registry is the extension point it would be added to — but nothing is implemented today.',
+        note: 'There is no UK ruleset in the engine. If a UK customisation of EN 16931 is published, the ruleset registry is the extension point it would be added to: but nothing is implemented today.',
       },
     },
     hasPage: true,
@@ -225,14 +225,14 @@ export const MARKETS: Record<MarketId, Market> = {
     profile: 'en16931',
     headline: 'Stampbench for US businesses',
     stance:
-      'Stampbench implements no US rules and no sales-tax logic. It is structured-invoice infrastructure: it reads and writes the XML formats European customers and their portals expect, checks a document against the European standard, and repairs what is provably wrong. If your invoicing is entirely domestic US, most of that is not yet useful to you — better to hear it now.',
+      'Stampbench implements no US rules and no sales-tax logic. It is structured-invoice infrastructure: it reads and writes the XML formats European customers and their portals expect, checks a document against the European standard, and repairs what is provably wrong. If your invoicing is entirely domestic US, most of that is not yet useful to you: better to hear it now.',
     primaryUse:
       'The common case: you bill customers in Europe, one of them asks for an e-invoice in a format you have never heard of, and you need to produce and check one.',
     capabilities: {
       ...ENGINE_BASELINE,
       xrechnung: {
         status: 'context',
-        note: 'Available when you invoice a German buyer — switch the market to Germany for the additional 16 German rules.',
+        note: 'Available when you invoice a German buyer: switch the market to Germany for the additional 16 German rules.',
       },
       domestic: {
         status: 'no',
@@ -253,7 +253,7 @@ export const MARKETS: Record<MarketId, Market> = {
     profile: 'en16931',
     headline: 'Stampbench for the European Union',
     stance:
-      'This is where Stampbench is deepest. Every invoice is checked against EN 16931-1:2017, the semantic standard the member-state formats are customisations of, and both syntaxes are read: UBL 2.1 and CII, the syntax ZUGFeRD and Factur-X carry. One national customisation is implemented in full — Germany’s XRechnung 3.0. The others are not, and are listed as such rather than implied.',
+      'This is where Stampbench is deepest. Every invoice is checked against EN 16931-1:2017, the semantic standard the member-state formats are customisations of, and both syntaxes are read: UBL 2.1 and CII, the syntax ZUGFeRD and Factur-X carry. One national customisation is implemented in full: Germany’s XRechnung 3.0. The others are not, and are listed as such rather than implied.',
     primaryUse:
       'Validate against the European core, then switch to a national profile when the buyer’s country has one implemented.',
     capabilities: {
@@ -261,7 +261,7 @@ export const MARKETS: Record<MarketId, Market> = {
       xrechnung: { status: 'yes' },
       domestic: {
         status: 'context',
-        note: 'Germany (XRechnung 3.0) is the one national CIUS implemented today. France, Italy and the rest are validated against the European core only — Factur-X profiles, FatturaPA and Peppol BIS rules are not implemented.',
+        note: 'Germany (XRechnung 3.0) is the one national CIUS implemented today. France, Italy and the rest are validated against the European core only: Factur-X profiles, FatturaPA and Peppol BIS rules are not implemented.',
       },
     },
     hasPage: true,
@@ -276,9 +276,9 @@ export const MARKETS: Record<MarketId, Market> = {
     tagline: 'XRechnung 3.0 and ZUGFeRD, 56 rules, with the failing line pointed at.',
     pickerHint: 'Billing German customers, including public authorities.',
     profile: 'xrechnung',
-    headline: 'Stampbench for Germany — XRechnung and ZUGFeRD',
+    headline: 'Stampbench for Germany: XRechnung and ZUGFeRD',
     stance:
-      'The deepest coverage in the product. The German CIUS runs 56 rules: the 40 European core rules plus 16 BR-DE rules covering the Leitweg-ID, the buyer reference, seller contact details and the German payment-means requirements. Both syntaxes German invoices actually arrive in are read — UBL and the CII XML inside ZUGFeRD / Factur-X — and generation emits the XRechnung 3.0 customization id.',
+      'The deepest coverage in the product. The German CIUS runs 56 rules: the 40 European core rules plus 16 BR-DE rules covering the Leitweg-ID, the buyer reference, seller contact details and the German payment-means requirements. Both syntaxes German invoices actually arrive in are read: UBL and the CII XML inside ZUGFeRD / Factur-X: and generation emits the XRechnung 3.0 customization id.',
     primaryUse:
       'Run an XRechnung through it, get the rule id, the business term and the line number, and repair the arithmetic errors in place.',
     capabilities: {
@@ -296,7 +296,7 @@ export const MARKETS: Record<MarketId, Market> = {
     short: 'Multi-market',
     adjective: 'multi-market',
     tagline: 'Compare what Stampbench covers everywhere, side by side.',
-    pickerHint: 'Not sure yet — compare what is covered where.',
+    pickerHint: 'Not sure yet: compare what is covered where.',
     profile: 'en16931',
     headline: 'Stampbench across markets',
     stance:
@@ -328,7 +328,7 @@ export function getMarket(id: MarketId): Market {
   return MARKETS[id];
 }
 
-/** The route for a market — 'multi' has no page of its own, so it lands on the index. */
+/** The route for a market: 'multi' has no page of its own, so it lands on the index. */
 export function marketHref(id: MarketId): string {
   return MARKETS[id].hasPage ? `/markets/${id}` : '/markets';
 }
@@ -342,7 +342,7 @@ export function rulesetFor(id: MarketId) {
 /**
  * What a document says it is. BT-24 (the specification identifier) is written
  * by whoever produced the invoice and is the one field that names its profile,
- * so reading it is detection rather than guessing — but it is still only what
+ * so reading it is detection rather than guessing: but it is still only what
  * the *sender* claims, which is why the UI offers a switch instead of silently
  * changing ruleset.
  */

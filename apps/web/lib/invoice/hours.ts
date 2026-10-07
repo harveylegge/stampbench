@@ -2,8 +2,8 @@
  * Hours-to-invoice: a time log in, grouped line items out.
  *
  * Deliberately mechanical. It parses what tools export (Toggl-style CSV, or
- * a pasted "3.5h fixing the deploy" log), groups by project — or by matching
- * description when there is no project column — and sums the hours in code.
+ * a pasted "3.5h fixing the deploy" log), groups by project: or by matching
+ * description when there is no project column: and sums the hours in code.
  * It does not rephrase, merge "similar-looking" work, or guess: an importer
  * that quietly changed what 40 entries said would be editing the user's
  * timesheet, and the arithmetic on an invoice must come from arithmetic.
@@ -20,7 +20,7 @@ export interface HoursEntry {
 
 export interface HoursGroup {
   description: string;
-  /** Summed and rounded to 2 dp — quantity precision, not payroll precision. */
+  /** Summed and rounded to 2 dp: quantity precision, not payroll precision. */
   hours: number;
   entries: number;
 }
@@ -29,7 +29,7 @@ export interface ParsedHours {
   entries: HoursEntry[];
   /** Lines that had no readable duration. Reported, never silently dropped. */
   skipped: number;
-  /** Lines beyond the entry cap. Also reported — the cap must not lie either. */
+  /** Lines beyond the entry cap. Also reported: the cap must not lie either. */
   truncated: number;
 }
 
@@ -38,7 +38,7 @@ const MAX_ENTRIES = 1_000;
 
 /**
  * "1:30", "1.5", "1,5", "90m", "2h 15m", "3.5h" → hours. Null when the text
- * is not a duration — the caller decides whether that skips a line or a cell.
+ * is not a duration: the caller decides whether that skips a line or a cell.
  */
 export function parseDuration(raw: string): number | null {
   const s = raw.trim();
@@ -95,10 +95,10 @@ const DURATION_COLUMNS = ['duration', 'hours', 'time', 'hrs', 'h', 'decimal hour
  */
 function cleanDescription(raw: string): string {
   return raw
-    .replace(/^[\s\-–—•*>·]+/, '')
-    .replace(/^\d{4}-\d{2}-\d{2}[\s:,–—-]*/, '')
-    .replace(/^\d{1,2}[/.]\d{1,2}(?:[/.]\d{2,4})?[\s:,–—-]*/, '')
-    .replace(/[\s\-–—:,;]+$/, '')
+    .replace(/^[\s\-–: •*>·]+/, '')
+    .replace(/^\d{4}-\d{2}-\d{2}[\s:,–: -]*/, '')
+    .replace(/^\d{1,2}[/.]\d{1,2}(?:[/.]\d{2,4})?[\s:,–: -]*/, '')
+    .replace(/[\s\-–: :,;]+$/, '')
     .replace(/\s+/g, ' ')
     .trim();
 }
@@ -148,7 +148,7 @@ export function parseHoursLog(text: string): ParsedHours {
   }
 
   // Plain text: find the duration in each line; the rest is the work. Order
-  // matters — a clock range ("9:00-10:30") and a compound ("2h 15m") both
+  // matters: a clock range ("9:00-10:30") and a compound ("2h 15m") both
   // contain tokens the simpler patterns would happily half-match, so the
   // specific shapes go first and the leftovers never masquerade as hours.
   const entries: HoursEntry[] = [];
@@ -163,7 +163,7 @@ export function parseHoursLog(text: string): ParsedHours {
     let hours: number | null = null;
     let matched = '';
 
-    const range = /(\d{1,2}):([0-5]\d)\s*[-–—]\s*(\d{1,2}):([0-5]\d)/.exec(line);
+    const range = /(\d{1,2}):([0-5]\d)\s*[-–: ]\s*(\d{1,2}):([0-5]\d)/.exec(line);
     const compound = /(?<![\d.,])(\d+\s*h(?:ours?|rs?)?\.?\s*\d+\s*m(?:in(?:ute)?s?)?)\.?\b/i.exec(line);
     const clock = /(\d{1,3}:[0-5]\d)\b/.exec(line);
     const hoursOnly = /(\d+(?:[.,]\d+)?)\s*(?:h|hr|hrs|hours?|std)\b\.?/i.exec(line);
@@ -192,7 +192,7 @@ export function parseHoursLog(text: string): ParsedHours {
     }
 
     // A single log line claiming more than a day is a mis-read timestamp,
-    // not a shift — skipping it loudly beats billing it quietly.
+    // not a shift: skipping it loudly beats billing it quietly.
     if (hours === null || hours <= 0 || hours > 24) {
       skipped++;
       continue;

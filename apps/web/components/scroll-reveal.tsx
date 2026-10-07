@@ -5,7 +5,7 @@ import { useEffect } from 'react';
 
 /**
  * Fades page sections in as they scroll into view. Progressive enhancement:
- * hiding is opt-in per element — the effect veils only the below-fold
+ * hiding is opt-in per element: the effect veils only the below-fold
  * sections it is actively observing, so with JS disabled (or before
  * hydration) everything is simply visible, and a section that mounts later
  * (the account dashboard renders only after its session fetch resolves) is
@@ -40,7 +40,7 @@ export function ScrollReveal() {
     const veiled: Element[] = [];
     for (const section of Array.from(document.querySelectorAll('main section'))) {
       if (section.classList.contains('revealed')) continue;
-      // Whatever is already on screen is left untouched — first paint never
+      // Whatever is already on screen is left untouched: first paint never
       // waits on observer timing, and an inert observer can't hide content.
       const rect = section.getBoundingClientRect();
       if (rect.top >= viewport || rect.bottom <= 0) {

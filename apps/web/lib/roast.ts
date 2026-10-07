@@ -1,16 +1,16 @@
 /**
- * Roast my invoice — a rule engine wearing a smirk.
+ * Roast my invoice: a rule engine wearing a smirk.
  *
  * Every check here is a real invoicing mistake that really delays payment;
  * the jokes are the delivery mechanism, not the product. It runs entirely in
  * the browser on pasted text, which is both the privacy story ("roasted
- * locally — we never saw it") and the reason it can be free: there is no
+ * locally: we never saw it") and the reason it can be free: there is no
  * per-roast cost to anyone.
  *
  * The humour rules: the joke is always about the invoice, never the person
  * or their prices. Each finding carries several lines and picks one by a
  * stable hash of the input, so different invoices get different jokes but
- * re-roasting the same text never reshuffles — a card someone shares should
+ * re-roasting the same text never reshuffles: a card someone shares should
  * still say what it said.
  */
 
@@ -31,11 +31,11 @@ export interface RoastResult {
   /** The headline verdict for the score band. */
   grade: string;
   findings: RoastFinding[];
-  /** What the invoice got right — at most two, so praise stays scarce. */
+  /** What the invoice got right: at most two, so praise stays scarce. */
   praise: string[];
 }
 
-/** Deterministic 32-bit hash — the joke picker's only source of "randomness". */
+/** Deterministic 32-bit hash: the joke picker's only source of "randomness". */
 function hash(text: string): number {
   let h = 2166136261;
   for (let i = 0; i < text.length; i++) {
@@ -75,7 +75,7 @@ const RULES: Rule[] = [
       'When you chase it, you\'ll be chasing "you know, the one".',
       'Numberless. Untraceable. Less an invoice, more a rumour of money owed.',
     ],
-    praise: 'It has an invoice number — congratulations, it legally exists.',
+    praise: 'It has an invoice number: congratulations, it legally exists.',
   },
   {
     id: 'no-due-date',
@@ -91,7 +91,7 @@ const RULES: Rule[] = [
     lines: [
       'So payment is due… whenever the vibes feel right?',
       'Without a due date this can never be overdue. Congratulations on inventing the eternal invoice.',
-      'Bold move — "pay me at some point before we both die" rarely converts.',
+      'Bold move: "pay me at some point before we both die" rarely converts.',
     ],
     praise: 'There is an actual due date. The single biggest get-paid-faster lever, pulled.',
   },
@@ -102,7 +102,7 @@ const RULES: Rule[] = [
     title: 'No way to pay',
     // The IBAN pattern tolerates the conventional grouped form ("DE89 3704
     // 0044 …"). "Überweisung" sits outside the \b alternation because JS
-    // word boundaries are ASCII-only — \bü can never match after a space.
+    // word boundaries are ASCII-only: \bü can never match after a space.
     applies: (t) =>
       !/\b[A-Z]{2}\d{2}(?:[ .]?[A-Z0-9]){10,30}\b/.test(t) && // IBAN, spaced or compact
       !/\b\d{2}-\d{2}-\d{2}\b/.test(t) && // UK sort code
@@ -123,15 +123,15 @@ const RULES: Rule[] = [
     emoji: '🌫️',
     title: 'Vague line items',
     // Fires only when the whole line item IS the vague word (an amount after
-    // it is allowed) — "Consulting: API integration, 14 hours" is specific
-    // and must pass, "- Consulting — £500" is a shrug and must not.
+    // it is allowed): "Consulting: API integration, 14 hours" is specific
+    // and must pass, "- Consulting: £500" is a shrug and must not.
     applies: (t) =>
-      /(^|\n)\s*(?:[-–•*·]\s*)?(?:general\s+)?(?:work|misc|miscellaneous|stuff|things|tasks?|jobs?|various(?:\s+services)?|services|consulting)(?:\s*[-–—:,]?\s*[£$€]?[\d.,]*)?\s*(?=$|\n)/im.test(
+      /(^|\n)\s*(?:[-–•*·]\s*)?(?:general\s+)?(?:work|misc|miscellaneous|stuff|things|tasks?|jobs?|various(?:\s+services)?|services|consulting)(?:\s*[-–: :,]?\s*[£$€]?[\d.,]*)?\s*(?=$|\n)/im.test(
         t,
       ) || /\b(?:did\s+(?:some\s+)?(?:work|stuff)|odds\s+and\s+ends)\b/i.test(t),
     lines: [
       '"Work" is not a line item, it\'s a confession.',
-      '"Various services" — ah yes, the invoice equivalent of a shrug.',
+      '"Various services": ah yes, the invoice equivalent of a shrug.',
       'Line items so vague the client will query them just to find out what they bought.',
     ],
   },
@@ -157,7 +157,7 @@ const RULES: Rule[] = [
     title: 'No currency',
     applies: (t) => !/[£$€]|\b(?:GBP|EUR|USD|CHF|SEK|NOK|DKK|PLN)\b/.test(t),
     lines: [
-      'Numbers with no currency. Bold — let them pick the cheapest one.',
+      'Numbers with no currency. Bold: let them pick the cheapest one.',
       'No £, € or $ in sight. 400 what? Dollars? Euros? Bottle caps?',
       'Currency: unspecified. Enjoy being paid 1,200 of something.',
     ],
@@ -169,7 +169,7 @@ const RULES: Rule[] = [
     title: 'No dates at all',
     applies: (t) => !DATE_PATTERN.test(t),
     lines: [
-      'Not one date on the whole thing. A timeless document — unfortunately, so is the debt.',
+      'Not one date on the whole thing. A timeless document: unfortunately, so is the debt.',
       'No dates anywhere. Historians will never know when this invoice was ignored.',
       'Undated. Payable in any century, apparently.',
     ],
@@ -184,7 +184,7 @@ const RULES: Rule[] = [
         .length >= 2,
     lines: [
       'Two apologies and a "no rush". It\'s a bill, not a hostage note.',
-      '"Whenever suits" — congratulations, you\'ve just signed off on their 90-day payment terms.',
+      '"Whenever suits": congratulations, you\'ve just signed off on their 90-day payment terms.',
       'This invoice apologises for existing. The client will treat it accordingly.',
     ],
   },
@@ -195,7 +195,7 @@ const RULES: Rule[] = [
     title: 'No late-payment terms',
     applies: (t) => !/\b(?:late\s+(?:fee|payment|charge)|interest|overdue|statutory|verzug)\b/i.test(t),
     lines: [
-      'Nothing happens if they pay late — and they can tell.',
+      'Nothing happens if they pay late: and they can tell.',
       'Day 31 arrives and your invoice just… shrugs.',
       'No consequences mentioned. The due date is more of a mood, then.',
     ],
@@ -210,9 +210,9 @@ const RULES: Rule[] = [
         t,
       ),
     lines: [
-      'No VAT, no tax line, no exemption note. Fine if you\'re not registered — chaos if you are.',
+      'No VAT, no tax line, no exemption note. Fine if you\'re not registered: chaos if you are.',
       'Tax: unmentioned. HMRC loves a surprise, said no one ever.',
-      'Not a whisper about VAT. If you\'re not registered, say so — silence reads as "forgot".',
+      'Not a whisper about VAT. If you\'re not registered, say so: silence reads as "forgot".',
     ],
   },
 ];
@@ -241,7 +241,7 @@ export function roastInvoice(text: string): RoastResult {
           severity: 3,
           emoji: '📱',
           title: 'Barely there',
-          line: 'That is not an invoice, that is a text message. Paste the whole thing — or worse, this IS the whole thing.',
+          line: 'That is not an invoice, that is a text message. Paste the whole thing: or worse, this IS the whole thing.',
         },
       ],
       praise: [],

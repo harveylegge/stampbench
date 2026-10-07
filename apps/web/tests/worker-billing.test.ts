@@ -4,7 +4,7 @@
  * These guard the entitlement boundary: `stripeSignatureValid` is the only
  * thing standing between a forged HTTP request and a free plan upgrade, and
  * `planFromSubscription` decides which tier a payment buys. Both are easy to
- * get subtly wrong in a way that manual testing never surfaces — a broken
+ * get subtly wrong in a way that manual testing never surfaces: a broken
  * signature check still works perfectly for genuine Stripe traffic.
  */
 import { describe, expect, it } from 'vitest';
@@ -49,7 +49,7 @@ describe('stripeSignatureValid', () => {
   it('rejects a replayed delivery once it falls outside the tolerance', async () => {
     const signedAt = NOW_MS / 1000;
     const header = await signature(BODY, signedAt);
-    // Still genuine, still correctly signed — only old.
+    // Still genuine, still correctly signed: only old.
     const justInside = NOW_MS + (WEBHOOK_TOLERANCE_SECONDS - 1) * 1000;
     const justOutside = NOW_MS + (WEBHOOK_TOLERANCE_SECONDS + 1) * 1000;
     expect(await stripeSignatureValid(BODY, header, SECRET, justInside)).toBe(true);
@@ -76,7 +76,7 @@ describe('stripeSignatureValid', () => {
 
   it('rejects even a genuine delivery when no endpoint secret is configured', async () => {
     // Misconfiguration must fail closed. An unset STRIPE_WEBHOOK_SECRET means
-    // nothing can be verified, so nothing may be trusted — the alternative is
+    // nothing can be verified, so nothing may be trusted: the alternative is
     // an endpoint that grants plans to anyone who can POST to it.
     const header = await signature(BODY, NOW_MS / 1000);
     expect(await stripeSignatureValid(BODY, header, '', NOW_MS)).toBe(false);

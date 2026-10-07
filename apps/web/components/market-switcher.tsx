@@ -7,7 +7,7 @@ import { MARKETS, PAGE_MARKETS, rulesetFor, type MarketId } from '@/lib/markets'
 /**
  * The compact "Validate for: 🇬🇧 United Kingdom ▾" control.
  *
- * The market is not a filter on what the user is allowed to do — it selects
+ * The market is not a filter on what the user is allowed to do: it selects
  * which ruleset runs, and every option stays one click away, because a
  * validator that quietly decided your jurisdiction for you would be exactly
  * the confusion this redesign exists to remove.

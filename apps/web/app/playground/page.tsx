@@ -15,7 +15,7 @@ export const metadata: Metadata = {
  * The English playground opens on the European core rather than the German
  * profile: a visitor who has not told us where they bill should not have a
  * national customisation applied on their behalf. The moment they choose a
- * market — here, on the homepage or on a market page — that choice sticks, and
+ * market: here, on the homepage or on a market page: that choice sticks, and
  * a document that declares itself XRechnung gets offered the German ruleset
  * explicitly.
  */
@@ -28,7 +28,7 @@ export default function PlaygroundPage() {
           en.playground.intro
         ) : (
           <>
-            Try the API without signing up — validate an invoice or create one from JSON. Anonymous
+            Try the API without signing up: validate an invoice or create one from JSON. Anonymous
             use is limited to 10 requests/hour;{' '}
             <a href="/register" className="text-accent-hi hover:underline">
               create a free account

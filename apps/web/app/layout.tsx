@@ -13,20 +13,20 @@ export const metadata: Metadata = {
   title: {
     // The result page already shows the domain above the title, so the brand
     // goes at the end instead of repeating up front.
-    default: 'Stampbench — e-invoicing, without the complexity',
+    default: 'Stampbench: e-invoicing, without the complexity',
     template: '%s · Stampbench',
   },
   /**
    * The site-wide default is deliberately market-neutral, and now
    * audience-neutral too: it names both products in one sentence, because the
    * homepage's job is to route rather than to sell one of them. Jurisdiction
-   * terms are not abandoned — they live where they are true and specific:
+   * terms are not abandoned: they live where they are true and specific:
    * /markets/germany carries XRechnung and ZUGFeRD in English, /de carries the
    * German-language terms that already rank, and /developers carries the
    * standards vocabulary in full.
    */
   description:
-    'Create compliant invoices without learning e-invoicing standards, or build e-invoicing into your software with a TypeScript engine, CLI and hosted API. EN 16931, the German XRechnung profile, UBL and CII — open source, runs on your own machine.',
+    'Create compliant invoices without learning e-invoicing standards, or build e-invoicing into your software with a TypeScript engine, CLI and hosted API. EN 16931, the German XRechnung profile, UBL and CII: open source, runs on your own machine.',
   keywords: [
     'invoice validation', 'e-invoicing api', 'invoice api', 'invoice compliance',
     'en 16931', 'ubl invoice', 'cii invoice', 'xrechnung', 'zugferd', 'factur-x',
@@ -34,7 +34,7 @@ export const metadata: Metadata = {
   authors: [{ name: 'Harvey Legge', url: 'https://github.com/harveylegge' }],
   creator: 'Harvey Legge',
   openGraph: {
-    title: 'Stampbench — invoice validation and compliance infrastructure',
+    title: 'Stampbench: invoice validation and compliance infrastructure',
     description:
       'Validate, repair and create structured e-invoices against the ruleset that applies where you bill: EN 16931 everywhere, the German XRechnung profile in full. Open source, runs locally.',
     siteName: 'Stampbench',

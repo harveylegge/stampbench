@@ -10,7 +10,7 @@ import { defaultCountryFor } from '@/lib/invoice/draft';
 import { MARKETS, PAGE_MARKETS, rulesetFor, type MarketId } from '@/lib/markets';
 
 /**
- * Per-market generator pages — four, not forty.
+ * Per-market generator pages: four, not forty.
  *
  * Each exists because there is something specific and true to say about
  * generating an invoice for that market: which ruleset runs, which fields the
@@ -26,14 +26,14 @@ export function generateStaticParams() {
 
 const META: Record<string, { title: string; description: string }> = {
   uk: {
-    title: 'UK invoice generator — create and validate EN 16931 invoices',
+    title: 'UK invoice generator: create and validate EN 16931 invoices',
     description:
       'Create a UK invoice with sterling amounts, sort code and account number, and validate it against EN 16931. Exact arithmetic, UBL and JSON export, free and in your browser. No UK-specific ruleset is claimed.',
   },
   germany: {
-    title: 'XRechnung generator — create and validate German e-invoices',
+    title: 'XRechnung generator: create and validate German e-invoices',
     description:
-      'Create an XRechnung 3.0 invoice with the Leitweg-ID, IBAN and BIC, then validate it against all 56 rules of the German CIUS — the European core plus the BR-DE profile. Free, open source, runs in your browser.',
+      'Create an XRechnung 3.0 invoice with the Leitweg-ID, IBAN and BIC, then validate it against all 56 rules of the German CIUS: the European core plus the BR-DE profile. Free, open source, runs in your browser.',
   },
   eu: {
     title: 'EN 16931 invoice generator for the European Union',
@@ -41,9 +41,9 @@ const META: Record<string, { title: string; description: string }> = {
       'Create an EN 16931 invoice in UBL 2.1 for any EU market, with reverse-charge and intra-community VAT categories, and validate it against the 40 core rules in the same step.',
   },
   us: {
-    title: 'US invoice generator — commercial and EN 16931 invoices',
+    title: 'US invoice generator: commercial and EN 16931 invoices',
     description:
-      'Create a US business invoice with state, ZIP and routing number, or an EN 16931 document for European customers. Sales tax is entered manually — Stampbench does not determine US tax rates.',
+      'Create a US business invoice with state, ZIP and routing number, or an EN 16931 document for European customers. Sales tax is entered manually: Stampbench does not determine US tax rates.',
   },
 };
 

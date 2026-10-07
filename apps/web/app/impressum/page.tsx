@@ -4,19 +4,19 @@ import { Fill } from '@/components/legal';
 
 export const metadata: Metadata = {
   title: 'Impressum / Legal notice',
-  description: 'Anbieterkennzeichnung nach § 5 DDG — provider identification for Stampbench.',
+  description: 'Anbieterkennzeichnung nach § 5 DDG: provider identification for Stampbench.',
 };
 
 /**
  * Germany requires a reachable "Impressum" (provider identification) on
- * commercial websites addressed to German users — § 5 DDG (formerly § 5 TMG),
+ * commercial websites addressed to German users: § 5 DDG (formerly § 5 TMG),
  * plus § 18 MStV for journalistic content. Omitting or hiding it is a common
  * cause of Abmahnungen (formal warning letters with costs), which is why this
  * page exists before launch rather than after.
  *
  * 2026-08-07: filled in for Harvey Legge, sole trader, trading as Stampbench.
  * Remaining <Fill>s are ONLY the postal address and phone number (virtual
- * office pending — Harvey supplies both). Then have the page checked by a
+ * office pending: Harvey supplies both). Then have the page checked by a
  * solicitor; the required fields differ by legal form.
  */
 
@@ -40,9 +40,9 @@ export default function ImpressumPage() {
           <br />
           handelnd unter der Bezeichnung &bdquo;Stampbench&ldquo; / trading as Stampbench
           <br />
-          <Fill>[Straße und Hausnummer — folgt in Kürze]</Fill>
+          <Fill>[Straße und Hausnummer: folgt in Kürze]</Fill>
           <br />
-          <Fill>[Postleitzahl und Ort — folgt in Kürze]</Fill>
+          <Fill>[Postleitzahl und Ort: folgt in Kürze]</Fill>
           <br />
           Vereinigtes Königreich / United Kingdom
         </p>
@@ -56,7 +56,7 @@ export default function ImpressumPage() {
             hello@stampbench.com
           </a>
           <br />
-          Telefon: <Fill>[Telefonnummer — folgt in Kürze]</Fill>
+          Telefon: <Fill>[Telefonnummer: folgt in Kürze]</Fill>
         </p>
         <p className="mt-2 text-xs leading-relaxed text-faint">
           German law requires a means of rapid electronic contact and direct communication. An email
@@ -82,7 +82,7 @@ export default function ImpressumPage() {
           Verantwortlich für den Inhalt / Responsible for content
         </h2>
         <p className="text-sm leading-relaxed text-muted">
-          Harvey Legge, <Fill>[Anschrift wie oben — folgt in Kürze]</Fill>
+          Harvey Legge, <Fill>[Anschrift wie oben: folgt in Kürze]</Fill>
         </p>
       </section>
 

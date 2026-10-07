@@ -173,7 +173,7 @@ export function SelectField({
  *
  * The document layout has no room for a visible label above every box, so the
  * label moves to `aria-label` and the placeholder carries the hint visually.
- * That is the one place placeholder-as-label is defensible — the surrounding
+ * That is the one place placeholder-as-label is defensible: the surrounding
  * document supplies the context a sighted reader needs ("Bill To" above the
  * box), and the accessible name is still there in full for everyone else.
  */
@@ -198,7 +198,7 @@ export function DocField({
   align?: 'left' | 'right';
   inputMode?: 'text' | 'decimal' | 'numeric' | 'email' | 'tel';
   bold?: boolean;
-  /** id of a <datalist> offering completions — the line editor's services. */
+  /** id of a <datalist> offering completions: the line editor's services. */
   list?: string;
 }) {
   return (

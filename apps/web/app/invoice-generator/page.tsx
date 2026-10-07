@@ -5,14 +5,14 @@ import { InvoiceGenerator } from '@/components/invoice/generator';
 import { PAGE_MARKETS, MARKETS, RULE_COUNTS } from '@/lib/markets';
 
 export const metadata: Metadata = {
-  title: 'Invoice generator — create and validate structured invoices',
+  title: 'Invoice generator: create and validate structured invoices',
   description:
     'Create a structured invoice for the UK, Germany, the EU or the US, then validate it against EN 16931 or the German XRechnung profile in the same step. Exact arithmetic, UBL and JSON export, open source, runs in your browser.',
   alternates: { canonical: '/invoice-generator' },
   openGraph: {
     title: 'Stampbench invoice generator',
     description:
-      'Create, validate, repair and export structured invoices for the market you bill — EN 16931 and XRechnung, in the browser.',
+      'Create, validate, repair and export structured invoices for the market you bill: EN 16931 and XRechnung, in the browser.',
   },
 };
 
@@ -30,7 +30,7 @@ export default function InvoiceGeneratorPage() {
       <h1 className="mb-1.5 text-2xl font-semibold tracking-tight sm:text-3xl">Create an invoice</h1>
       {/* One line, and it answers the three questions a first-time visitor
           actually has: is this free, will it work, where does my data go. It
-          does not name a standard — the point of this page is that they never
+          does not name a standard: the point of this page is that they never
           have to learn one. */}
       <p className="mb-6 max-w-2xl text-sm leading-relaxed text-muted">
         Add your business, customer and work details. We handle the totals and prepare a PDF ready
@@ -47,7 +47,7 @@ export default function InvoiceGeneratorPage() {
               You fill in your details, your customer and what you are charging for. Stampbench works
               out the VAT and the totals exactly, checks the invoice against the e-invoicing
               requirements that apply where you bill, and tells you in plain English if anything is
-              missing — before you send it.
+              missing: before you send it.
             </p>
           </div>
           <div>
@@ -59,7 +59,7 @@ export default function InvoiceGeneratorPage() {
           </div>
         </div>
 
-        {/* The technical account of the same paragraph, for whoever wants it —
+        {/* The technical account of the same paragraph, for whoever wants it:
             and the bridge to the developer product, stated once. */}
         <details className="mt-8 rounded-xl border border-border bg-surface p-5">
           <summary className="cursor-pointer list-none text-sm font-medium">
@@ -70,7 +70,7 @@ export default function InvoiceGeneratorPage() {
           </summary>
           <div className="mt-4 space-y-3 border-t border-border pt-4 text-sm leading-relaxed text-muted">
             <p>
-              Invoices are validated against EN 16931 — {RULE_COUNTS.en16931} rules in the European
+              Invoices are validated against EN 16931: {RULE_COUNTS.en16931} rules in the European
               core profile, {RULE_COUNTS.xrechnung} under the German XRechnung 3.0 CIUS, selected by
               the market you chose. Output is UBL 2.1. Totals and the VAT breakdown are computed in
               exact minor units from your lines, so the BR-CO arithmetic rules pass by construction
@@ -79,7 +79,7 @@ export default function InvoiceGeneratorPage() {
             <p>
               The engine is <code className="font-mono text-xs">@stampbench/core</code>, an
               MIT-licensed npm package running client-side on this page. The same validation and
-              generation are available as a library, a CLI and a hosted REST API —{' '}
+              generation are available as a library, a CLI and a hosted REST API: {' '}
               <Link href="/developers" className="text-accent-hi hover:underline">
                 see the developer platform
               </Link>

@@ -3,20 +3,20 @@
  *
  * `plans.ts` next door describes plans in marketing terms and meters the
  * hosted API. This file is the enforcement table for the browser-side business
- * tools — the generator, My invoices, recurring, the customer book — which
+ * tools: the generator, My invoices, recurring, the customer book: which
  * until now checked the plan for exactly one thing (the PDF watermark) and
  * handed everything else out free.
  *
  * Two rules govern anything added here:
  *
  *  1. **The acquisition path stays free.** Validating a file, fixing it, and
- *     the open-source library are never gated — that promise is load-bearing
+ *     the open-source library are never gated: that promise is load-bearing
  *     and is repeated on /pricing, /trust and the homepage. What is gated is
  *     *running a business on it*: volume, recurrence, and the memory of who
  *     owes you what.
  *  2. **Gates are honest, not hostile.** Every limit here is stated on
  *     /pricing before signup, the wall names the number, and hitting it never
- *     destroys work — a capped user can still open, edit and export every
+ *     destroys work: a capped user can still open, edit and export every
  *     invoice they already made. A cap that eats someone's data is a refund
  *     conversation, not an upgrade.
  *
@@ -24,7 +24,7 @@
  * deliberate trade, not an oversight. The privacy promise ("your invoice never
  * leaves the browser") is worth more than a cap that a determined user could
  * bypass with devtools anyway. The account-backed limits that *do* matter for
- * cost — API quota, stored backups — are enforced in the worker, where they
+ * cost: API quota, stored backups: are enforced in the worker, where they
  * belong.
  */
 
@@ -43,7 +43,7 @@ export interface BusinessEntitlements {
   cleanPdf: boolean;
   /**
    * The inbound payment webhook (worker payment-hook.ts). The worker enforces
-   * this too — it refuses to mint hooks for free plans and ignores deliveries
+   * this too: it refuses to mint hooks for free plans and ignores deliveries
    * to a downgraded account's hook; this flag is what the settings UI reads.
    */
   autoInvoicing: boolean;

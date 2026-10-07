@@ -13,7 +13,7 @@ import type { Copy } from '@/lib/copy';
  * from the same design tokens as the app, so they stay sharp at any size,
  * cost a few kB, and the text in them is real text.
  *
- * They are illustrations, not live software — every panel is inert, and the
+ * They are illustrations, not live software: every panel is inert, and the
  * tab strip is the only interactive part. The numbers shown are the same
  * worked example used everywhere else on the site (£2,450 net, 20% VAT,
  * £490 tax), so a visitor who follows through to the real generator sees
@@ -100,7 +100,7 @@ function CreatePanel({ copy }: { copy: Copy }) {
  * A sweep crosses the document, the verdict resolves from "checking" to the
  * count, and each finding lands with its rule id a beat behind it. Every class
  * involved is inert below 1024px and under prefers-reduced-motion, and the CSS
- * only ever animates *towards* the finished state — so with no animation at
+ * only ever animates *towards* the finished state: so with no animation at
  * all this renders exactly as it did before, fully legible.
  *
  * The pending label is aria-hidden: it is a visual beat, not information, and
@@ -155,7 +155,7 @@ function CheckPanel({ copy }: { copy: Copy }) {
 function FixPanel({ copy }: { copy: Copy }) {
   const t = copy.showcase.fix;
   return (
-    <Chrome title="invoice.xml — repaired">
+    <Chrome title="invoice.xml: repaired">
       <div className="p-5 sm:p-7">
         <div className="mb-4 flex flex-wrap items-center gap-3">
           <span className="rounded-full bg-success/10 px-3 py-1 text-sm font-medium text-success">
@@ -219,7 +219,7 @@ export function ProductShowcase({ copy }: { copy: Copy }) {
    * findings would never finish landing. The guard clears a beat after the
    * last one does, so a second pass is always a deliberate return.
    *
-   * Hover is the right trigger precisely because it does not exist on touch —
+   * Hover is the right trigger precisely because it does not exist on touch:
    * this costs a phone visitor nothing, which is the same reason the CSS is
    * scoped to wide viewports.
    */
@@ -235,7 +235,7 @@ export function ProductShowcase({ copy }: { copy: Copy }) {
   return (
     <section className="mx-auto max-w-5xl px-4 pb-4">
       {/* Horizontally scrollable on a phone rather than wrapping into two
-          ragged rows — a tab strip that reflows reads as broken. */}
+          ragged rows: a tab strip that reflows reads as broken. */}
       <div
         role="tablist"
         aria-label={copy.showcase.label}

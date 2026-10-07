@@ -64,7 +64,7 @@ export function KeyManager({ initialKeys }: { initialKeys: KeyRow[] }) {
       {freshKey && (
         <div className="rounded-xl border border-accent/40 bg-accent-dim/40 p-4">
           <div className="mb-2 text-sm font-medium text-accent-hi">
-            Key “{freshKey.name}” created — copy it now, it won&apos;t be shown again.
+            Key “{freshKey.name}” created: copy it now, it won&apos;t be shown again.
           </div>
           <div className="flex items-center gap-2">
             <code className="flex-1 overflow-x-auto rounded-lg border border-border bg-bg px-3 py-2 font-mono text-xs">
@@ -113,7 +113,7 @@ export function KeyManager({ initialKeys }: { initialKeys: KeyRow[] }) {
             {initialKeys.length === 0 && (
               <tr>
                 <td colSpan={5} className="px-4 py-8 text-center text-muted">
-                  No keys yet — create your first one above.
+                  No keys yet: create your first one above.
                 </td>
               </tr>
             )}

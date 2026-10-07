@@ -62,7 +62,7 @@ export function navGroups(copy: Copy, locale: Locale): NavGroup[] {
   ];
 }
 
-/** Which group, if any, owns the current path — used to mark the active menu. */
+/** Which group, if any, owns the current path: used to mark the active menu. */
 export function activeGroup(pathname: string): 'business' | 'developers' | null {
   if (
     pathname.startsWith('/invoice-generator') ||

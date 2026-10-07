@@ -129,7 +129,7 @@ export async function registerUser(email: string, password: string, name?: strin
   const passwordHash = await hashPassword(password);
   // Admin bootstrap: the first registered account becomes admin (the solo
   // founder registers immediately on deploy). If ADMIN_EMAIL is set, the first
-  // account is admin ONLY when its email matches — so an attacker can't grab
+  // account is admin ONLY when its email matches: so an attacker can't grab
   // admin by racing to register first. Without email verification we must not
   // grant admin on an email match alone at any other time.
   // Admin rights are configuration-driven. Public registration can never win

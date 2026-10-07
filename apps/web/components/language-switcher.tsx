@@ -9,7 +9,7 @@ import { LOCALES, TRANSLATED_PATHS, type Locale } from '@/lib/copy';
  * Deliberately a switch rather than a redirect: silently sending a German
  * visitor to German copy takes the choice away from someone who may well
  * prefer English docs, and it muddies which page search engines should rank.
- * The browser's preference is only used to *hint* which option to nudge — the
+ * The browser's preference is only used to *hint* which option to nudge: the
  * visitor still decides.
  *
  * Pages that exist in one language only (docs, trust, security, legal) switch

@@ -5,7 +5,7 @@
  * history*: every buyer you have invoiced is a customer, every line you have
  * billed is a service, rebuilt from the saved drafts each time the generator
  * opens. There is nothing to maintain, nothing to migrate, and nothing to
- * drift — and because the history is what the account backup syncs, the book
+ * drift: and because the history is what the account backup syncs, the book
  * follows you to another device for free the moment the invoices do.
  *
  * The cost of that choice is honest too: you "add a customer" by invoicing
@@ -17,7 +17,7 @@ import type { DraftLine, DraftParty } from './draft';
 import type { SavedInvoice } from './history';
 
 export interface KnownCustomer {
-  /** Display name — the buyer's name as last invoiced. */
+  /** Display name: the buyer's name as last invoiced. */
   name: string;
   /** The full party block, ready to drop into a draft. */
   party: DraftParty;
@@ -67,7 +67,7 @@ export function knownCustomers(entries: SavedInvoice[]): KnownCustomer[] {
 /**
  * Every distinct line description ever billed, with the price and tax setup
  * it last carried. Lines without a description are half-typed rows, and lines
- * without a price teach the autofill nothing — both are skipped.
+ * without a price teach the autofill nothing: both are skipped.
  */
 export function knownServices(entries: SavedInvoice[]): KnownService[] {
   const byDescription = new Map<string, KnownService>();
@@ -90,7 +90,7 @@ export function knownServices(entries: SavedInvoice[]): KnownService[] {
   return [...byDescription.values()];
 }
 
-/** Case-insensitive exact match — what picking from a datalist produces. */
+/** Case-insensitive exact match: what picking from a datalist produces. */
 export function findService(services: KnownService[], description: string): KnownService | null {
   const key = description.trim().toLowerCase();
   if (!key) return null;

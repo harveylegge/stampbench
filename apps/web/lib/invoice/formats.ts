@@ -33,7 +33,7 @@ export interface InvoiceFormat {
   validationProfile: MarketProfile | null;
   /** What the user can download. */
   outputs: OutputKind[];
-  /** Why it is not implemented — required whenever support is not 'supported'. */
+  /** Why it is not implemented: required whenever support is not 'supported'. */
   limitation?: string;
 }
 
@@ -63,7 +63,7 @@ export const FORMATS: Record<string, InvoiceFormat> = {
     name: 'Commercial invoice',
     tagline: 'Structured JSON + printable document · no ruleset',
     detail:
-      'An ordinary business invoice: the same structured model, the same exact arithmetic, a printable document and canonical JSON — but no national e-invoicing standard is claimed and no compliance verdict is given, because Stampbench has no ruleset for it. Use this where a plain invoice is what the customer wants.',
+      'An ordinary business invoice: the same structured model, the same exact arithmetic, a printable document and canonical JSON: but no national e-invoicing standard is claimed and no compliance verdict is given, because Stampbench has no ruleset for it. Use this where a plain invoice is what the customer wants.',
     support: 'supported',
     validationProfile: null,
     outputs: ['json', 'print'],
@@ -73,14 +73,14 @@ export const FORMATS: Record<string, InvoiceFormat> = {
   'zugferd-cii': {
     id: 'zugferd-cii',
     name: 'ZUGFeRD / Factur-X (CII)',
-    tagline: 'Not implemented — reading only',
+    tagline: 'Not implemented: reading only',
     detail:
       'Stampbench reads and validates CII, the syntax inside ZUGFeRD and Factur-X, and the playground handles those documents today. It cannot write them: the engine has a UBL writer and no CII writer.',
     support: 'not-implemented',
     validationProfile: null,
     outputs: [],
     limitation:
-      'No CII writer exists in @stampbench/core. Validation of ZUGFeRD / Factur-X documents you already have works today — use the playground.',
+      'No CII writer exists in @stampbench/core. Validation of ZUGFeRD / Factur-X documents you already have works today: use the playground.',
   },
   'peppol-bis': {
     id: 'peppol-bis',
@@ -106,7 +106,7 @@ export const FORMATS: Record<string, InvoiceFormat> = {
 };
 
 /**
- * Formats offered per market, best first. Unimplemented ones are listed too —
+ * Formats offered per market, best first. Unimplemented ones are listed too:
  * a visitor asking "can it do ZUGFeRD?" deserves the answer on the page
  * rather than the absence of an option they then assume is coming.
  */
@@ -141,7 +141,7 @@ export function isUsable(format: InvoiceFormat): boolean {
 
 /** Human label for the ruleset a format validates against. */
 export function rulesetLabelFor(format: InvoiceFormat): string {
-  if (!format.validationProfile) return 'No ruleset — arithmetic checks only';
+  if (!format.validationProfile) return 'No ruleset: arithmetic checks only';
   const ruleset = RULESETS[format.validationProfile];
   return `${ruleset.label} · ${RULE_COUNTS[format.validationProfile]} rules`;
 }

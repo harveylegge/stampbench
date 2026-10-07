@@ -12,7 +12,7 @@ export function SigninForm() {
   const router = useRouter();
   const searchParams = useSearchParams();
 
-  // ?next= lets gated pages bounce back after sign-in. Same-site paths only —
+  // ?next= lets gated pages bounce back after sign-in. Same-site paths only:
   // a leading '/' but not '//', so it can never become an off-site redirect.
   const next = searchParams.get('next');
   const destination = next && next.startsWith('/') && !next.startsWith('//') ? next : '/account';
@@ -30,7 +30,7 @@ export function SigninForm() {
         if (user && !cancelled) router.replace(destination);
       })
       .catch(() => {
-        // API unreachable — leave the form usable; submitting will surface it.
+        // API unreachable: leave the form usable; submitting will surface it.
       });
     return () => {
       cancelled = true;
@@ -44,7 +44,7 @@ export function SigninForm() {
     try {
       await login(email.trim(), password);
       router.push(destination);
-      // `busy` stays true — the router is navigating away.
+      // `busy` stays true: the router is navigating away.
     } catch (err) {
       if (err instanceof ApiError && err.code === 'bad_credentials') {
         // Deliberately neutral: no hint about which half was wrong.
@@ -97,7 +97,7 @@ export function SigninForm() {
         <a href="mailto:hello@stampbench.com" className="text-accent-hi hover:underline">
           hello@stampbench.com
         </a>{' '}
-        and we will sort it out manually — automated reset is coming.
+        and we will sort it out manually: automated reset is coming.
       </p>
       <p className="mt-4 text-sm text-muted">
         No account yet?{' '}

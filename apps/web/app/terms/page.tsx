@@ -11,9 +11,9 @@ export const metadata: Metadata = {
  * NOT LEGAL ADVICE. Written for a UK sole trader selling a developer API into
  * the EU; drafted B2B. 2026-08-07: Harvey's details filled in (England & Wales,
  * £100 cap, no VAT, hello@ contact) and billing language corrected to the real
- * flow (manual upgrade by email — no Stripe on the site). Remaining <Fill>s are
+ * flow (manual upgrade by email: no Stripe on the site). Remaining <Fill>s are
  * ONLY the postal address (virtual office pending). It has NOT been reviewed by
- * a qualified lawyer — do that before actively promoting paid plans.
+ * a qualified lawyer: do that before actively promoting paid plans.
  */
 
 export default function TermsPage() {
@@ -180,7 +180,7 @@ export default function TermsPage() {
           </a>{' '}
           from your account address. We may terminate or suspend
           access for material breach of these terms, for non-payment, or if we cease operating the
-          Service — in the last case we will give as much notice as we reasonably can so you can
+          Service: in the last case we will give as much notice as we reasonably can so you can
           migrate. On termination your right to use the hosted Service ends; the open-source library
           remains yours to use under its licence.
         </p>

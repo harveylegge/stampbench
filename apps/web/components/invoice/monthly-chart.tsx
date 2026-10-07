@@ -6,7 +6,7 @@ import { formatMoney, type Money } from '@stampbench/core';
 import type { CurrencySeries } from '@/lib/invoice/status';
 
 /**
- * Invoiced money per month, as a chart — the month-by-month companion to the
+ * Invoiced money per month, as a chart: the month-by-month companion to the
  * "this month" summary card above it.
  *
  * One series only: the area is what was invoiced. "Paid" and the invoice
@@ -15,12 +15,12 @@ import type { CurrencySeries } from '@/lib/invoice/status';
  * shape, not a comparison. Everything the tooltip shows is also in the table,
  * so hover never gates a number.
  *
- * Currencies never mix in one line — £3,000 + €500 is not a number. Each
+ * Currencies never mix in one line: £3,000 + €500 is not a number. Each
  * currency is its own series; with more than one, chips switch between them
  * and the one with the most invoices leads.
  */
 
-/** Plot band heights. The container's height is their sum — the x-axis band is
+/** Plot band heights. The container's height is their sum: the x-axis band is
  *  part of the layout, never an overflow. */
 const PAD_TOP = 14;
 const PLOT_H = 156;
@@ -279,7 +279,7 @@ export function MonthlyChart({ series }: { series: CurrencySeries[] }) {
             )}
 
             {/* The endpoint is the one directly-labelled value: today's month,
-                with its dot — everything else reads off the axis or tooltip. */}
+                with its dot: everything else reads off the axis or tooltip. */}
             {active === null && (
               <>
                 <circle
@@ -338,7 +338,7 @@ export function MonthlyChart({ series }: { series: CurrencySeries[] }) {
         )}
       </div>
 
-      {/* The chart's table twin — every figure the chart or its tooltip can
+      {/* The chart's table twin: every figure the chart or its tooltip can
           show, reachable with no pointer at all. */}
       <table className="sr-only">
         <caption>Invoices by month, {shown.currency}, last 12 months</caption>

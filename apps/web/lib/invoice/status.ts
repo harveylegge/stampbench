@@ -2,15 +2,15 @@
  * Payment status, derived rather than stored.
  *
  * The only fact the user records is "I marked this paid" (`paidAt` on the
- * saved entry). Everything else — awaiting, overdue — is computed from the
+ * saved entry). Everything else: awaiting, overdue: is computed from the
  * draft's own dates at the moment of asking, so an invoice becomes overdue by
  * the calendar advancing, not by anyone remembering to update a field. Storing
  * "overdue" would create exactly the stale second copy the history module was
  * built to avoid.
  *
  * Money figures are summed in the engine's minor units straight from
- * `computeDraftTotals` — the same arithmetic the editor, the PDF and the XML
- * use — and grouped by currency, because £3,000 + €500 is not a number and
+ * `computeDraftTotals`: the same arithmetic the editor, the PDF and the XML
+ * use: and grouped by currency, because £3,000 + €500 is not a number and
  * this module refuses to pretend it is.
  */
 
@@ -29,7 +29,7 @@ export function isoDayOf(date: Date): string {
 
 /**
  * Paid wins over everything; otherwise the due date decides. An invoice due
- * today is awaiting, not overdue — a payment that arrives on the due date is
+ * today is awaiting, not overdue: a payment that arrives on the due date is
  * on time, and a tracker that shouts a day early teaches people to ignore it.
  * No due date means nothing to be late against, so it stays awaiting.
  */
@@ -68,13 +68,13 @@ interface Bucket {
 
 /**
  * This month's business, per currency: everything issued in the current
- * calendar month, split by where it stands. Credit notes subtract — a month
+ * calendar month, split by where it stands. Credit notes subtract: a month
  * with a £500 credit note in it has £500 less invoiced, which is what the
  * word means. Entries whose totals cannot be computed (drafts written by an
  * older build) are skipped rather than guessed at.
  *
  * Sums are integer minor units carried between the engine's own Money values
- * — every invoice in one currency shares one scale, so the arithmetic never
+ *: every invoice in one currency shares one scale, so the arithmetic never
  * mixes exponents.
  */
 export function monthSummary(entries: SavedInvoice[], now: Date): CurrencySummary[] {
@@ -148,20 +148,20 @@ export interface CurrencySeries {
   currency: string;
   /** A locale for formatting, taken from the first invoice seen. */
   locale: string;
-  /** Documents in the window — decides which currency leads the chart. */
+  /** Documents in the window: decides which currency leads the chart. */
   count: number;
   /** Months in the window with at least one document. */
   activeMonths: number;
-  /** Oldest first, one point per month of the window — zero months included. */
+  /** Oldest first, one point per month of the window: zero months included. */
   months: MonthPoint[];
 }
 
 /**
- * The last `monthsBack` calendar months per currency — `monthSummary`'s rules
+ * The last `monthsBack` calendar months per currency: `monthSummary`'s rules
  * applied month by month, for the chart on /my-invoices. Same arithmetic:
  * integer minor units from the documents' own totals chain, credit notes
  * subtract, uncomputable drafts are skipped. A month with no invoices is a
- * real zero rather than a gap — the business did no invoicing that month, and
+ * real zero rather than a gap: the business did no invoicing that month, and
  * a chart that smoothed over it would be flattering, not reporting.
  */
 export function monthlySeries(

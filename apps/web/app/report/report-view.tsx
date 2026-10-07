@@ -6,7 +6,7 @@ import { useEffect, useState } from 'react';
 import { ApiError, getReport } from '@/lib/account-client';
 
 /**
- * Read-only viewer for a shared validation report — the page an agency sends
+ * Read-only viewer for a shared validation report: the page an agency sends
  * its client, so it stays clean and makes no demands. The payload was written
  * by the playground's 'Share report' button and holds the verdict and
  * violation list only, never the XML. Parsed defensively: it crossed the
@@ -69,7 +69,7 @@ function parseReport(payload: unknown, createdAt: number): Report {
   };
 }
 
-/** Mirrors the playground's violation cards — a report should look like the tool that made it. */
+/** Mirrors the playground's violation cards: a report should look like the tool that made it. */
 function SeverityBadge({ severity }: { severity: 'error' | 'warning' }) {
   return severity === 'error' ? (
     <span className="rounded bg-danger/15 px-1.5 py-0.5 font-mono text-[11px] font-medium text-danger">
@@ -137,7 +137,7 @@ export function ReportView() {
         {state.status === 'loading' && <p className="mt-4 text-sm text-faint">Loading report…</p>}
         {state.status === 'missing-id' && (
           <p className="mt-4 text-sm text-muted">
-            This link is missing its report id — check it was copied in full.
+            This link is missing its report id: check it was copied in full.
           </p>
         )}
         {state.status === 'not-found' && (
@@ -168,7 +168,7 @@ export function ReportView() {
 
       {report.verdict ? (
         <div className="rounded-xl border border-success/40 bg-success/5 p-5">
-          <p className="font-medium text-success">✓ Valid — no blocking errors</p>
+          <p className="font-medium text-success">✓ Valid: no blocking errors</p>
           {report.warningCount > 0 && (
             <p className="mt-1 text-sm text-muted">
               {report.warningCount} warning{report.warningCount === 1 ? '' : 's'} worth reviewing
@@ -208,7 +208,7 @@ export function ReportView() {
 
       <div className="mt-10 rounded-xl border border-border bg-surface p-5">
         <p className="text-sm text-muted">
-          This report was produced with Stampbench — EN 16931 / XRechnung validation that runs
+          This report was produced with Stampbench: EN 16931 / XRechnung validation that runs
           entirely in the browser. The invoice itself was never uploaded; a report holds only the
           verdict and the rule violations.
         </p>

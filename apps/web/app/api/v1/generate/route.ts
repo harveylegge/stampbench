@@ -167,7 +167,7 @@ const requestSchema = z.object({
 /**
  * POST /api/v1/generate
  * Body: { invoice: <semantic model>, options?: { computeTotals?, validate?, profile? } }
- * Returns: { xml, validation? } — totals are computed for you unless disabled.
+ * Returns: { xml, validation? }: totals are computed for you unless disabled.
  */
 export async function POST(request: Request) {
   const gate = await gateRequest(request);

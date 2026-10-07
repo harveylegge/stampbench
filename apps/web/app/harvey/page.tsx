@@ -52,7 +52,7 @@ export default function HarveyPage() {
       />
 
       <div className="mb-8 flex items-center gap-6">
-        {/* Monogram placeholder — swap for a headshot when one is available. */}
+        {/* Monogram placeholder: swap for a headshot when one is available. */}
         <div
           aria-hidden
           className="flex h-24 w-24 shrink-0 items-center justify-center rounded-2xl border border-border bg-surface text-3xl font-semibold tracking-tight text-accent"
@@ -73,7 +73,7 @@ export default function HarveyPage() {
           </a>
           , an open-source compliance toolkit for European e-invoicing. Stampbench validates,
           repairs and generates <strong className="text-text">XRechnung / EN 16931</strong>{' '}
-          e-invoices in pure TypeScript — locally, on your own machine, with plain-language
+          e-invoices in pure TypeScript: locally, on your own machine, with plain-language
           explanations for cryptic rule violations.
         </p>
         <p>

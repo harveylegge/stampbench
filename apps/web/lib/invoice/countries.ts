@@ -9,7 +9,7 @@
  *
  * What is *not* here: tax rates. Rates change by legislation and by the thing
  * being sold, and a wrong default rate on a compliance document is worse than
- * no default at all — Stampbench checks that the arithmetic and the category
+ * no default at all: Stampbench checks that the arithmetic and the category
  * are consistent, it does not decide what rate applies to your transaction.
  * The only rate-like data below is `commonVatRates`, offered as suggestions in
  * a dropdown the user can always override, and labelled as such in the UI.
@@ -25,14 +25,14 @@ export interface Subdivision {
 }
 
 export interface CountryDef {
-  /** ISO 3166-1 alpha-2 — BT-40 / BT-55. */
+  /** ISO 3166-1 alpha-2: BT-40 / BT-55. */
   code: string;
   name: string;
   /** Default document currency (BT-5) when this is the seller's country. */
   currency: string;
-  /** BCP 47 tag used to format amounts — a US invoice must not read "US$". */
+  /** BCP 47 tag used to format amounts: a US invoice must not read "US$". */
   locale: string;
-  /** In the EU VAT area — decides whether intra-community categories apply. */
+  /** In the EU VAT area: decides whether intra-community categories apply. */
   inEu: boolean;
   /** Which Stampbench market this country belongs to. */
   market: MarketId;
@@ -49,10 +49,10 @@ export interface CountryDef {
     subdivisions?: Subdivision[];
   };
   bank: BankScheme;
-  /** BT-31 / BT-48 label — what this country calls its VAT identifier. */
+  /** BT-31 / BT-48 label: what this country calls its VAT identifier. */
   taxIdLabel: string;
   taxIdPlaceholder?: string;
-  /** BT-30 label — company register identifier, where one is customary. */
+  /** BT-30 label: company register identifier, where one is customary. */
   companyIdLabel?: string;
   /** Suggestions only. Never applied automatically, never presented as law. */
   commonVatRates?: number[];

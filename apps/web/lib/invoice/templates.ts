@@ -1,5 +1,5 @@
 /**
- * Starting points, with realistic — and entirely fictional — example data.
+ * Starting points, with realistic: and entirely fictional: example data.
  *
  * Every company, VAT number, IBAN and address below is invented. None of them
  * belongs to a real business, and nothing here should be mistaken for a real
@@ -18,7 +18,7 @@ export interface InvoiceTemplate {
   name: string;
   market: MarketId;
   formatId: string;
-  /** What this template demonstrates — shown under the name. */
+  /** What this template demonstrates: shown under the name. */
   description: string;
   /** Applied on top of a fresh draft for the template's market. */
   apply: (base: InvoiceDraft) => InvoiceDraft;
@@ -77,7 +77,7 @@ export const TEMPLATES: InvoiceTemplate[] = [
         paymentTerms: 'Payment within 30 days. Late payment interest applies under the Late Payment of Commercial Debts (Interest) Act 1998.',
       },
       lines: [
-        line('Data platform review — senior consultant', '7.5', 'HUR', '145.00', '20', 'S', 'CONS-SR'),
+        line('Data platform review: senior consultant', '7.5', 'HUR', '145.00', '20', 'S', 'CONS-SR'),
         line('Workshop facilitation', '2', 'DAY', '950.00', '20', 'S', 'CONS-WS'),
         line('Travel and subsistence (recharged at cost)', '1', 'C62', '318.40', '20', 'S'),
       ],
@@ -94,7 +94,7 @@ export const TEMPLATES: InvoiceTemplate[] = [
 
   {
     id: 'de-b2b-xrechnung',
-    name: 'German B2B — XRechnung',
+    name: 'German B2B: XRechnung',
     market: 'germany',
     formatId: 'xrechnung-ubl',
     description: 'A Berlin engineering firm invoicing a German buyer, with the buyer reference the BR-DE rules require.',
@@ -133,13 +133,13 @@ export const TEMPLATES: InvoiceTemplate[] = [
         ...base.document,
         currency: 'EUR',
         // BT-10. For public-sector buyers this is the Leitweg-ID; a B2B buyer
-        // supplies their own reference. Never invented — this is example data.
+        // supplies their own reference. Never invented: this is example data.
         buyerReference: 'BST-2026-00417',
         orderReference: '4500219883',
         paymentTerms: 'Zahlbar innerhalb von 30 Tagen ohne Abzug.',
       },
       lines: [
-        line('Steuerungssoftware — Entwicklung', '48', 'HUR', '128.00', '19', 'S', 'ENT-STG'),
+        line('Steuerungssoftware: Entwicklung', '48', 'HUR', '128.00', '19', 'S', 'ENT-STG'),
         line('Inbetriebnahme vor Ort', '3', 'DAY', '1450.00', '19', 'S', 'INB-VO'),
         line('Technische Dokumentation', '1', 'C62', '2400.00', '7', 'S', 'DOK-TD'),
       ],
@@ -156,7 +156,7 @@ export const TEMPLATES: InvoiceTemplate[] = [
 
   {
     id: 'eu-cross-border',
-    name: 'EU cross-border — reverse charge',
+    name: 'EU cross-border: reverse charge',
     market: 'eu',
     formatId: 'en16931-ubl',
     description:
@@ -178,7 +178,7 @@ export const TEMPLATES: InvoiceTemplate[] = [
       buyer: {
         ...base.buyer,
         name: 'Ateliers Rivière SAS',
-        // Required by BR-AE-02 for reverse charge — the invoice fails without it.
+        // Required by BR-AE-02 for reverse charge: the invoice fails without it.
         vatId: 'FR40303265045',
         street: '18 Rue Lafayette',
         city: 'Lyon',
@@ -193,7 +193,7 @@ export const TEMPLATES: InvoiceTemplate[] = [
         buyerReference: 'CMD-2026-0553',
         orderReference: 'CMD-2026-0553',
         paymentTerms: 'Payment within 45 days of the invoice date.',
-        note: 'VAT reverse charge — the recipient accounts for the VAT.',
+        note: 'VAT reverse charge: the recipient accounts for the VAT.',
       },
       lines: [
         line('Industrial design retainer', '1', 'MON', '6800.00', '0', 'AE', 'RET-DES'),
@@ -207,7 +207,7 @@ export const TEMPLATES: InvoiceTemplate[] = [
         providerId: 'ABNANL2A',
       },
       exemptionReasons: {
-        AE: 'Reverse charge — VAT to be accounted for by the recipient (Article 196, Council Directive 2006/112/EC).',
+        AE: 'Reverse charge: VAT to be accounted for by the recipient (Article 196, Council Directive 2006/112/EC).',
       },
     }),
   },
@@ -218,7 +218,7 @@ export const TEMPLATES: InvoiceTemplate[] = [
     market: 'us',
     formatId: 'commercial',
     description:
-      'A New York studio billing a US client. Sales tax is entered manually — Stampbench does not determine US tax rates.',
+      'A New York studio billing a US client. Sales tax is entered manually: Stampbench does not determine US tax rates.',
     apply: (base) => ({
       ...base,
       seller: {
@@ -301,7 +301,7 @@ export const TEMPLATES: InvoiceTemplate[] = [
         paymentTerms: 'Charged monthly in advance. Payment within 14 days.',
       },
       lines: [
-        line('Platform subscription — 45 seats', '45', 'MON', '18.00', '0', 'AE', 'SUB-SEAT'),
+        line('Platform subscription: 45 seats', '45', 'MON', '18.00', '0', 'AE', 'SUB-SEAT'),
         line('Priority support add-on', '1', 'MON', '240.00', '0', 'AE', 'SUB-SUP'),
       ],
       payment: {
@@ -312,7 +312,7 @@ export const TEMPLATES: InvoiceTemplate[] = [
         providerId: 'BYLADEM1001',
       },
       exemptionReasons: {
-        AE: 'Reverse charge — VAT to be accounted for by the recipient (Article 196, Council Directive 2006/112/EC).',
+        AE: 'Reverse charge: VAT to be accounted for by the recipient (Article 196, Council Directive 2006/112/EC).',
       },
     }),
   },
@@ -323,7 +323,7 @@ export const TEMPLATES: InvoiceTemplate[] = [
     market: 'uk',
     formatId: 'en16931-ubl',
     description:
-      'A sole trader who is not VAT registered. Uses category O (not subject to VAT), which needs a stated reason and a tax registration identifier — EN 16931 has no category for "no tax reference at all".',
+      'A sole trader who is not VAT registered. Uses category O (not subject to VAT), which needs a stated reason and a tax registration identifier: EN 16931 has no category for "no tax reference at all".',
     apply: (base) => ({
       ...base,
       seller: {
@@ -361,7 +361,7 @@ export const TEMPLATES: InvoiceTemplate[] = [
         line('Monthly advertising design retainer', '1', 'MON', '1200.00', '', 'O', 'RET-ADV'),
         line('Additional artwork revisions', '4', 'HUR', '65.00', '', 'O'),
       ],
-      exemptionReasons: { O: 'Not registered for VAT — no VAT charged on this supply.' },
+      exemptionReasons: { O: 'Not registered for VAT: no VAT charged on this supply.' },
       payment: {
         ...base.payment,
         meansTypeCode: '30',
@@ -374,7 +374,7 @@ export const TEMPLATES: InvoiceTemplate[] = [
 ];
 
 export function templatesForMarket(market: MarketId): InvoiceTemplate[] {
-  // The market's own templates first, then the rest — a UK visitor should see
+  // The market's own templates first, then the rest: a UK visitor should see
   // the UK example at the top but is not prevented from loading the German one.
   return [...TEMPLATES].sort((a, b) => Number(b.market === market) - Number(a.market === market));
 }

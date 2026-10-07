@@ -9,7 +9,7 @@ import type { MarketId } from '@/lib/markets';
  * is never asked the same question twice: choosing a market here means the
  * validator opens on the right ruleset instead of showing a second picker.
  *
- * A plain <Link>, so it still navigates with JavaScript disabled — the market
+ * A plain <Link>, so it still navigates with JavaScript disabled: the market
  * simply falls back to the default in that case, which is the correct
  * degradation for a preference.
  */

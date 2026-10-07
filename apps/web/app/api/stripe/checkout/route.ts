@@ -66,7 +66,7 @@ export async function POST(request: Request) {
     });
     return NextResponse.json({
       url: portal.url,
-      note: 'You already have a subscription — manage or change your plan in the billing portal.',
+      note: 'You already have a subscription: manage or change your plan in the billing portal.',
     });
   }
 

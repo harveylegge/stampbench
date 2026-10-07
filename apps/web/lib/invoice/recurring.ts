@@ -4,13 +4,13 @@
  * Recurring invoices, v1: a schedule and a prompt, not a robot.
  *
  * A rule says "this invoice repeats monthly". When its date comes around and
- * the user next opens /my-invoices, they are offered the ready-made invoice —
+ * the user next opens /my-invoices, they are offered the ready-made invoice:
  * one click opens the editor prefilled with the next number in the series and
  * today's dates. Nothing is created without them present.
  *
  * That limit is deliberate, twice over. Creating invoices unattended needs the
- * drafts server-side and something to wake up on schedule — infrastructure
- * that exists only behind the opt-in backup — and an invoice that issues
+ * drafts server-side and something to wake up on schedule: infrastructure
+ * that exists only behind the opt-in backup: and an invoice that issues
  * itself while nobody is looking is also the kind of surprise a numbering
  * series does not forgive. The rule store is the part that will not change
  * when true background automation arrives; the trigger is.
@@ -119,7 +119,7 @@ function write(rules: RecurringRule[]): void {
     window.localStorage.setItem(KEY, JSON.stringify(rules));
   } catch {
     // Private mode: the rule holds for this page view only. The invoices
-    // themselves are never at risk here — this store is only the schedule.
+    // themselves are never at risk here: this store is only the schedule.
   }
   window.dispatchEvent(new Event(RECURRING_EVENT));
 }
@@ -156,7 +156,7 @@ export function removeRuleForInvoice(invoiceId: string): void {
   if (kept.length !== rules.length) write(kept);
 }
 
-/** Step a rule past its current due date (created or skipped — same move). */
+/** Step a rule past its current due date (created or skipped: same move). */
 export function advanceRule(id: string, todayIso: string): void {
   const rules = read();
   const rule = rules.find((r) => r.id === id);
@@ -166,7 +166,7 @@ export function advanceRule(id: string, todayIso: string): void {
 }
 
 /**
- * Rules whose date has come, restricted to invoices that still exist — and
+ * Rules whose date has come, restricted to invoices that still exist: and
  * orphans of deleted invoices are dropped for good while we are looking,
  * so they cannot pile up invisibly forever.
  */

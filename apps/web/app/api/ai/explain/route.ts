@@ -28,7 +28,7 @@ const schema = z.object({
   invoiceContext: z.string().max(2000).optional(),
 });
 
-/** POST /api/ai/explain — plain-language fixes for validation violations. */
+/** POST /api/ai/explain: plain-language fixes for validation violations. */
 export async function POST(request: Request) {
   const gate = await gateRequest(request);
   if (gate instanceof NextResponse) return gate;

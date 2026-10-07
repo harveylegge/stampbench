@@ -46,7 +46,7 @@ import { MARKETS } from '@/lib/markets';
 /**
  * Every invoice created in this browser, newest first.
  *
- * The list renders straight off the stored drafts — number, buyer and total
+ * The list renders straight off the stored drafts: number, buyer and total
  * are derived on the way through `computeDraftTotals`, the same arithmetic the
  * editor and the XML use, so the figure shown here is the figure in the
  * document. There is no second copy to drift.
@@ -68,7 +68,7 @@ export function InvoicesView() {
   const [armedDelete, setArmedDelete] = useState<string | null>(null);
   /** The invoice whose chase panel is open, if any. */
   const [chaseFor, setChaseFor] = useState<string | null>(null);
-  // Backup state is read after mount — the page is prerendered without it.
+  // Backup state is read after mount: the page is prerendered without it.
   const [signedIn, setSignedIn] = useState(false);
   const [backup, setBackup] = useState(false);
   const [freePlan, setFreePlan] = useState(false);
@@ -104,7 +104,7 @@ export function InvoicesView() {
     };
   }, []);
 
-  /** This month's money, per currency — from the same totals chain as the documents. */
+  /** This month's money, per currency: from the same totals chain as the documents. */
   const summary = useMemo(() => (invoices ? monthSummary(invoices, new Date()) : []), [invoices]);
 
   /** The last 12 months, per currency, for the chart under the summary. */
@@ -137,7 +137,7 @@ export function InvoicesView() {
     }
   }
 
-  // With backup on, every visit to this page catches up both directions —
+  // With backup on, every visit to this page catches up both directions:
   // that is what makes the list follow you across browsers.
   useEffect(() => {
     if (signedIn && backup && syncState === 'idle') void runSync();
@@ -163,7 +163,7 @@ export function InvoicesView() {
 
   /**
    * Payment tracking, recurring and the customer book are the paid business
-   * tools. Free keeps the whole archive readable, reopenable and exportable —
+   * tools. Free keeps the whole archive readable, reopenable and exportable:
    * the gate is on the bookkeeping built on top of it, never on the documents
    * themselves, which are the user's own work.
    */
@@ -171,7 +171,7 @@ export function InvoicesView() {
 
   function togglePaid(entry: SavedInvoice) {
     if (!paidTools) {
-      setUpgradePrompt('Marking invoices paid — and seeing what is overdue — is on the paid plans.');
+      setUpgradePrompt('Marking invoices paid: and seeing what is overdue: is on the paid plans.');
       return;
     }
     // A paid invoice needs no chasing; an open panel for it would be a
@@ -208,7 +208,7 @@ export function InvoicesView() {
 
   /**
    * "Create it now" on a due rule. The rule advances when the offer is taken,
-   * not when the invoice is finished — the editor may still be abandoned, in
+   * not when the invoice is finished: the editor may still be abandoned, in
    * which case the prompt returns next cadence rather than tomorrow, which is
    * the less naggy of the two imperfect options.
    */
@@ -270,13 +270,13 @@ export function InvoicesView() {
 
       {view === 'business' ? (
         <div className="invoice-ledger-index" aria-label="Invoice overview">
-          <div><small>ALL INVOICES</small><strong>{invoices?.length ?? '—'}</strong><span>saved here</span></div>
+          <div><small>ALL INVOICES</small><strong>{invoices?.length ?? 'Not set'}</strong><span>saved here</span></div>
           <div><small>WAITING</small><strong>{businessCounts.waiting}</strong><span>for payment</span></div>
           <div><small>PAID</small><strong>{businessCounts.paid}</strong><span>completed</span></div>
         </div>
       ) : (
         <div className="invoice-ledger-index" aria-label="Technical invoice overview">
-          <div><small>DOCUMENTS</small><strong>{invoices?.length ?? '—'}</strong><span>in this archive</span></div>
+          <div><small>DOCUMENTS</small><strong>{invoices?.length ?? 'Not set'}</strong><span>in this archive</span></div>
           <div><small>STORAGE</small><strong>LOCAL</strong><span>private to this browser</span></div>
           <div><small>CHECKING</small><strong>AUTOMATIC</strong><span>before every download</span></div>
         </div>
@@ -310,7 +310,7 @@ export function InvoicesView() {
       </div>}
 
       {/* Reaching for a paid tool. Says which one and what it costs, then gets
-          out of the way — it is dismissible because this page is where people
+          out of the way: it is dismissible because this page is where people
           come to do work, not to be sold to twice. */}
       {upgradePrompt && (
         <div
@@ -355,7 +355,7 @@ export function InvoicesView() {
                 {source.draft.buyer.name || source.draft.document.number}
               </span>{' '}
               <span className="text-muted">
-                — the {cadence?.noun ?? ''} invoice is due. Stampbench has it ready with the next
+: the {cadence?.noun ?? ''} invoice is due. Stampbench has it ready with the next
                 number and today&apos;s dates.
               </span>
             </div>
@@ -375,7 +375,7 @@ export function InvoicesView() {
       })}
 
       {/* This month, per currency. Rendered from the same totals arithmetic
-          as the documents — there is no second bookkeeping to disagree with
+          as the documents: there is no second bookkeeping to disagree with
           the invoices below it. */}
       {summary.length > 0 && (
         <div className="mb-6 rounded-xl border border-border bg-surface p-4">
@@ -412,11 +412,11 @@ export function InvoicesView() {
       )}
 
       {/* Month by month, the trend behind the numbers above. The component
-          keeps itself off the page until there is a shape worth drawing —
+          keeps itself off the page until there is a shape worth drawing:
           two or more months with invoices in them. */}
       <MonthlyChart series={monthly} />
 
-      {/* Backup — plain words, one decision. Invoices stay in the browser
+      {/* Backup: plain words, one decision. Invoices stay in the browser
           unless the visitor flips this on; that promise is the product's. */}
       {!signedIn && invoices !== null && invoices.length > 0 && (
         <p className="mb-6 rounded-xl border border-border bg-surface p-4 text-sm text-muted">
@@ -448,7 +448,7 @@ export function InvoicesView() {
           {syncState === 'syncing'
             ? 'Backing up to your account…'
             : syncState === 'error'
-              ? 'Backup is on, but the last sync failed — it will retry next time you visit.'
+              ? 'Backup is on, but the last sync failed: it will retry next time you visit.'
               : freePlan
                 ? 'Your 10 most recent invoices are backed up (Free plan).'
                 : 'Backed up to your account. New invoices are saved automatically.'}
@@ -490,7 +490,7 @@ export function InvoicesView() {
           <div className="invoice-ledger-list">
             {[...invoices]
               // Business order: by issue date, newest series first. Not by
-              // savedAt — marking an old invoice paid bumps its sync clock,
+              // savedAt: marking an old invoice paid bumps its sync clock,
               // and a list that reshuffled on every tick of a checkbox would
               // feel haunted.
               .sort(
@@ -508,7 +508,7 @@ export function InvoicesView() {
                 try {
                   total = formatMoney(computeDraftTotals(draft).gross, currency, locale);
                 } catch {
-                  // A stored draft an older build wrote may not total — the
+                  // A stored draft an older build wrote may not total: the
                   // row still opens in the editor, which can.
                 }
                 const creditNote = draft.document.typeCode === '381';
@@ -548,7 +548,7 @@ export function InvoicesView() {
                         {rule && (
                           <span
                             className="rounded-full bg-accent-dim/60 px-2 py-0.5 text-[11px] font-medium text-accent-hi"
-                            title={`Repeats ${rule.cadence} — next on ${rule.nextDue}`}
+                            title={`Repeats ${rule.cadence}: next on ${rule.nextDue}`}
                           >
                             ↻ {rule.cadence}
                           </span>
@@ -677,7 +677,7 @@ export function InvoicesView() {
                       </div>
                     </div>
 
-                    {/* The chase panel opens inside the row it belongs to —
+                    {/* The chase panel opens inside the row it belongs to:
                         the flex-wrap parent drops this full-width child onto
                         its own line, so the letter sits under its invoice. */}
                     {chaseFor === entry.id && status === 'overdue' && (
@@ -691,7 +691,7 @@ export function InvoicesView() {
           <p className="mt-6 text-xs leading-relaxed text-faint">
             {signedIn && backup
               ? 'Saved in this browser and backed up to your account. Turning backup off keeps what is already saved until you delete it.'
-              : 'Saved in this browser only — clearing site data clears this list, and it does not follow you to another device. Download anything you need to keep.'}{' '}
+              : 'Saved in this browser only: clearing site data clears this list, and it does not follow you to another device. Download anything you need to keep.'}{' '}
             <Link href="/privacy" className="text-accent-hi hover:underline">
               Privacy
             </Link>

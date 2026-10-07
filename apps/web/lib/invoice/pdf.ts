@@ -7,12 +7,12 @@
  * but "Save as PDF" via the print dialog turned out to be a destination
  * puzzle: anyone whose default printer is a physical one gets paper settings,
  * not a file. This produces an actual .pdf, in the browser, from the same
- * `DraftTotals` the preview and the XML read — one arithmetic, three views.
+ * `DraftTotals` the preview and the XML read: one arithmetic, three views.
  *
  * Import this module dynamically (`await import`): jsPDF is a few hundred
  * kilobytes that nobody should pay for until they click the button.
  *
- * Typography is Helvetica in WinAnsi encoding — that covers the £ € ä ö ü ß
+ * Typography is Helvetica in WinAnsi encoding: that covers the £ € ä ö ü ß
  * the supported markets need. Characters outside it degrade, which is the
  * honest trade for a dependency-free, offline PDF.
  */
@@ -40,7 +40,7 @@ const RULE = 225;
 
 /**
  * WinAnsi-safe text. Intl number formatting loves narrow and no-break spaces,
- * and the preview uses a true minus sign — all outside WinAnsi, all rendered
+ * and the preview uses a true minus sign: all outside WinAnsi, all rendered
  * as garbage by the standard PDF fonts unless swapped here.
  */
 function clean(value: string): string {
@@ -78,7 +78,7 @@ async function rasterisedLogo(dataUrl: string): Promise<{ png: string; w: number
 export interface PdfOptions {
   /**
    * Free plans carry a small "Made with stampbench.com" line in the footer;
-   * paid plans do not — that is part of what they pay for. Defaults to
+   * paid plans do not: that is part of what they pay for. Defaults to
    * branded, so an unknown plan can never accidentally hand out the paid look.
    */
   branded?: boolean;
@@ -143,7 +143,7 @@ export async function invoicePdf(draft: InvoiceDraft, options: PdfOptions = {}):
   doc.text(draft.document.typeCode === '381' ? 'Credit note' : 'Invoice', RIGHT, y + 5.5, { align: 'right' });
   style(10);
   ink(MUTED);
-  doc.text(clean(draft.document.number || '—'), RIGHT, y + 11.5, { align: 'right' });
+  doc.text(clean(draft.document.number || 'Not set'), RIGHT, y + 11.5, { align: 'right' });
 
   y = Math.max(leftY, y + 13) + 8;
 
@@ -156,7 +156,7 @@ export async function invoicePdf(draft: InvoiceDraft, options: PdfOptions = {}):
     doc.text(heading.toUpperCase(), x, py);
     py += 4.5;
     const lines: { text: string; bold?: boolean; grey?: number }[] = [
-      { text: p.name || '—', bold: true },
+      { text: p.name || 'Not set', bold: true },
       ...(p.tradingName ? [{ text: `t/a ${p.tradingName}`, grey: MUTED }] : []),
       ...[
         p.street,
@@ -235,7 +235,7 @@ export async function invoicePdf(draft: InvoiceDraft, options: PdfOptions = {}):
     const total = totals.lines[index];
     const category = getVatCategory(line.vatCategory);
     style(9.5);
-    const descLines = doc.splitTextToSize(clean(line.description || '—'), DESC_W) as string[];
+    const descLines = doc.splitTextToSize(clean(line.description || 'Not set'), DESC_W) as string[];
     const rowH = descLines.length * 4.4 + (line.sku ? 3.8 : 0) + 3;
     if (y + rowH > BOTTOM) {
       doc.addPage();
@@ -251,8 +251,8 @@ export async function invoicePdf(draft: InvoiceDraft, options: PdfOptions = {}):
     }
     style(9.5);
     ink(MUTED);
-    doc.text(clean(line.quantity || '—'), col.qty, y, { align: 'right' });
-    doc.text(clean(line.unitPrice || '—'), col.unit, y, { align: 'right' });
+    doc.text(clean(line.quantity || 'Not set'), col.qty, y, { align: 'right' });
+    doc.text(clean(line.unitPrice || 'Not set'), col.unit, y, { align: 'right' });
     doc.text(
       category.rate === 'absent' ? category.code : `${line.vatRate || 0}% ${category.code}`,
       col.vat,
@@ -260,7 +260,7 @@ export async function invoicePdf(draft: InvoiceDraft, options: PdfOptions = {}):
       { align: 'right' },
     );
     ink(INK);
-    doc.text(total ? cash(total.net) : '—', col.net, y, { align: 'right' });
+    doc.text(total ? cash(total.net) : 'Not set', col.net, y, { align: 'right' });
     y += rowH - 1.2;
     rule(y, MARGIN, RIGHT);
     y += 4.2;
@@ -309,7 +309,7 @@ export async function invoicePdf(draft: InvoiceDraft, options: PdfOptions = {}):
   if (toDecimal(totals.tax) === 0 && totals.categories.length > 0) {
     const code = totals.categories[0]!.categoryCode;
     const reason = draft.exemptionReasons[code];
-    const note = clean(`${getVatCategory(code).label}${reason ? ` — ${reason}` : ''}`);
+    const note = clean(`${getVatCategory(code).label}${reason ? `: ${reason}` : ''}`);
     style(7.5);
     ink(FAINT);
     for (const wrapped of doc.splitTextToSize(note, TOTAL_W) as string[]) {

@@ -2,7 +2,7 @@
  * VAT categories, mirrored from the rules the engine actually enforces.
  *
  * Every constraint below is checked by `@stampbench/core`'s BR-S / BR-Z /
- * BR-E / BR-AE / BR-K / BR-G / BR-O families — the rate constraint, the
+ * BR-E / BR-AE / BR-K / BR-G / BR-O families: the rate constraint, the
  * exemption-reason requirement, the buyer-VAT-id requirement. That is the
  * point: the form can guide someone through reverse charge (grey out the
  * rate, require a reason, require the buyer's VAT id) and every one of those
@@ -25,7 +25,7 @@ export interface VatCategory {
   label: string;
   /** What it means, in a sentence a non-specialist can act on. */
   description: string;
-  /** 'positive' — a rate above 0; 'zero' — must be 0; 'absent' — no rate at all. */
+  /** 'positive': a rate above 0; 'zero': must be 0; 'absent': no rate at all. */
   rate: 'positive' | 'zero' | 'absent';
   /** BT-120 exemption reason: the engine errors if it is missing. */
   exemptionReason: 'required' | 'forbidden';
@@ -33,7 +33,7 @@ export interface VatCategory {
   buyerVatRequired: boolean;
   /** Trade relations where this category is worth offering at all. */
   relations: TradeRelation[];
-  /** Suggested BT-120 text — a starting point the user edits, never final. */
+  /** Suggested BT-120 text: a starting point the user edits, never final. */
   reasonSuggestion?: string;
 }
 
@@ -74,7 +74,7 @@ export const VAT_CATEGORIES: VatCategory[] = [
     exemptionReason: 'required',
     buyerVatRequired: true,
     relations: ['domestic', 'intra-eu', 'cross-border'],
-    reasonSuggestion: 'Reverse charge — VAT to be accounted for by the recipient',
+    reasonSuggestion: 'Reverse charge: VAT to be accounted for by the recipient',
   },
   {
     code: 'K',
@@ -116,7 +116,7 @@ export function getVatCategory(code: string | undefined): VatCategory {
 
 /**
  * Categories worth offering for a given pair of countries. Everything the
- * engine supports stays reachable — this only reorders and trims the ones
+ * engine supports stays reachable: this only reorders and trims the ones
  * that cannot apply, so an invoice between two British companies is not
  * offered "intra-community supply".
  */
@@ -184,4 +184,4 @@ export function requirementsFor(codes: VatCategoryCode[]): CategoryRequirement[]
  * invoices, checks the arithmetic, and says exactly this.
  */
 export const US_TAX_NOTE =
-  'Stampbench does not determine US sales tax. Enter the rate and amount your own tax process produced — the arithmetic is checked, the rate is not.';
+  'Stampbench does not determine US sales tax. Enter the rate and amount your own tax process produced: the arithmetic is checked, the rate is not.';

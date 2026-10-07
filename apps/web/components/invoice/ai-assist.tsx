@@ -5,14 +5,14 @@ import { aiDraft, aiStatus, ApiError, type AiDraftLine } from '@/lib/account-cli
 import { BUTTON_PRIMARY, BUTTON_SECONDARY } from '@/components/invoice/fields';
 
 /**
- * AI assist — plain English in, line items out.
+ * AI assist: plain English in, line items out.
  *
  * Scoped to exactly one job on purpose. It proposes descriptions, quantities,
  * units and prices: the commercial content the user is describing. It is never
  * asked for a tax rate, a VAT number, an address, a date or a buyer reference,
  * and the server strips anything of that shape out of the reply. Those are the
  * fields where a confident guess turns "invalid" into "quietly wrong", which
- * is the failure this whole product exists to avoid — so the assistant is not
+ * is the failure this whole product exists to avoid: so the assistant is not
  * given the chance to make it.
  *
  * The proposal lands in the editor as ordinary draft lines that the user can
@@ -73,7 +73,7 @@ export function AiAssist({
         <div className="mt-3 rounded-xl border border-border bg-surface p-4">
           {enabled === false ? (
             <p className="text-sm leading-relaxed text-muted">
-              AI assist is built but not switched on for this deployment — no model key is configured, so
+              AI assist is built but not switched on for this deployment: no model key is configured, so
               there is nothing behind the button yet. Everything else on this page works without it.
             </p>
           ) : (
@@ -91,7 +91,7 @@ export function AiAssist({
                 className="w-full resize-y rounded-lg border border-border bg-bg px-3 py-2 text-sm outline-none transition placeholder:text-faint focus:border-accent"
               />
               <p id="ai-assist-scope" className="mt-2 text-xs leading-relaxed text-faint">
-                Returns line items only — descriptions, quantities, units and prices. It is not asked for
+                Returns line items only: descriptions, quantities, units and prices. It is not asked for
                 and cannot set tax rates, VAT numbers, addresses or dates; you fill those in yourself.
                 Your text is sent to the model; the rest of the invoice is not.
               </p>

@@ -1,12 +1,12 @@
 /**
  * Chase emails, written from templates rather than a model.
  *
- * The escalation ladder — friendly nudge, firm reminder, final notice — is
+ * The escalation ladder: friendly nudge, firm reminder, final notice: is
  * three templates per language with the facts filled in. Deliberately not AI:
  * the words in a payment chase are load-bearing (they end up quoted back at
  * you in a dispute), and a template the product's author signed off beats a
  * generation nobody read. The one part that must be *right* rather than
- * *well-put* — UK statutory interest and fixed compensation — is arithmetic,
+ * *well-put*: UK statutory interest and fixed compensation: is arithmetic,
  * and lives here as arithmetic.
  *
  * Nothing in this module sends anything. It produces a subject and a body;
@@ -26,7 +26,7 @@ export type ChaseLocale = 'en' | 'de';
  * Statutory interest is 8% over the Bank of England base rate, per year, on
  * the debt including VAT, counted per day overdue. The fixed compensation is
  * tiered by debt size: £40 under £1,000, £70 to £9,999.99, £100 from £10,000.
- * B2B debts in GBP only — the caller decides whether that applies; this
+ * B2B debts in GBP only: the caller decides whether that applies; this
  * function only does the sums.
  *
  * The base rate moves, so it is an input, not a constant: a hardcoded rate
@@ -67,7 +67,7 @@ export function statutoryCharges(
   };
 }
 
-/** The tone a chase this old should open on. Overridable — it is a dial. */
+/** The tone a chase this old should open on. Overridable: it is a dial. */
 export function defaultToneFor(daysOverdue: number): ChaseTone {
   if (daysOverdue >= 45) return 'final';
   if (daysOverdue >= 14) return 'firm';
@@ -115,7 +115,7 @@ function longDate(iso: string, locale: ChaseLocale): string {
 }
 
 /**
- * The email. Plain strings with real names and figures in them — every word
+ * The email. Plain strings with real names and figures in them: every word
  * here ships verbatim, so the register matters: polite without grovelling,
  * firm without theatre. The final notice cites consequences factually and
  * offers the exit ("if payment has been made…") that lets everyone keep face.
@@ -138,12 +138,12 @@ function englishEmail(tone: ChaseTone, d: ChaseDetails): { subject: string; body
 
   if (tone === 'friendly') {
     return {
-      subject: `Friendly reminder — invoice ${d.invoiceNumber}`,
+      subject: `Friendly reminder: invoice ${d.invoiceNumber}`,
       body: `${greeting}
 
 I hope all is well. Just a gentle nudge about invoice ${d.invoiceNumber} for ${amount}, which was due on ${due}.
 
-These things slip through — if payment is already on its way, please ignore this and thank you.
+These things slip through: if payment is already on its way, please ignore this and thank you.
 
 If anything is missing on my side to get it paid, just let me know.
 
@@ -152,18 +152,18 @@ Best wishes,${signoff}`,
   }
 
   if (tone === 'firm') {
-    // The firm tone states the accrual as a fact rather than a demand — the
+    // The firm tone states the accrual as a fact rather than a demand: the
     // reader learns the clock is running without being served notice yet.
     const firmStatutory = d.statutory
       ? `
 
-Please note that as a business-to-business debt this invoice has begun accruing statutory interest under the Late Payment of Commercial Debts (Interest) Act 1998 — currently ${d.statutory.interest} plus ${d.statutory.compensation} fixed compensation, bringing the total due to ${d.statutory.totalDue}.`
+Please note that as a business-to-business debt this invoice has begun accruing statutory interest under the Late Payment of Commercial Debts (Interest) Act 1998: currently ${d.statutory.interest} plus ${d.statutory.compensation} fixed compensation, bringing the total due to ${d.statutory.totalDue}.`
       : '';
     return {
       subject: `Reminder: invoice ${d.invoiceNumber} is ${d.daysOverdue} days overdue`,
       body: `${greeting}
 
-I am following up on invoice ${d.invoiceNumber} for ${amount}, issued on ${issued} and due on ${due} — now ${d.daysOverdue} days overdue.
+I am following up on invoice ${d.invoiceNumber} for ${amount}, issued on ${issued} and due on ${due}: now ${d.daysOverdue} days overdue.
 
 Could you let me know when payment will be made? If there is an issue with the invoice itself, I would rather hear about it now so we can resolve it quickly.${firmStatutory}
 
@@ -176,18 +176,18 @@ Kind regards,${signoff}`,
   const statutory = d.statutory
     ? `
 
-As this is a business-to-business debt, I am entitled under the Late Payment of Commercial Debts (Interest) Act 1998 to statutory interest of ${d.statutory.interest} (${d.statutory.ratePct}% per year, ${d.statutory.days} days) plus ${d.statutory.compensation} in fixed compensation — bringing the total now due to ${d.statutory.totalDue}. I would prefer to resolve this without adding those charges.`
+As this is a business-to-business debt, I am entitled under the Late Payment of Commercial Debts (Interest) Act 1998 to statutory interest of ${d.statutory.interest} (${d.statutory.ratePct}% per year, ${d.statutory.days} days) plus ${d.statutory.compensation} in fixed compensation: bringing the total now due to ${d.statutory.totalDue}. I would prefer to resolve this without adding those charges.`
     : '';
 
   return {
-    subject: `Final notice: invoice ${d.invoiceNumber} — ${amount} overdue`,
+    subject: `Final notice: invoice ${d.invoiceNumber}: ${amount} overdue`,
     body: `${greeting}
 
 Despite previous reminders, invoice ${d.invoiceNumber} for ${amount}, due on ${due}, remains unpaid after ${d.daysOverdue} days.
 
 Please arrange payment within 7 days of this email.${statutory}
 
-If payment has been made in the last few days, please disregard this notice — and thank you.
+If payment has been made in the last few days, please disregard this notice: and thank you.
 
 Regards,${signoff}`,
   };
@@ -208,7 +208,7 @@ function germanEmail(tone: ChaseTone, d: ChaseDetails): { subject: string; body:
 
   if (tone === 'friendly') {
     return {
-      subject: `Zahlungserinnerung — Rechnung ${d.invoiceNumber}`,
+      subject: `Zahlungserinnerung: Rechnung ${d.invoiceNumber}`,
       body: `${greeting}
 
 sicherlich ist es Ihrer Aufmerksamkeit entgangen: Die Rechnung ${d.invoiceNumber} über ${amount}, fällig am ${due}, ist noch offen.
@@ -221,10 +221,10 @@ Mit freundlichen Grüßen${signoff}`,
 
   if (tone === 'firm') {
     return {
-      subject: `Mahnung — Rechnung ${d.invoiceNumber} (${d.daysOverdue} Tage überfällig)`,
+      subject: `Mahnung: Rechnung ${d.invoiceNumber} (${d.daysOverdue} Tage überfällig)`,
       body: `${greeting}
 
-trotz Fälligkeit am ${due} ist die Rechnung ${d.invoiceNumber} über ${amount} weiterhin offen — inzwischen seit ${d.daysOverdue} Tagen.
+trotz Fälligkeit am ${due} ist die Rechnung ${d.invoiceNumber} über ${amount} weiterhin offen: inzwischen seit ${d.daysOverdue} Tagen.
 
 Bitte begleichen Sie den Betrag innerhalb der nächsten 7 Tage. Sollte es mit der Rechnung selbst ein Problem geben, geben Sie mir bitte kurz Bescheid, damit wir es zügig klären können.
 
@@ -235,7 +235,7 @@ Mit freundlichen Grüßen${signoff}`,
   }
 
   return {
-    subject: `Letzte Mahnung — Rechnung ${d.invoiceNumber}`,
+    subject: `Letzte Mahnung: Rechnung ${d.invoiceNumber}`,
     body: `${greeting}
 
 trotz mehrfacher Erinnerung ist die Rechnung ${d.invoiceNumber} über ${amount}, fällig am ${due}, seit ${d.daysOverdue} Tagen unbeglichen.

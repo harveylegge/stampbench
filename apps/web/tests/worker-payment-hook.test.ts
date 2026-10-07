@@ -1,7 +1,7 @@
 /**
  * Pins the payment webhook's pure decisions (workers/api/src/payment-hook.ts):
  * payload parsing for the three shapes, invoice matching, deterministic ids,
- * and — most load-bearing — that a server-built draft satisfies every guard
+ * and: most load-bearing: that a server-built draft satisfies every guard
  * the browser applies before rendering it. The client silently DROPS any
  * pulled row whose payload fails those guards, so drift between the worker's
  * structural draft and the real InvoiceDraft must fail here, loudly, not in
@@ -38,7 +38,7 @@ function genericEvent(overrides: Partial<PaymentEvent> = {}): PaymentEvent {
   return { ...parsed!, ...overrides };
 }
 
-describe('parsePaymentEvent — generic shape', () => {
+describe('parsePaymentEvent: generic shape', () => {
   it('accepts the documented shape', () => {
     const e = genericEvent();
     expect(e.provider).toBe('generic');
@@ -85,7 +85,7 @@ describe('parsePaymentEvent — generic shape', () => {
   });
 });
 
-describe('parsePaymentEvent — Stripe', () => {
+describe('parsePaymentEvent: Stripe', () => {
   it('reads checkout.session.completed in minor units', () => {
     const e = parsePaymentEvent({
       object: 'event',
@@ -128,7 +128,7 @@ describe('parsePaymentEvent — Stripe', () => {
     expect(xof?.amount).toBe('1500');
   });
 
-  it('divides HUF/TWD/UGX by 100 — Stripe sends them ×100 despite ISO zero-decimal', () => {
+  it('divides HUF/TWD/UGX by 100: Stripe sends them ×100 despite ISO zero-decimal', () => {
     const huf = parsePaymentEvent({
       object: 'event',
       type: 'payment_intent.succeeded',
@@ -171,7 +171,7 @@ describe('parsePaymentEvent — Stripe', () => {
     expect(e).toMatchObject({ amount: '99.00', invoiceNumber: 'F-2026-01', payerEmail: 'x@y.z' });
   });
 
-  it('ignores Stripe event types that are not payments — a refund must not become an invoice', () => {
+  it('ignores Stripe event types that are not payments: a refund must not become an invoice', () => {
     expect(
       parsePaymentEvent({
         object: 'event',
@@ -182,7 +182,7 @@ describe('parsePaymentEvent — Stripe', () => {
   });
 });
 
-describe('parsePaymentEvent — PayPal', () => {
+describe('parsePaymentEvent: PayPal', () => {
   it('reads PAYMENT.CAPTURE.COMPLETED with invoice_id', () => {
     const e = parsePaymentEvent({
       event_type: 'PAYMENT.CAPTURE.COMPLETED',
@@ -272,7 +272,7 @@ describe('autoInvoiceId', () => {
   });
 });
 
-describe('buildAutoDraft — must satisfy every client-side guard', () => {
+describe('buildAutoDraft: must satisfy every client-side guard', () => {
   const event = genericEvent();
 
   async function build(e: PaymentEvent = event) {

@@ -6,12 +6,12 @@ import { BUTTON_PRIMARY, BUTTON_SECONDARY } from '@/components/invoice/fields';
 import { groupHours, parseHoursLog, type HoursGroup } from '@/lib/invoice/hours';
 
 /**
- * Import hours — the mechanical cousin of AI assist, one card down.
+ * Import hours: the mechanical cousin of AI assist, one card down.
  *
  * Paste a Toggl-style CSV or a plain "3.5h fixing the deploy" log and it
  * becomes grouped line items: hours summed in code, descriptions kept as
  * written, nothing rephrased and nothing uploaded. The preview is the
- * contract — what it shows is exactly what lands in the editor, where every
+ * contract: what it shows is exactly what lands in the editor, where every
  * line can still be changed before anything is generated.
  */
 export function HoursImport({
@@ -86,7 +86,7 @@ export function HoursImport({
             <div className="mt-3 rounded-lg border border-border bg-bg p-3">
               {groups.length === 0 ? (
                 <p className="text-sm text-muted">
-                  No hours found yet — each line needs a duration like “3.5h”, “1:30” or “45m”, or
+                  No hours found yet: each line needs a duration like “3.5h”, “1:30” or “45m”, or
                   a CSV needs a duration column.
                 </p>
               ) : (
@@ -100,7 +100,7 @@ export function HoursImport({
                     )}
                     {parsed.truncated > 0 && (
                       <span className="ml-2 normal-case tracking-normal text-danger">
-                        import capped at 1,000 entries — {parsed.truncated} line
+                        import capped at 1,000 entries: {parsed.truncated} line
                         {parsed.truncated === 1 ? '' : 's'} not imported
                       </span>
                     )}

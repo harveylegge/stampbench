@@ -7,7 +7,7 @@ import { checkQuota } from './usage';
 import { planFor } from './plans';
 import { log } from './log';
 
-export const MAX_BODY_BYTES = 2 * 1024 * 1024; // 2 MB — invoices are small
+export const MAX_BODY_BYTES = 2 * 1024 * 1024; // 2 MB: invoices are small
 
 export function apiError(status: number, code: string, message: string, extra?: Record<string, unknown>) {
   return NextResponse.json({ error: { code, message, ...extra } }, { status });
@@ -28,7 +28,7 @@ function presentedApiKey(request: Request): boolean {
 /**
  * Resolve who is calling: API key, then browser session, then anonymous.
  * Returns `'invalid_key'` when a credential was presented but does not
- * authenticate — the caller must NOT be silently downgraded to the anonymous
+ * authenticate: the caller must NOT be silently downgraded to the anonymous
  * trial pool (that would mask revoked keys and let anyone bypass quota by
  * sending a junk key).
  */
@@ -63,7 +63,7 @@ export async function gateRequest(
   }
 
   if (caller.type === 'anon') {
-    // 10 requests/hour per IP — enough to evaluate, not enough to freeload.
+    // 10 requests/hour per IP: enough to evaluate, not enough to freeload.
     const rl = await rateLimit(`anon:${caller.ip}`, 10, 60 * 60 * 1000);
     if (!rl.allowed) {
       return apiError(429, 'rate_limited',

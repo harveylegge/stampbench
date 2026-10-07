@@ -257,7 +257,7 @@ export function WorkbenchPass() {
       role="button"
       tabIndex={0}
       aria-pressed={personalised}
-      aria-label="Interactive Stampbench Workbench pass"
+      aria-label="Interactive Stampbench invoice file"
       aria-describedby="workbench-pass-instruction"
       onClick={togglePersonalised}
       onKeyDown={(event) => {
@@ -291,38 +291,38 @@ export function WorkbenchPass() {
         <div className="workbench-pass-card">
           <div className="workbench-pass-face workbench-pass-front">
             <div className="workbench-pass-shine" />
-            <header><span><i />STAMPBENCH / WORKBENCH</span><small>SB–001</small></header>
-            <div className="pass-checking"><i />Checking invoice…</div>
+            <header><span><i />STAMPBENCH / INVOICE FILE</span><small>INV–SB–001</small></header>
+            <div className="pass-checking"><i />Checking invoice data…</div>
             <ol>
-              <li><span>01</span><b>EN 16931</b><em>✓</em></li>
-              <li><span>02</span><b>Required fields</b><em>✓</em></li>
-              <li><span>03</span><b>Totals</b><em>✓</em></li>
+              <li><span>01</span><b>Invoice identity</b><em>✓</em></li>
+              <li><span>02</span><b>Tax + totals</b><em>✓</em></li>
+              <li><span>03</span><b>EN 16931</b><em>✓</em></li>
             </ol>
-            <footer><span>VALIDATION COMPLETE</span><strong>READY TO SEND&nbsp; ↗</strong></footer>
+            <footer><span>UBL + PDF / LOCAL CHECK</span><strong>ACCOUNTING READY&nbsp; ↗</strong></footer>
           </div>
 
           <div className="workbench-pass-face workbench-pass-back">
             <div className="workbench-pass-shine" />
-            <header><span><i />STAMPBENCH</span><small>INVOICE PASSPORT</small></header>
+            <header><span><i />STAMPBENCH / INVOICE FILE</span><small>VERIFIED COPY</small></header>
             <div className="pass-identity">
-              <small>PREVIEW / PERSONALISED TO YOUR ACCOUNT</small>
-              <strong>YOUR BUSINESS</strong>
-              <span>hello@yourbusiness.co.uk</span>
+              <small>SAMPLE INVOICE / READY TO EXPORT</small>
+              <strong>INV–SB–001</strong>
+              <span>YOUR BUSINESS · £1,240.00</span>
             </div>
             <dl>
-              <div><dt>DEFAULT STANDARD</dt><dd>EN 16931</dd></div>
-              <div><dt>CURRENCY</dt><dd>GBP</dd></div>
-              <div><dt>STATUS</dt><dd>READY ✓</dd></div>
+              <div><dt>CUSTOMER</dt><dd>SAMPLE CLIENT</dd></div>
+              <div><dt>DUE</dt><dd>30 DAYS</dd></div>
+              <div><dt>FORMAT</dt><dd>UBL + PDF</dd></div>
             </dl>
-            <footer><span>SB / YOUR / 001</span><strong>PRIVATE TO YOUR WORKBENCH</strong></footer>
+            <footer><span>CHECKED IN YOUR BROWSER</span><strong>EXPORT READY ✓</strong></footer>
           </div>
         </div>
       </div>
 
       <p className="workbench-pass-caption">
-        <span>{personalised ? 'YOUR INVOICE PASSPORT' : 'LIVE COMPLIANCE CHECK'}</span>
+        <span>{personalised ? 'INVOICE EXPORT PROFILE' : 'INVOICE READINESS CHECK'}</span>
         <i />
-        <b>{personalised ? 'CLICK TO CHECK' : 'CLICK TO PERSONALISE'}</b>
+        <b>{personalised ? 'CLICK TO CHECK' : 'CLICK FOR EXPORT VIEW'}</b>
       </p>
       <span className="workbench-pass-hint" id="workbench-pass-instruction">
         <span className="pass-hint-pointer">MOVE TO TILT · CLICK TO FLIP</span>

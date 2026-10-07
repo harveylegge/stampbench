@@ -17,9 +17,9 @@ export function EditorialHero({ copy }: { copy: Copy }) {
         </nav>
         <div className="basalt-layout">
           <div className="basalt-copy">
-            <p className="basalt-overline">STAMPBENCH FOR DESKTOP / COMING SOON</p>
+            <p className="basalt-overline">STAMPBENCH DESKTOP · COMING SOON</p>
             <h1 id="editorial-title">Good work.<br />Properly <em>invoiced.</em></h1>
-            <p>Create, check and keep compliant invoices in one focused workbench—without learning the rulebook.</p>
+            <p>Create, check and keep compliant invoices in one focused workbench. No rulebook required.</p>
             <div className="basalt-actions">
               <Link href="/signup?download=windows"><span className="platform-mark" aria-hidden><svg viewBox="0 0 20 20"><path d="M2.5 3.5 9 2.6v6.6H2.5V3.5Zm7.5-1L17.5 1.5v7.7H10V2.5ZM2.5 10.2H9v6.7l-6.5-.9v-5.8Zm7.5 0h7.5v7.8L10 17v-6.8Z" /></svg></span> Download for Windows</Link>
               <Link href="/signup?download=mac"><span className="platform-mark" aria-hidden><svg viewBox="0 0 24 24"><path d="M17.05 20.28c-.98.95-2.05.8-3.08.35-1.09-.46-2.09-.48-3.24 0-1.44.62-2.2.44-3.06-.35C2.79 15.25 3.51 7.59 9.05 7.31c1.35-.07 2.29.74 3.08.74.76 0 2.11-.91 3.61-.77.63.03 2.41.25 3.55 1.92-.09.06-2.12 1.22-2.09 3.69.03 2.95 2.58 3.93 2.61 3.94-.02.07-.41 1.42-1.34 2.82-.81 1.2-1.66 2.39-3 2.42-1.31.03-1.74-.77-3.24-.77-1.51 0-1.98.74-3.22.8-1.29.05-2.27-1.29-3.1-2.49-1.69-2.44-2.98-6.9-1.25-9.92.86-1.5 2.4-2.45 4.07-2.48 1.27-.03 2.47.86 3.24.86.77 0 2.22-1.06 3.74-.9.64.03 2.41.26 3.55 1.93-3.18 1.85-2.67 6.41.55 7.7-.25.74-.58 1.45-.99 2.07M15.99 3.3c.68-.82 1.14-1.96 1.01-3.09-.98.04-2.17.65-2.86 1.47-.62.71-1.16 1.87-1.02 2.98 1.09.08 2.2-.55 2.87-1.36" /></svg></span> Download for Mac</Link>

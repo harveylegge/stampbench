@@ -1,17 +1,17 @@
 'use client';
 
 /**
- * The Stampbench assistant — a floating chat widget on every page.
+ * The Stampbench assistant: a floating chat widget on every page.
  *
  * Paid feature with a deliberately public face: everyone sees the button, and
  * the panel adapts to who opened it. Signed out → what it is plus a sign-in
  * link; Free → the locked pitch; paid → the chat. The plan check here only
- * picks the panel — the worker enforces the gate for real (402 'plan'), and
+ * picks the panel: the worker enforces the gate for real (402 'plan'), and
  * a 'plan' error simply flips the panel to the locked state.
  *
  * Costs nothing until opened: no fetch runs on mount, only on first open
  * (currentPlan() is cached per page view, aiStatus() is one public GET).
- * The transcript lives in sessionStorage so navigating does not wipe it —
+ * The transcript lives in sessionStorage so navigating does not wipe it:
  * and dies with the tab, which is the right lifetime for a support chat.
  */
 
@@ -48,7 +48,7 @@ function writeTranscript(turns: ChatTurn[]): void {
   try {
     window.sessionStorage.setItem(STORE, JSON.stringify(turns.slice(-MAX_TURNS)));
   } catch {
-    // Storage full or unavailable — the chat still works, it just forgets.
+    // Storage full or unavailable: the chat still works, it just forgets.
   }
 }
 
@@ -67,7 +67,7 @@ export function AssistantWidget() {
   const [input, setInput] = useState('');
   const [busy, setBusy] = useState(false);
   const [note, setNote] = useState<Note>(null);
-  /** Server said 'plan' — trust it over the client's cached idea. */
+  /** Server said 'plan': trust it over the client's cached idea. */
   const [serverLocked, setServerLocked] = useState(false);
 
   const listRef = useRef<HTMLDivElement | null>(null);
@@ -131,7 +131,7 @@ export function AssistantWidget() {
         try {
           window.sessionStorage.removeItem(STORE);
         } catch {
-          // storage unavailable — the in-memory clear above is enough
+          // storage unavailable: the in-memory clear above is enough
         }
       } else setNote('error');
     } finally {

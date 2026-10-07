@@ -13,7 +13,7 @@ import {
 } from '@/lib/markets';
 
 export const metadata: Metadata = {
-  title: 'Markets — what Stampbench covers, and what it does not',
+  title: 'Markets: what Stampbench covers, and what it does not',
   description:
     'A side-by-side view of Stampbench coverage by market: EN 16931 core validation everywhere, the German XRechnung profile in full, and an explicit list of what is not implemented in the UK, the US or the rest of the EU.',
   alternates: { canonical: '/markets' },
@@ -21,7 +21,7 @@ export const metadata: Metadata = {
 
 /**
  * The multi-market view. Someone who bills into several countries does not
- * want four separate pages — they want the matrix, including the empty cells.
+ * want four separate pages: they want the matrix, including the empty cells.
  * Publishing the gaps is the same instinct as publishing the three official
  * test documents we disagree with on /trust: the coverage claim is only worth
  * anything if the non-coverage is stated just as plainly.
@@ -30,7 +30,7 @@ export const metadata: Metadata = {
 const SYMBOL: Record<CapabilityStatus, { mark: string; className: string; label: string }> = {
   yes: { mark: '✓', className: 'text-success', label: 'Available' },
   context: { mark: '~', className: 'text-warning', label: 'In a specific case' },
-  no: { mark: '—', className: 'text-faint', label: 'Not implemented' },
+  no: { mark: 'Not set', className: 'text-faint', label: 'Not implemented' },
 };
 
 function MarketColumnHead({ id }: { id: MarketId }) {
@@ -64,7 +64,7 @@ export default function MarketsPage() {
       <p className="mb-10 max-w-2xl text-sm leading-relaxed text-faint">
         Every market gets the {RULE_COUNTS.en16931} EN 16931 core rules, both XML syntaxes, repair
         and creation, because those are properties of the engine rather than of a country. What
-        differs is whether a national customisation exists on top — today exactly one does.
+        differs is whether a national customisation exists on top: today exactly one does.
       </p>
 
       {/* The table is wider than a phone; it scrolls inside its own box rather
@@ -153,7 +153,7 @@ export default function MarketsPage() {
         <p className="max-w-2xl text-sm leading-relaxed text-muted">
           A compliance tool that overstates its coverage is worse than no tool at all: it turns
           &ldquo;invalid&rdquo; into &ldquo;quietly wrong&rdquo;. The same rule applies to markets as
-          to invoice data — we publish what we have not implemented for the same reason we publish
+          to invoice data: we publish what we have not implemented for the same reason we publish
           the official test documents where we disagree with the reference validator.{' '}
           <Link href="/trust" className="font-medium text-accent-hi hover:underline">
             See the test evidence

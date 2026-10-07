@@ -4,14 +4,14 @@ import { useEffect, useState } from 'react';
 import { fixXml, type FixResult } from '@stampbench/core';
 
 /**
- * 'Fix automatically' — the flagship demo. Free and unmetered on purpose: the
+ * 'Fix automatically': the flagship demo. Free and unmetered on purpose: the
  * repair engine ships in the open-source library, and the pricing page promises
  * local validation stays unlimited, so gating it here would contradict our own
  * copy. Everything runs in the browser; the XML never leaves the machine.
  *
  * The engine only ever writes values it derived arithmetically from the rest
  * of the document. Anything needing business data is reported as unfixable
- * with the reason — shown verbatim, because "we refused to guess" is the
+ * with the reason: shown verbatim, because "we refused to guess" is the
  * feature, not a shortcoming.
  */
 
@@ -52,7 +52,7 @@ export function FixPanel({
 }: {
   xml: string;
   fileName: string | null;
-  /** The market's ruleset — repairing under a different one than the check ran
+  /** The market's ruleset: repairing under a different one than the check ran
    *  under would report fixes for violations the user was never shown. */
   profile: 'en16931' | 'xrechnung';
   onUseFixed: (fixed: string) => void;
@@ -61,7 +61,7 @@ export function FixPanel({
   const [error, setError] = useState<string | null>(null);
 
   // A fix belongs to the exact text it was computed from, under the ruleset it
-  // was computed against — either changing invalidates the panel.
+  // was computed against: either changing invalidates the panel.
   useEffect(() => {
     setFix(null);
     setError(null);
@@ -97,7 +97,7 @@ export function FixPanel({
         </button>
         <p className="mt-2 text-xs text-faint">
           Free, in your browser. Repairs values the rules can derive arithmetically and mismatched
-          closing tags the parser names exactly — it will not guess business data.
+          closing tags the parser names exactly: it will not guess business data.
         </p>
         {error && <p className="mt-2 text-sm text-danger">{error}</p>}
       </div>
@@ -112,13 +112,13 @@ export function FixPanel({
       {applied > 0 ? (
         <p className={`font-medium ${fix.valid ? 'text-success' : 'text-text'}`}>
           {fix.valid ? '✓ ' : ''}
-          {applied} fix{applied === 1 ? '' : 'es'} applied — errors {fix.errorsBefore} →{' '}
+          {applied} fix{applied === 1 ? '' : 'es'} applied: errors {fix.errorsBefore} →{' '}
           {fix.errorsAfter}.{fix.valid && ' The document now validates.'}
         </p>
       ) : (
         <p className="font-medium">
           {fix.errorsBefore === 0
-            ? 'Nothing to fix — there are no blocking errors. Warnings usually need business context, not arithmetic.'
+            ? 'Nothing to fix: there are no blocking errors. Warnings usually need business context, not arithmetic.'
             : 'Nothing could be fixed automatically.'}
         </p>
       )}
@@ -143,7 +143,7 @@ export function FixPanel({
       {fix.unfixable.length > 0 && (
         <div className="mt-3">
           <p className="text-muted">
-            Not fixed ({fix.unfixable.length}) — these need business data or a decision we will not
+            Not fixed ({fix.unfixable.length}): these need business data or a decision we will not
             guess:
           </p>
           <ul className="mt-1.5 flex flex-col gap-1.5">

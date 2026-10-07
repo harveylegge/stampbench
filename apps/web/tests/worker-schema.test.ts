@@ -1,7 +1,7 @@
 /**
  * Cold-start schema check for the billing paths.
  *
- * On 2026-08-17 the remote D1 was missing `users.paypal_subscription_id` — the
+ * On 2026-08-17 the remote D1 was missing `users.paypal_subscription_id`: the
  * ALTER from migration 003 had never been run. Because every user read is
  * `SELECT *`, the column just came back undefined and nothing in the request
  * paths (login, /account, /pricing) noticed. The first symptom would have been
@@ -53,7 +53,7 @@ describe('evaluateSchema', () => {
     );
   });
 
-  it('is tolerant of unknown columns — a later migration may add more', () => {
+  it('is tolerant of unknown columns: a later migration may add more', () => {
     expect(evaluateSchema([...FULL_SCHEMA, 'future_column']).ok).toBe(true);
   });
 });
@@ -76,7 +76,7 @@ describe('schemaFailureMessage', () => {
       ok: false,
       missing: ['stripe_customer_id', 'stripe_subscription_id'],
     });
-    // Both live in migration 002 — the operator should see it once, not twice.
+    // Both live in migration 002: the operator should see it once, not twice.
     const occurrences = msg.split('002_security_and_billing.sql').length - 1;
     expect(occurrences).toBe(1);
   });
@@ -179,11 +179,11 @@ describe('checkUsersSchema (D1 adapter)', () => {
     const check = await checkUsersSchema(throwingDb());
     expect(check.ok).toBe(false);
     // Reporting every billing column as missing is the honest answer when the
-    // pragma itself failed — the caller cannot prove anything specific is safe.
+    // pragma itself failed: the caller cannot prove anything specific is safe.
     expect(check.missing.sort()).toEqual([...USERS_BILLING_COLUMNS].sort());
   });
 
-  it('does NOT cache a pragma error — the next request must retry', async () => {
+  it('does NOT cache a pragma error: the next request must retry', async () => {
     // Otherwise one transient D1 blip poisons the isolate for its whole life
     // and every billing request 503s until a redeploy.
     const bad = await checkUsersSchema(throwingDb());

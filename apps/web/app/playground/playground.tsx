@@ -30,7 +30,7 @@ import { SAMPLE_GENERATE_JSON, SAMPLE_XML } from './samples';
 
 /**
  * The compliant sample, broken in two deliberately different ways: a VAT rate
- * that no longer matches the tax amount (arithmetic — exactly one right answer,
+ * that no longer matches the tax amount (arithmetic: exactly one right answer,
  * so `fix` can repair it) and a missing buyer reference (a business fact, so it
  * cannot). One document therefore demonstrates both halves of the product
  * principle, which is the whole point of the demo.
@@ -41,7 +41,7 @@ const BROKEN_SAMPLE_XML = SAMPLE_XML.replace(
 ).replace('<cbc:Percent>19</cbc:Percent>', '<cbc:Percent>16</cbc:Percent>');
 
 /**
- * Validation and generation run entirely in the browser — the engine is pure
+ * Validation and generation run entirely in the browser: the engine is pure
  * TypeScript, so the playground IS the product claim: your invoice never
  * leaves your machine. Only the optional AI explanation calls the server; its
  * button renders only when /api/ai/status says the feature is switched on.
@@ -51,7 +51,7 @@ const BROKEN_SAMPLE_XML = SAMPLE_XML.replace(
  * against what. It selects the profile the engine runs (40 European core rules
  * or those plus the 16 German ones), it is remembered locally so nobody is
  * asked twice, and the result always states which ruleset produced the
- * verdict. Detection reads BT-24 — what the document declares itself to be —
+ * verdict. Detection reads BT-24: what the document declares itself to be:
  * and offers a switch; it never changes the ruleset behind the user's back,
  * because a validator that quietly picks its own jurisdiction is exactly the
  * ambiguity this screen exists to remove.
@@ -82,7 +82,7 @@ interface ValidationResult {
  * Why a dropped file cannot be used, or null when it is worth reading.
  *
  * The case that matters is a ZUGFeRD or Factur-X invoice, because those are
- * PDFs with the XML embedded inside them — and this site advertises
+ * PDFs with the XML embedded inside them: and this site advertises
  * "CII · ZUGFeRD / Factur-X" on the homepage, so someone will absolutely drop
  * one here. `File.text()` does not reject on a PDF: it decodes the bytes as
  * UTF-8 and *resolves* with mojibake, so the catch never fires, the box fills
@@ -91,10 +91,10 @@ interface ValidationResult {
  */
 export function describeUnreadableDrop(file: { name: string; type: string }): string | null {
   if (/\.pdf$/i.test(file.name) || file.type === 'application/pdf') {
-    return 'That is a PDF. If it is a ZUGFeRD or Factur-X invoice, the invoice data is an XML file embedded inside it — export that XML from your billing system and drop it here. Stampbench cannot open the PDF wrapper for you yet.';
+    return 'That is a PDF. If it is a ZUGFeRD or Factur-X invoice, the invoice data is an XML file embedded inside it: export that XML from your billing system and drop it here. Stampbench cannot open the PDF wrapper for you yet.';
   }
   if (/\.(zip|docx?|xlsx?|png|jpe?g|heic)$/i.test(file.name)) {
-    return `Stampbench reads invoice XML — UBL or CII. A ${file.name.split('.').pop()?.toUpperCase()} file is not something it can check.`;
+    return `Stampbench reads invoice XML: UBL or CII. A ${file.name.split('.').pop()?.toUpperCase()} file is not something it can check.`;
   }
   return null;
 }
@@ -166,7 +166,7 @@ function ViolationList({ result, market }: { result: ValidationResult; market: M
     <div className="flex flex-col gap-2">
       <div className={`text-sm font-medium ${result.valid ? 'text-success' : 'text-danger'}`}>
         {result.valid
-          ? '✓ Valid — no blocking errors'
+          ? '✓ Valid: no blocking errors'
           : `✗ ${result.errorCount} error${result.errorCount === 1 ? '' : 's'}, ${result.warningCount} warning${result.warningCount === 1 ? '' : 's'}`}
       </div>
       <CheckedAgainst result={result} market={market} />
@@ -188,7 +188,7 @@ const SECONDARY_BUTTON =
   'rounded-lg border border-border bg-surface px-4 py-2 text-sm font-medium text-muted transition hover:border-border-hi hover:text-text disabled:opacity-40';
 
 /**
- * 'Share report' — the one playground feature that stores something
+ * 'Share report': the one playground feature that stores something
  * server-side: the verdict and violation list (never the XML), keyed for
  * /report?id=…. Metered per FEATURE_LIMITS.share, which is why the two
  * expected failures get bespoke prompts rather than a generic error.
@@ -200,7 +200,7 @@ function SharePanel({ result, fileName }: { result: ValidationResult; fileName: 
   const [busy, setBusy] = useState(false);
   const [copied, setCopied] = useState(false);
 
-  // A link describes one specific run — a new result invalidates all of it.
+  // A link describes one specific run: a new result invalidates all of it.
   useEffect(() => {
     setShared(null);
     setGate(null);
@@ -256,7 +256,7 @@ function SharePanel({ result, fileName }: { result: ValidationResult; fileName: 
             {busy ? 'Sharing…' : 'Share report'}
           </button>
           <p className="mt-2 text-xs text-faint">
-            Stores the verdict and violation list — never the XML itself.
+            Stores the verdict and violation list: never the XML itself.
           </p>
         </>
       )}
@@ -330,10 +330,10 @@ interface RegressData {
 }
 
 /**
- * 'Check against upcoming rules' — validates the current input under every
+ * 'Check against upcoming rules': validates the current input under every
  * registered ruleset version and reports what changes at each step. The maths
  * is client-side (the library is open source); regressCredit() is purely the
- * account/quota gate, and it is asked only *after* the XML parses — a parse
+ * account/quota gate, and it is asked only *after* the XML parses: a parse
  * failure should not cost a credit.
  */
 function RegressPanel({ xml, fileName }: { xml: string; fileName: string | null }) {
@@ -342,7 +342,7 @@ function RegressPanel({ xml, fileName }: { xml: string; fileName: string | null 
   const [checkError, setCheckError] = useState<string | null>(null);
   const [busy, setBusy] = useState(false);
 
-  // The check describes one specific document — new input, fresh panel.
+  // The check describes one specific document: new input, fresh panel.
   useEffect(() => {
     setData(null);
     setGate(null);
@@ -405,7 +405,7 @@ function RegressPanel({ xml, fileName }: { xml: string; fileName: string | null 
           <Link href="/signup" className="text-accent-hi hover:underline">
             Create a free account
           </Link>{' '}
-          to run future-ruleset checks — free accounts get {FEATURE_LIMITS.free.regress} a month.
+          to run future-ruleset checks: free accounts get {FEATURE_LIMITS.free.regress} a month.
         </p>
       )}
       {gate === 'quota' && (
@@ -458,7 +458,7 @@ function RegressPanel({ xml, fileName }: { xml: string; fileName: string | null 
           })}
           {!data.hasCandidate && (
             <p className="text-xs text-faint">
-              No future ruleset is published yet — new specification releases are registered the
+              No future ruleset is published yet: new specification releases are registered the
               day they appear. Until then this covers the step from the European core to the German
               CIUS.
             </p>
@@ -543,7 +543,7 @@ export function Playground({ defaultMarket = 'eu' }: { defaultMarket?: MarketId 
 
   /**
    * The market, and with it the ruleset. Starts from the page's own default
-   * (the German page defaults to Germany — a reader who arrived in German has
+   * (the German page defaults to Germany: a reader who arrived in German has
    * already told us their market) and is replaced on mount by whatever the
    * visitor chose earlier, here or on the homepage.
    */
@@ -573,7 +573,7 @@ export function Playground({ defaultMarket = 'eu' }: { defaultMarket?: MarketId 
       setXml(handoff);
       setFileName('generated-invoice.xml');
     } catch {
-      // Storage unavailable — the playground simply opens empty.
+      // Storage unavailable: the playground simply opens empty.
     }
   }, []);
 
@@ -590,7 +590,7 @@ export function Playground({ defaultMarket = 'eu' }: { defaultMarket?: MarketId 
 
   /**
    * `source` defaults to whatever is in the box, but the demo needs to check
-   * a document it has only just written into state — and state is not readable
+   * a document it has only just written into state: and state is not readable
    * in the same tick, so the caller can pass the XML directly.
    */
   function runValidate(against: MarketProfile = profile, source: string = xml) {
@@ -635,7 +635,7 @@ export function Playground({ defaultMarket = 'eu' }: { defaultMarket?: MarketId 
   /** Accept either the bare invoice object or a { "invoice": { … } } wrapper. */
   function unwrapInvoice(parsed: unknown): Invoice {
     if (typeof parsed !== 'object' || parsed === null || Array.isArray(parsed)) {
-      throw new Error('Input must be a JSON object — the invoice itself, or { "invoice": { … } }.');
+      throw new Error('Input must be a JSON object: the invoice itself, or { "invoice": { … } }.');
     }
     const inner = (parsed as Record<string, unknown>)['invoice'];
     return (typeof inner === 'object' && inner !== null && !Array.isArray(inner) ? inner : parsed) as Invoice;
@@ -648,7 +648,7 @@ export function Playground({ defaultMarket = 'eu' }: { defaultMarket?: MarketId 
     try {
       // BT-24 follows the market: the generator defaults to the XRechnung
       // customization id, which is right for Germany and wrong everywhere
-      // else — a document that announces itself as a German CIUS when it is
+      // else: a document that announces itself as a German CIUS when it is
       // not is a compliance claim we would be making on the user's behalf.
       const options = { specificationIdentifier: SPEC_IDS[profile] };
       const invoice = withComputedTotals(
@@ -715,14 +715,14 @@ export function Playground({ defaultMarket = 'eu' }: { defaultMarket?: MarketId 
           and "paste your XML" is not an offer they can accept. One button
           loads a document with a repairable VAT error and an unrepairable
           missing field, checks it, and leaves the repair one further click
-          away — the whole product argument, without them supplying anything. */}
+          away: the whole product argument, without them supplying anything. */}
       {tab === 'validate' && (
         <div className="mb-6 flex flex-col gap-3 rounded-xl border border-accent/30 bg-accent-dim/20 p-4 sm:flex-row sm:items-center sm:justify-between">
           <div>
             <h2 className="text-sm font-medium">Nothing to hand? See how it works</h2>
             <p className="mt-1 max-w-xl text-sm leading-relaxed text-muted">
-              Loads a real invoice with two problems — one Stampbench can fix on its own, one it
-              refuses to guess — and checks it straight away.
+              Loads a real invoice with two problems: one Stampbench can fix on its own, one it
+              refuses to guess: and checks it straight away.
             </p>
           </div>
           <button
@@ -786,7 +786,7 @@ export function Playground({ defaultMarket = 'eu' }: { defaultMarket?: MarketId 
                   .catch(() => setError('Could not read the dropped file.'));
               }}
               spellCheck={false}
-              placeholder="Paste — or drop a file: XRechnung, UBL, or CII/ZUGFeRD XML…"
+              placeholder="Paste: or drop a file: XRechnung, UBL, or CII/ZUGFeRD XML…"
               className="h-105 w-full resize-none rounded-xl border border-border bg-surface p-4 font-mono text-xs leading-relaxed outline-none transition focus:border-accent"
             />
             <button
@@ -804,7 +804,7 @@ export function Playground({ defaultMarket = 'eu' }: { defaultMarket?: MarketId 
                 <p className="text-sm text-faint">
                   This runs the{' '}
                   <span className="font-medium text-muted">{rulesetFor(market).label}</span> ruleset
-                  — {rulesetFor(market).ruleCount} rules, including the BR-S/E/AE/Z/G/O VAT
+: {rulesetFor(market).ruleCount} rules, including the BR-S/E/AE/Z/G/O VAT
                   category families
                   {profile === 'xrechnung'
                     ? ' and the German BR-DE rules on top of the European core'
@@ -812,7 +812,7 @@ export function Playground({ defaultMarket = 'eu' }: { defaultMarket?: MarketId 
                   . Both syntaxes are auto-detected: UBL 2.1 and CII (the XML inside ZUGFeRD /
                   Factur-X). Load the broken sample to see it catch a VAT arithmetic error.
                   <span className="mt-2 block">
-                    Everything runs in your browser — the XML never leaves your machine.
+                    Everything runs in your browser: the XML never leaves your machine.
                   </span>
                 </p>
               )}
@@ -917,13 +917,13 @@ export function Playground({ defaultMarket = 'eu' }: { defaultMarket?: MarketId 
             <div className="min-h-105 rounded-xl border border-border bg-bg p-4">
               {!genResult && !error && (
                 <p className="text-sm text-faint">
-                  Send lines with quantities, prices and VAT categories — Stampbench computes the
+                  Send lines with quantities, prices and VAT categories: Stampbench computes the
                   totals (BT-106…BT-115) and the VAT breakdown so the BR-CO arithmetic rules pass by
                   construction.
                   <span className="mt-2 block">
                     The specification identifier (BT-24) follows your market:{' '}
                     <span className="font-mono text-[11px] text-muted">{SPEC_IDS[profile]}</span>.
-                    Legally significant fields — VAT ids, addresses, buyer references — are only
+                    Legally significant fields: VAT ids, addresses, buyer references: are only
                     ever taken from your input, never invented.
                   </span>
                 </p>
@@ -935,7 +935,7 @@ export function Playground({ defaultMarket = 'eu' }: { defaultMarket?: MarketId 
                     <div className={`mb-3 text-sm font-medium ${genResult.validation.valid ? 'text-success' : 'text-warning'}`}>
                       {genResult.validation.valid
                         ? '✓ Generated document passes validation'
-                        : `Generated with ${genResult.validation.errorCount} validation error(s) — check required fields`}
+                        : `Generated with ${genResult.validation.errorCount} validation error(s): check required fields`}
                     </div>
                   )}
                   <pre className="max-h-96 overflow-auto font-mono text-xs leading-relaxed text-muted">

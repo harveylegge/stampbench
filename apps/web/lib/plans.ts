@@ -30,7 +30,7 @@ export interface Plan {
 
 /**
  * Pricing philosophy: the open-source library is free forever with FULL rules.
- * Paid tiers sell what code alone can't promise — always-current rules without
+ * Paid tiers sell what code alone can't promise: always-current rules without
  * dependency upgrades, volume, client-project leverage (Agency), and the
  * compliance posture platforms need (Platform). Internal ids keep their
  * original names (starter/pro/scale) so Stripe env vars stay stable.
@@ -79,10 +79,10 @@ export const PLANS: Record<PlanId, Plan> = {
     monthlyQuota: 5_000,
     rateLimitPerMinute: 60,
     features: [
-      'Clean PDFs — no Stampbench line',
+      'Clean PDFs: no Stampbench line',
       'Every invoice backed up, on every device',
       '5,000 documents / month',
-      'Always-current rules — no dependency upgrades',
+      'Always-current rules: no dependency upgrades',
       'Version-pinned validation results',
       'Email support',
     ],
@@ -99,14 +99,14 @@ export const PLANS: Record<PlanId, Plan> = {
         'Your customer book, filled in from past invoices',
         'Mark invoices paid and see what is overdue',
         'The Stampbench assistant, on every page',
-        'Clean PDFs — no Stampbench line',
+        'Clean PDFs: no Stampbench line',
         'Every invoice backed up, on every device you sign in to',
         'Email support',
       ],
       developer: [
         '5,000 documents / month',
         '60 requests / minute',
-        'Always-current rules — no dependency upgrades',
+        'Always-current rules: no dependency upgrades',
         'Version-pinned validation results',
         'Email support',
       ],
@@ -186,7 +186,7 @@ export function planFor(id: string | null | undefined): Plan {
  * returns a link. 'regress' is the future-ruleset check in the playground.
  *
  * The local library and the playground's validate/generate/fix stay unlimited
- * and unmetered — that promise ("unlimited local validation, free forever")
+ * and unmetered: that promise ("unlimited local validation, free forever")
  * is load-bearing marketing and must never gain a quota here.
  *
  * -1 = unlimited. Quotas are per calendar month (UTC).
@@ -216,7 +216,7 @@ export function featureLimit(plan: string | null | undefined, feature: FeatureId
  * How many invoices an account keeps backed up. Deliberately NOT a monthly
  * meter: backup is a rolling archive, so on the free plan the oldest entries
  * fall off quietly rather than saves failing. The browser-local list is never
- * limited — this caps only the account copy, which is the upgrade hook.
+ * limited: this caps only the account copy, which is the upgrade hook.
  */
 export const BACKUP_LIMITS: Record<PlanId, number> = {
   free: 10,
@@ -234,7 +234,7 @@ export function currentPeriodKey(now = new Date()): string {
   return `${now.getUTCFullYear()}-${String(now.getUTCMonth() + 1).padStart(2, '0')}`;
 }
 
-/** Start of the current calendar month (UTC) — the quota window. */
+/** Start of the current calendar month (UTC): the quota window. */
 export function currentPeriodStart(now = new Date()): Date {
   return new Date(Date.UTC(now.getUTCFullYear(), now.getUTCMonth(), 1));
 }

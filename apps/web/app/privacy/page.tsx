@@ -13,7 +13,7 @@ export const metadata: Metadata = {
  * requirements because the target market is the EU. 2026-08-07: rewritten to
  * match the shipped architecture (Cloudflare Pages worker + D1, no Stripe,
  * manual upgrades, shared reports) and Harvey's details filled in. Remaining
- * <Fill>s are ONLY the postal address (virtual office pending) — plus the
+ * <Fill>s are ONLY the postal address (virtual office pending): plus the
  * still-outstanding solicitor review before signups are actively promoted.
  */
 
@@ -26,7 +26,7 @@ export default function PrivacyPage() {
         <p>
           This policy explains what personal data we process and why. The controller is Harvey
           Legge, trading as Stampbench, <Fill>[postal address to follow]</Fill>, United Kingdom. We
-          have written it to be read, not to be survived — if anything here is unclear, ask us.
+          have written it to be read, not to be survived: if anything here is unclear, ask us.
         </p>
       }
     >
@@ -40,8 +40,8 @@ export default function PrivacyPage() {
           </li>
           <li>
             If you choose to <strong className="text-text">share a report</strong>, we store that
-            report — the verdict and rule violations, whose messages can quote specific values from
-            the document — until you or we delete it. Sharing never happens automatically.
+            report: the verdict and rule violations, whose messages can quote specific values from
+            the document: until you or we delete it. Sharing never happens automatically.
           </li>
           <li>We do not sell your data, and we do not train models on your invoice contents.</li>
           <li>We use a small, named set of sub-processors, listed in clause 6.</li>
@@ -50,12 +50,12 @@ export default function PrivacyPage() {
 
       <Clause n="2." title="What we collect and why">
         <p>
-          <strong className="text-text">Account data</strong> — your email address and a salted
+          <strong className="text-text">Account data</strong>: your email address and a salted
           one-way password hash (bcrypt or PBKDF2, depending on the deployed runtime; we never store the password itself). Purpose: to create and
           secure your account. Legal basis: performance of a contract.
         </p>
         <p>
-          <strong className="text-text">Usage records</strong> — monthly counters per feature
+          <strong className="text-text">Usage records</strong>: monthly counters per feature
           (hosted API calls, shared reports, ruleset checks) and a last-used timestamp per API key.
           We do not keep a per-call log of what you sent.{' '}
           <strong className="text-text">These records do not contain your invoice contents.</strong>{' '}
@@ -63,21 +63,21 @@ export default function PrivacyPage() {
           contract.
         </p>
         <p>
-          <strong className="text-text">Shared reports</strong> — created only when you press
+          <strong className="text-text">Shared reports</strong>: created only when you press
           &ldquo;Share report&rdquo;: the verdict and the list of rule violations. Violation
           messages can quote individual values from the document (for example an amount that fails
           an arithmetic rule), so share a report only if you are comfortable with the recipient
           seeing those. Anyone with the link can view it. Legal basis: performance of a contract.
         </p>
         <p>
-          <strong className="text-text">Plan and upgrade data</strong> — your current plan and any
+          <strong className="text-text">Plan and upgrade data</strong>: your current plan and any
           upgrade request you make. <strong className="text-text">We never see or store your
           payment details.</strong> Card checkout is hosted by Stripe and PayPal checkout is hosted by PayPal. We receive customer and subscription identifiers, status, plan and accounting information, but not your complete card or bank credentials. We share the email address and account reference needed to match the payment to your account. We hold the fact of your request
           and, once paid, what we need for our accounting records. Legal basis: performance of a
           contract and our legal obligation to keep accounting records for invoices we issue.
         </p>
         <p>
-          <strong className="text-text">Auto-invoicing data</strong> (optional, paid plans) — if you
+          <strong className="text-text">Auto-invoicing data</strong> (optional, paid plans): if you
           switch on the payment webhook, the payment notifications your provider sends us are turned
           into invoice records saved to your account. Those notifications can include your
           customer&apos;s name, email and the amount and reference of the payment. You are choosing
@@ -87,7 +87,7 @@ export default function PrivacyPage() {
           performance of a contract. If you do not enable the webhook, none of this applies.
         </p>
         <p>
-          <strong className="text-text">Technical logs</strong> — our infrastructure provider
+          <strong className="text-text">Technical logs</strong>: our infrastructure provider
           (Cloudflare) processes IP addresses and request metadata at its edge to deliver the site
           and defend it; we see aggregate statistics, not a browsing log, and we do not log request
           bodies. Legal basis: legitimate interest.
@@ -97,7 +97,7 @@ export default function PrivacyPage() {
       <Clause n="3." title="Invoice content submitted to the API">
         <p>
           The playground on this website validates, repairs and generates documents{' '}
-          <strong className="text-text">entirely in your browser</strong> — the XML never reaches
+          <strong className="text-text">entirely in your browser</strong>: the XML never reaches
           our servers at all. When you send a document to the hosted API endpoints it is parsed in
           memory, checked against the rules, and the result is returned to you. The document itself
           is not written to our database and is not retained after the response. We keep only the
@@ -118,20 +118,20 @@ export default function PrivacyPage() {
           Three optional, opt-in AI features can send data to Anthropic. Each sends only what is
           described below, and only when you use it; if you do not, nothing is sent to Anthropic.
           The assistant keeps your recent chat in your browser&apos;s session storage so it survives
-          navigating between pages — it is cleared when you close the tab, and we do not store the
+          navigating between pages: it is cleared when you close the tab, and we do not store the
           conversation on our servers beyond the API call that answers each message.
         </p>
         <ul>
           <li>
             <strong className="text-text">Explain a validation result.</strong> The findings for
-            that request — rule identifiers, business term references and our own message text — are
+            that request: rule identifiers, business term references and our own message text: are
             sent so a plain-language fix list can be generated.
           </li>
           <li>
             <strong className="text-text">AI assist in the invoice builder.</strong> The
             free-text description you type (for example &ldquo;12 hours of design work at
             £95/hr&rdquo;) is sent so it can be turned into draft line items. Only that text is sent
-            — never the rest of the invoice, and never anything you did not type into that box.
+: never the rest of the invoice, and never anything you did not type into that box.
           </li>
           <li>
             <strong className="text-text">The assistant</strong> (paid plans). The messages you type
@@ -147,10 +147,10 @@ export default function PrivacyPage() {
           session; it is HttpOnly, SameSite and Secure, so it cannot be read by scripts. The second
           is a small non-secret flag that simply records that you are signed in, so the site knows
           to show your account rather than the sign-in button without calling our server on every
-          page — it contains no personal data and no session token. We use no advertising or
+          page: it contains no personal data and no session token. We use no advertising or
           cross-site tracking cookies, so we show no consent banner for them, and we run no
           analytics scripts at all: traffic is measured as aggregate page counts in our own edge
-          worker (one number per page, per day — never an IP, a cookie or a per-visitor record) and
+          worker (one number per page, per day: never an IP, a cookie or a per-visitor record) and
           as request statistics at our infrastructure provider, with nothing executing in your
           browser.
         </p>
@@ -161,19 +161,19 @@ export default function PrivacyPage() {
         <p>We use these third parties to run the service:</p>
         <ul>
           <li>
-            <strong className="text-text">Stripe</strong> — hosted card checkout, subscriptions and the customer billing portal. Stripe receives the payment and account details needed to process the transaction; Stampbench does not receive complete card credentials.
+            <strong className="text-text">Stripe</strong>: hosted card checkout, subscriptions and the customer billing portal. Stripe receives the payment and account details needed to process the transaction; Stampbench does not receive complete card credentials.
           </li>
           <li>
-            <strong className="text-text">Cloudflare</strong> — website hosting and delivery, the
+            <strong className="text-text">Cloudflare</strong>: website hosting and delivery, the
             account database (Cloudflare D1), and email routing/delivery for our
             @stampbench.com addresses.
           </li>
           <li>
-            <strong className="text-text">Anthropic</strong> — the optional AI features (see
+            <strong className="text-text">Anthropic</strong>: the optional AI features (see
             clause 4), applicable only once they are enabled.
           </li>
           <li>
-            <strong className="text-text">PayPal</strong> — payment and subscriptions for paid
+            <strong className="text-text">PayPal</strong>: payment and subscriptions for paid
             plans. You pay on PayPal&apos;s own site under their privacy policy. For a subscription
             we share your email address and account reference with them; we receive the
             subscription&apos;s status, not your card or bank details.
@@ -205,7 +205,7 @@ export default function PrivacyPage() {
         <p>
           Invoices normally contain personal data about your customers. Where you send such data to
           our hosted API, you are the controller and we act as your processor. A data processing
-          agreement (Auftragsverarbeitungsvertrag) is in preparation — contact us at{' '}
+          agreement (Auftragsverarbeitungsvertrag) is in preparation: contact us at{' '}
           <a href="mailto:hello@stampbench.com" className="text-accent-hi hover:underline">
             hello@stampbench.com
           </a>{' '}
@@ -226,7 +226,7 @@ export default function PrivacyPage() {
           </a>
           . We aim to respond
           within 30 days. If you believe we have handled your data improperly you may complain to
-          your supervisory authority — in the UK, the Information Commissioner&apos;s Office; in
+          your supervisory authority: in the UK, the Information Commissioner&apos;s Office; in
           Germany, your state data protection authority.
         </p>
       </Clause>

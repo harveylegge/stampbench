@@ -70,7 +70,7 @@ export async function POST(request: Request) {
     callerType: gate.caller.type,
   });
 
-  // Never echo the parsed invoice back by default — keep responses small.
+  // Never echo the parsed invoice back by default: keep responses small.
   const { invoice: _invoice, ...rest } = result;
   return NextResponse.json(
     { ...rest, rulesetVersion: RULESET_VERSION },

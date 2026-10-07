@@ -5,7 +5,7 @@ import { useId } from 'react';
  * the 2026-09 cream redesign. The top staple is always brand orange; the bottom
  * one inherits `currentColor`, so the same component works on light surfaces
  * (ink bottom, like the board's light variant) and dark ones (white bottom)
- * with no props. Keep this file the single source of the mark — the favicon
+ * with no props. Keep this file the single source of the mark: the favicon
  * (app/icon.svg) and the schema logo PNG are derived from the same geometry.
  */
 
@@ -37,7 +37,7 @@ export function StampbenchMark({ size = 24, className }: { size?: number; classN
         strokeLinecap="round"
         strokeLinejoin="round"
       />
-      {/* bottom staple — inherits the surrounding text colour */}
+      {/* bottom staple: inherits the surrounding text colour */}
       <path
         d="M12 39 V45 Q12 51 18 51 H46 Q52 51 52 45 V33 Q52 27 46 27 H24"
         stroke="currentColor"

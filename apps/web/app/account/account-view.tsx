@@ -55,7 +55,7 @@ function isUpgradeId(v: string | null): v is UpgradeId {
   return v === 'starter' || v === 'pro' || v === 'scale';
 }
 
-/** ISO date slice — locale/timezone-stable, and quotas run on UTC anyway. */
+/** ISO date slice: locale/timezone-stable, and quotas run on UTC anyway. */
 function isoDay(ms: number): string {
   return new Date(ms).toISOString().slice(0, 10);
 }
@@ -78,7 +78,7 @@ export function AccountView() {
   const router = useRouter();
   const params = useSearchParams();
   const upgradeParam = params.get('upgrade');
-  /** Set by PayPal's return_url — the buyer approved and is on their way back. */
+  /** Set by PayPal's return_url: the buyer approved and is on their way back. */
   const returnedFromPaypal = params.get('subscribed') === 'paypal';
 
   const [account, setAccount] = useState<Me | null>(null);
@@ -129,7 +129,7 @@ export function AccountView() {
         setAccount(acct);
         const { keys: keyList } = await listKeys();
         if (!cancelled) setKeys(keyList);
-        // Separate catch: a hiccup here should not blank the whole page — and
+        // Separate catch: a hiccup here should not blank the whole page: and
         // must NOT be read as "no hook", or one un-confirmed click would
         // overwrite a live webhook. Leave the state unknown and say so.
         try {
@@ -138,7 +138,7 @@ export function AccountView() {
         } catch {
           if (!cancelled) {
             setHookConfigured(null);
-            setHookError('Could not check your webhook status — refresh to try again.');
+            setHookError('Could not check your webhook status: refresh to try again.');
           }
         }
       } catch {
@@ -179,7 +179,7 @@ export function AccountView() {
   }, [router]);
 
   /* ?upgrade=starter|pro|scale (e.g. from a quota upsell) pre-arms a one-click
-     confirm on the matching card and scrolls it into view — never for the plan
+     confirm on the matching card and scrolls it into view: never for the plan
      already held. A pending manual request only blocks this in the manual
      world: once self-serve billing exists, the pending note is history, not a
      gate, and the person who already asked for a plan is the last person the
@@ -198,7 +198,7 @@ export function AccountView() {
   /* Coming back from PayPal's approval page, the plan is usually not live yet:
      the browser is racing a webhook. Rather than showing the old plan (which
      reads as "my payment did nothing"), poll for the entitlement the webhook
-     grants. Polling, not trusting the return URL — that URL is a navigation
+     grants. Polling, not trusting the return URL: that URL is a navigation
      anyone can perform, and it is not evidence that anything was paid. */
   useEffect(() => {
     if (!returnedFromPaypal || !account || pollStarted.current) return;
@@ -222,7 +222,7 @@ export function AccountView() {
           }
         }
       } catch {
-        // Transient failure — keep waiting; the attempt cap ends this anyway.
+        // Transient failure: keep waiting; the attempt cap ends this anyway.
       }
       if (cancelled) return;
       // ~30s in total. Past that it is more honest to stop spinning and tell
@@ -254,7 +254,7 @@ export function AccountView() {
     try {
       await logout();
     } catch {
-      // Session already gone server-side — the destination is the same.
+      // Session already gone server-side: the destination is the same.
     }
     // Drop the assistant transcript so the next person on this browser cannot
     // read the previous user's conversation, and hard-navigate so every piece
@@ -262,7 +262,7 @@ export function AccountView() {
     try {
       window.sessionStorage.removeItem('sb_assistant_chat');
     } catch {
-      // storage unavailable — nothing to clear
+      // storage unavailable: nothing to clear
     }
     window.location.assign('/');
   }
@@ -397,7 +397,7 @@ export function AccountView() {
   /**
    * Route to whichever upgrade mechanism the server actually has available.
    *
-   * Cards first when both exist — instant activation and a hosted portal beat
+   * Cards first when both exist: instant activation and a hosted portal beat
    * PayPal's approval hop. PayPal subscriptions next, because they recur.
    * The email loop last: it always works, and it always needs a human.
    */
@@ -462,7 +462,7 @@ export function AccountView() {
     setDataError(null);
     try {
       await deleteAccount(deleteConfirm.trim());
-      // Everything is gone, including the session — a hard navigation avoids
+      // Everything is gone, including the session: a hard navigation avoids
       // rendering a dashboard for an account that no longer exists.
       window.location.assign('/?deleted=1');
     } catch (e) {
@@ -503,12 +503,12 @@ export function AccountView() {
      whether to hand over a card. */
   const selfServe = account.billing.enabled || account.billing.paypalSubscriptions;
   const cardCopy = selfServe
-    ? { idle: 'Subscribe to', confirm: 'Continue to payment —', busy: 'Redirecting…' }
+    ? { idle: 'Subscribe to', confirm: 'Continue to payment: ', busy: 'Redirecting…' }
     : { idle: 'Request', confirm: 'Confirm request for', busy: 'Sending…' };
 
   return (
     <div className="mx-auto max-w-4xl px-4 py-16">
-      {/* ————— Header ————— */}
+      {/* -------------------------------- Header -------------------------------- */}
       <div className="mb-10 flex flex-wrap items-center justify-between gap-4">
         <div>
           <h1 className="text-2xl font-semibold tracking-tight">Account</h1>
@@ -528,7 +528,7 @@ export function AccountView() {
         </button>
       </div>
 
-      {/* ————— Usage ————— */}
+      {/* -------------------------------- Usage -------------------------------- */}
       <section className="mb-6 rounded-xl border border-border bg-surface p-5">
         <h2 className="mb-4 text-lg font-semibold tracking-tight">Usage this month</h2>
         <div className="flex flex-col gap-4">
@@ -558,7 +558,7 @@ export function AccountView() {
         </p>
       </section>
 
-      {/* ————— API keys ————— */}
+      {/* -------------------------------- API keys -------------------------------- */}
       <section className="mb-6 rounded-xl border border-border bg-surface p-5">
         <div className="mb-2 flex items-center justify-between">
           <h2 className="text-lg font-semibold tracking-tight">API keys</h2>
@@ -571,14 +571,14 @@ export function AccountView() {
           </button>
         </div>
         <p className="mb-4 text-sm text-muted">
-          Keys authenticate the hosted REST API — validate and generate from any language, metered
+          Keys authenticate the hosted REST API: validate and generate from any language, metered
           against your plan.
         </p>
 
         {freshKey && (
           <div className="mb-4 rounded-lg border border-accent/40 bg-accent-dim/40 p-4">
             <div className="mb-2 text-sm font-medium text-accent-hi">
-              Key created — copy it now, it will not be shown again.
+              Key created: copy it now, it will not be shown again.
             </div>
             <div className="flex items-center gap-2">
               <code className="flex-1 overflow-x-auto rounded-lg border border-border bg-bg px-3 py-2 font-mono text-xs">
@@ -617,7 +617,7 @@ export function AccountView() {
               {keys?.length === 0 && (
                 <tr>
                   <td colSpan={4} className="px-4 py-6 text-center text-muted">
-                    No keys yet — create your first one above.
+                    No keys yet: create your first one above.
                   </td>
                 </tr>
               )}
@@ -670,17 +670,17 @@ export function AccountView() {
         </div>
       </section>
 
-      {/* ————— Upgrade ————— */}
+      {/* -------------------------------- Upgrade -------------------------------- */}
       <section className="rounded-xl border border-border bg-surface p-5">
         <h2 className="mb-2 text-lg font-semibold tracking-tight">
           {account.billing.subscribed || account.billing.paypalSubscribed ? 'Plan & billing' : 'Upgrade'}
         </h2>
         <p className="mb-4 text-sm text-muted">
           {account.billing.enabled
-            ? 'Pay by card through Stripe — your plan activates as soon as the payment clears. Cancel any time from the billing portal.'
+            ? 'Pay by card through Stripe: your plan activates as soon as the payment clears. Cancel any time from the billing portal.'
             : account.billing.paypalSubscriptions
-              ? 'Subscribe with PayPal — it renews monthly and your plan activates as soon as PayPal confirms the first payment. Cancel any time, right here.'
-              : 'No card is taken on the site. We email you, arrange payment, and activate the plan — usually within a day.'}
+              ? 'Subscribe with PayPal: it renews monthly and your plan activates as soon as PayPal confirms the first payment. Cancel any time, right here.'
+              : 'No card is taken on the site. We email you, arrange payment, and activate the plan: usually within a day.'}
         </p>
 
         {(account.billing.subscribed || account.billing.hasCustomer) && (
@@ -701,7 +701,7 @@ export function AccountView() {
               <div className="rounded-lg border border-border bg-bg p-4">
                 <p className="text-sm">
                   Cancel your PayPal subscription? Your plan drops to Free and PayPal stops billing
-                  you. Nothing else on the account changes — your keys, reports and usage stay.
+                  you. Nothing else on the account changes: your keys, reports and usage stay.
                 </p>
                 <div className="mt-3 flex flex-wrap gap-2">
                   <button
@@ -734,14 +734,14 @@ export function AccountView() {
             here reads as "my payment did nothing". */}
         {activating && (
           <p className="mb-4 rounded-lg border border-accent/40 bg-accent-dim/40 p-4 text-sm text-accent-hi">
-            PayPal approved — waiting for confirmation. This usually takes a few seconds; the page
+            PayPal approved: waiting for confirmation. This usually takes a few seconds; the page
             updates on its own.
           </p>
         )}
         {returnedFromPaypal && !activating && !account.billing.paypalSubscribed && (
           <p className="mb-4 rounded-lg border border-border bg-bg p-4 text-sm text-muted">
             PayPal has not confirmed the subscription yet. If you completed payment, refresh in a
-            minute — and if it still is not live, email hello@stampbench.com and we will sort it out
+            minute: and if it still is not live, email hello@stampbench.com and we will sort it out
             by hand.
           </p>
         )}
@@ -759,7 +759,7 @@ export function AccountView() {
               You requested {pendingPlan.name} earlier, when activation was done by hand.
             </p>
             <p className="mt-1 text-muted">
-              Good news since then: you can now activate it yourself, instantly — use the{' '}
+              Good news since then: you can now activate it yourself, instantly: use the{' '}
               <span className="font-medium text-text">Subscribe to {pendingPlan.name}</span> button
               below. Subscribing replaces the old request automatically.
             </p>
@@ -784,11 +784,11 @@ export function AccountView() {
             {payUrl ? (
               <>
                 <p className="font-medium text-accent-hi">
-                  Upgrade to {pendingPlan.name} requested — £{pendingPlan.priceGbp}/month.
+                  Upgrade to {pendingPlan.name} requested: £{pendingPlan.priceGbp}/month.
                 </p>
                 <p className="mt-1 text-muted">
                   Pay by PayPal and we will switch your plan on as soon as it lands, usually the
-                  same day. Paying does not activate it automatically — a person checks the payment
+                  same day. Paying does not activate it automatically: a person checks the payment
                   first, and we will email you the moment it is live.
                 </p>
                 <a
@@ -802,7 +802,7 @@ export function AccountView() {
               </>
             ) : (
               <p className="text-accent-hi">
-                Upgrade to {pendingPlan.name} requested — we will email you to arrange payment and
+                Upgrade to {pendingPlan.name} requested: we will email you to arrange payment and
                 activation.
               </p>
             )}
@@ -879,7 +879,7 @@ export function AccountView() {
         </div>
       </section>
 
-      {/* ————— Invoice Autopilot — account-only product preview ————— */}
+      {/* -------------------------------- Invoice Autopilot: account-only product preview -------------------------------- */}
       <section className="account-autopilot" aria-labelledby="invoice-autopilot-title">
         <div className="autopilot-head">
           <div>
@@ -922,12 +922,12 @@ export function AccountView() {
         </div>
       </section>
 
-      {/* ————— Payment matching (inbound payment webhook) ————— */}
+      {/* -------------------------------- Payment matching (inbound payment webhook) -------------------------------- */}
       <section className="mt-6 rounded-xl border border-border bg-surface p-5">
         <h2 className="mb-2 text-lg font-semibold tracking-tight">Payment matching</h2>
         <p className="mb-4 text-sm text-muted">
           A secret webhook URL for your account. Point PayPal, Stripe or anything that can send
-          JSON at it, and an incoming payment marks the matching invoice paid — or creates a draft
+          JSON at it, and an incoming payment marks the matching invoice paid: or creates a draft
           invoice for you when nothing matches. New invoices appear in{' '}
           <a href="/my-invoices" className="text-accent-hi hover:underline">My invoices</a> the next
           time it syncs. See the{' '}
@@ -959,7 +959,7 @@ export function AccountView() {
             {hookUrl && (
               <div className="mb-4 rounded-lg border border-accent/40 bg-accent-dim/40 p-4">
                 <p className="mb-2 text-sm">
-                  Your webhook URL — copy it now, it is shown only this once:
+                  Your webhook URL: copy it now, it is shown only this once:
                 </p>
                 <code className="block overflow-x-auto rounded-lg border border-border bg-bg px-3 py-2 font-mono text-xs">
                   {hookUrl}
@@ -1009,7 +1009,7 @@ export function AccountView() {
                   <span className="text-sm text-muted">
                     {hookArmed === 'rotate'
                       ? 'Rotating stops the current URL working immediately.'
-                      : 'Removing stops all deliveries — invoices already created stay.'}
+                      : 'Removing stops all deliveries: invoices already created stay.'}
                   </span>
                   <button
                     onClick={hookArmed === 'rotate' ? onCreateHook : onRemoveHook}
@@ -1031,12 +1031,12 @@ export function AccountView() {
         )}
       </section>
 
-      {/* ————— Your data (GDPR Art. 15/17/20) ————— */}
+      {/* -------------------------------- Your data (GDPR Art. 15/17/20) -------------------------------- */}
       <section className="mt-6 rounded-xl border border-border bg-surface p-5">
         <h2 className="mb-2 text-lg font-semibold tracking-tight">Your data</h2>
         <p className="mb-4 text-sm text-muted">
           Take a copy of everything we hold about this account, or delete it permanently. Invoice
-          XML is never stored — only your account, usage counts and any reports you chose to share.
+          XML is never stored: only your account, usage counts and any reports you chose to share.
         </p>
 
         {dataError && <p className="mb-4 text-sm text-danger">{dataError}</p>}

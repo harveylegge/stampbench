@@ -1,7 +1,7 @@
 'use client';
 
 /**
- * Backing up "My invoices" to the account — strictly opt-in.
+ * Backing up "My invoices" to the account: strictly opt-in.
  *
  * The site's standing promise is that invoices live in the browser unless you
  * choose otherwise. This module is the "otherwise": once switched on, every
@@ -11,7 +11,7 @@
  *
  * Two deliberate limits:
  *  - Logos are not uploaded. They are print-only decoration, they are big,
- *    and the invoice is complete without them — an invoice opened on another
+ *    and the invoice is complete without them: an invoice opened on another
  *    device simply asks for its logo again.
  *  - Sync failures are silent-but-recoverable. The local list is always the
  *    thing you see; the backup catches up on the next visit rather than
@@ -51,7 +51,7 @@ export function setBackupEnabled(on: boolean): void {
     if (on) window.localStorage.setItem(FLAG, '1');
     else window.localStorage.removeItem(FLAG);
   } catch {
-    // Storage unavailable — the toggle simply will not stick, and the UI
+    // Storage unavailable: the toggle simply will not stick, and the UI
     // reads backupEnabled() so it never claims otherwise.
   }
 }
@@ -68,7 +68,7 @@ function accountBody(entry: SavedInvoice) {
     const currency = draft.document.currency || 'EUR';
     total = formatMoney(computeDraftTotals(draft).gross, currency, getCountry(draft.seller.countryCode).locale);
   } catch {
-    // A draft that will not total still deserves a backup row — the editor
+    // A draft that will not total still deserves a backup row: the editor
     // is where it gets fixed, on whichever device opens it.
   }
   const slim: InvoiceDraft = { ...draft, logo: undefined };
@@ -85,7 +85,7 @@ function accountBody(entry: SavedInvoice) {
   };
 }
 
-/** Push one invoice to the account. Quiet on failure — sync catches up later. */
+/** Push one invoice to the account. Quiet on failure: sync catches up later. */
 export async function pushInvoice(entry: SavedInvoice): Promise<void> {
   try {
     await saveAccountInvoice(entry.id, accountBody(entry));
@@ -99,15 +99,15 @@ export async function removeAccountCopy(id: string): Promise<void> {
   try {
     await deleteAccountInvoice(id);
   } catch {
-    // Either it was never backed up or the network blinked — both survivable.
+    // Either it was never backed up or the network blinked: both survivable.
   }
 }
 
 /**
  * Full two-way catch-up:
  *  1. every local invoice the account is missing (or has older) is pushed;
- *  2. every account invoice this browser is missing — or holds an older copy
- *     of — is pulled and merged.
+ *  2. every account invoice this browser is missing: or holds an older copy
+ *     of: is pulled and merged.
  * The "or older" clause is what carries changes to *existing* invoices
  * between devices: without it, marking an invoice paid on one machine would
  * push fine and then never land anywhere else, because the other machines
@@ -145,7 +145,7 @@ export async function syncWithAccount(local: SavedInvoice[]): Promise<number> {
         // The exact mark-as-paid moment is not stored server-side; the row's
         // update time is the closest honest stand-in, and nothing computes
         // with paidAt beyond "is it set". 'auto' is a webhook-created row
-        // (worker payment-hook.ts) — born from a received payment, so it
+        // (worker payment-hook.ts): born from a received payment, so it
         // arrives already paid.
         paidAt: invoice.status === 'paid' || invoice.status === 'auto' ? invoice.updatedAt : null,
         draft,

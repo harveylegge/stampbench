@@ -16,7 +16,7 @@ import { getCountry } from '@/lib/invoice/countries';
 import type { SavedInvoice } from '@/lib/invoice/history';
 
 /**
- * The chase panel — a politeness dial over three templates.
+ * The chase panel: a politeness dial over three templates.
  *
  * Everything happens in this browser: the email is assembled from the draft
  * that is already here, shown for editing, and leaves through the user's own
@@ -25,7 +25,7 @@ import type { SavedInvoice } from '@/lib/invoice/history';
  *
  * The UK statutory-interest block is opt-in and GBP-only, the arithmetic is
  * done in code (lib/invoice/chase.ts), and the base rate is typed in rather
- * than baked in — it moves, and a stale constant would put wrong numbers in a
+ * than baked in: it moves, and a stale constant would put wrong numbers in a
  * letter that cites an Act.
  */
 
@@ -75,7 +75,7 @@ export function ChaseEmail({ entry, onClose }: { entry: SavedInvoice; onClose: (
   const statutory = useMemo(() => {
     if (!statutoryAvailable || !addStatutory || !gross) return null;
     // An empty field must show the error, not quietly become a 0% base rate
-    // — Number('') is 0, which the range check would happily accept.
+    //: Number('') is 0, which the range check would happily accept.
     const raw = baseRate.trim().replace(',', '.');
     const charges = statutoryCharges(gross, daysOverdue, raw === '' ? NaN : Number(raw));
     if (!charges) return null;
@@ -124,7 +124,7 @@ export function ChaseEmail({ entry, onClose }: { entry: SavedInvoice; onClose: (
       setTimeout(() => setCopied(null), 1500);
     } catch {
       // Clipboard blocked (permissions, http). The textarea is still there to
-      // select by hand — no error state worth building for that.
+      // select by hand: no error state worth building for that.
     }
   }
 
@@ -138,11 +138,11 @@ export function ChaseEmail({ entry, onClose }: { entry: SavedInvoice; onClose: (
       <div className="mb-3 flex items-start justify-between gap-3">
         <div>
           <div className="text-sm font-medium">
-            Chase payment — <span className="font-mono">{draft.document.number}</span>
+            Chase payment: <span className="font-mono">{draft.document.number}</span>
           </div>
           <p className="mt-0.5 text-xs text-muted">
             {daysOverdue > 0 ? `${daysOverdue} days overdue. ` : ''}
-            Written from templates in your browser — nothing is sent until you send it.
+            Written from templates in your browser: nothing is sent until you send it.
           </p>
         </div>
         <button
@@ -262,7 +262,7 @@ export function ChaseEmail({ entry, onClose }: { entry: SavedInvoice; onClose: (
           </a>
         ) : (
           <span className="text-xs text-faint">
-            No email on this invoice&apos;s customer — copy the text instead.
+            No email on this invoice&apos;s customer: copy the text instead.
           </span>
         )}
         <button onClick={() => void copy(body, 'body')} className={BUTTON_SECONDARY}>

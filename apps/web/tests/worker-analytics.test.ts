@@ -1,6 +1,6 @@
 /**
- * Pins the page-view counter's one decision — countablePath (workers/api/src/
- * analytics.ts) — which is also the privacy boundary: it must count only real
+ * Pins the page-view counter's one decision: countablePath (workers/api/src/
+ * analytics.ts): which is also the privacy boundary: it must count only real
  * HTML page loads and must collapse anything hostile or high-cardinality, so
  * the aggregate table can never hold anything resembling personal data or grow
  * unbounded from mistyped URLs.

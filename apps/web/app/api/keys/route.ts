@@ -23,7 +23,7 @@ export async function POST(request: Request) {
     const body = z.object({ name: z.string().trim().min(1).max(60) }).safeParse(await request.json());
     if (body.success) name = body.data.name;
   } catch {
-    // empty body is fine — use default name
+    // empty body is fine: use default name
   }
 
   const activeCount = await db.apiKey.count({ where: { userId: user.id, revokedAt: null } });
@@ -34,14 +34,14 @@ export async function POST(request: Request) {
   const { key, record } = await createApiKey(user.id, name);
   log.info('apikey.created', { userId: user.id, keyId: record.id });
   return NextResponse.json({
-    key, // plaintext — returned exactly once
+    key, // plaintext: returned exactly once
     id: record.id,
     prefix: record.prefix,
     name: record.name,
   });
 }
 
-/** DELETE /api/keys { id } — revoke a key. */
+/** DELETE /api/keys { id }: revoke a key. */
 export async function DELETE(request: Request) {
   const user = await getCurrentUser();
   if (!user) return apiError(401, 'unauthenticated', 'Sign in first.');

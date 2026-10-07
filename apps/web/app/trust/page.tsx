@@ -2,7 +2,7 @@ import type { Metadata } from 'next';
 import Link from 'next/link';
 
 export const metadata: Metadata = {
-  title: 'Our standards — invoices checked clearly',
+  title: 'Our standards: invoices checked clearly',
   description:
     'How Stampbench checks invoice details, totals and e-invoicing requirements while keeping your work private.',
 };

@@ -5,7 +5,7 @@ import { useState } from 'react';
 /**
  * Code samples in several languages, tabbed.
  *
- * Every sample here is a plain HTTPS request — there is no Stampbench SDK for
+ * Every sample here is a plain HTTPS request: there is no Stampbench SDK for
  * Python, PHP or anything else, and the caption says so. Presenting these as
  * "supported languages" without that line would be the exact kind of implied
  * coverage the rest of the site is careful not to claim.

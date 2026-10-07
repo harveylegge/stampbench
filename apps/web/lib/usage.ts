@@ -40,7 +40,7 @@ export async function recordUsage(
   }
 }
 
-/** Daily usage counts for the last `days` days — feeds the dashboard chart. */
+/** Daily usage counts for the last `days` days: feeds the dashboard chart. */
 export async function usageByDay(userId: string, days = 30) {
   const since = new Date(Date.now() - days * 24 * 60 * 60 * 1000);
   const events = await db.usageEvent.findMany({

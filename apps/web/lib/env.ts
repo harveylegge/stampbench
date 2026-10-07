@@ -40,7 +40,7 @@ export const features = {
 };
 
 /**
- * True when running production auth on the known dev secret — checked at the
+ * True when running production auth on the known dev secret: checked at the
  * moment a session is hashed (not at module load, which would break builds).
  */
 export function insecureProductionSecret(): boolean {

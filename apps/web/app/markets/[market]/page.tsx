@@ -14,7 +14,7 @@ import {
 } from '@/lib/markets';
 
 /**
- * One page per market with real product substance — the ruleset that runs, the
+ * One page per market with real product substance: the ruleset that runs, the
  * capabilities that apply, and an explicit list of what is not implemented.
  * Four pages, not forty: a market gets a page when there is something true to
  * say about it, and "we have nothing country-specific for you yet, here is
@@ -29,7 +29,7 @@ const META: Record<string, { title: string; description: string }> = {
   uk: {
     title: 'Invoice validation for UK businesses',
     description:
-      'What Stampbench does for a UK business: EN 16931 validation, UBL and CII parsing, deterministic repair and invoice creation. No UK-specific ruleset is implemented — stated plainly rather than implied.',
+      'What Stampbench does for a UK business: EN 16931 validation, UBL and CII parsing, deterministic repair and invoice creation. No UK-specific ruleset is implemented: stated plainly rather than implied.',
   },
   us: {
     title: 'Invoice validation for US businesses',
@@ -39,7 +39,7 @@ const META: Record<string, { title: string; description: string }> = {
   eu: {
     title: 'EN 16931 invoice validation for the European Union',
     description:
-      'Validate invoices against EN 16931-1:2017 — 40 core rules, UBL 2.1 and CII (ZUGFeRD / Factur-X) auto-detected — plus Germany’s XRechnung 3.0 profile. Which national customisations are implemented, and which are not.',
+      'Validate invoices against EN 16931-1:2017: 40 core rules, UBL 2.1 and CII (ZUGFeRD / Factur-X) auto-detected: plus Germany’s XRechnung 3.0 profile. Which national customisations are implemented, and which are not.',
   },
   germany: {
     title: 'XRechnung and ZUGFeRD validation for Germany',
@@ -49,7 +49,7 @@ const META: Record<string, { title: string; description: string }> = {
 };
 
 /**
- * The four market slugs are the whole set — there is no such thing as a market
+ * The four market slugs are the whole set: there is no such thing as a market
  * page we have not written. `dynamicParams: false` makes that explicit and is
  * what `output: 'export'` needs in order to prerender the route at all.
  */
@@ -187,7 +187,7 @@ export default async function MarketPage({ params }: { params: Promise<{ market:
 invoice.xml  syntax: UBL | profile: ${ruleset.profile} | ruleset: 2026-08.2
   ERROR  BR-CO-17  VAT breakdown S @ 7%: tax amount should be
          22.04 (314.86 × 7%) but is 99.99. (line 78)
-INVALID — 1 error, 0 warnings (${ruleset.ruleCount} rules run)`}
+INVALID: 1 error, 0 warnings (${ruleset.ruleCount} rules run)`}
         </pre>
       </section>
 

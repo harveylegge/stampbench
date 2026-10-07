@@ -21,7 +21,7 @@ const NOW = new Date('2026-08-10T09:00:00Z');
 /**
  * The promise the generator makes is "press Generate and Stampbench validates
  * it". If a shipped template does not survive its own ruleset, the product's
- * first impression is a wall of errors on data the product supplied — so the
+ * first impression is a wall of errors on data the product supplied: so the
  * templates are tested against the real engine, not eyeballed.
  */
 describe('invoice templates produce documents that pass their own ruleset', () => {
@@ -41,7 +41,7 @@ describe('invoice templates produce documents that pass their own ruleset', () =
           `${template.id}: ${result.violations.map((v) => `${v.ruleId} ${v.message}`).join(' | ')}`,
         ).toBe(0);
       } else {
-        // No ruleset for this format, so there is no XML and no verdict — but
+        // No ruleset for this format, so there is no XML and no verdict: but
         // the arithmetic rules still have to hold on the model.
         expect(generated.xml).toBeUndefined();
         const result = validateInvoice(generated.invoice, { profile: 'en16931' });
@@ -104,7 +104,7 @@ describe('draft totals', () => {
   it('computes line nets from quantity × price, rounded once', () => {
     expect(toDecimal(lineNetAmount({ ...newLine(), quantity: '3', unitPrice: '0.335' }))).toBe(1.01);
     expect(toDecimal(lineNetAmount({ ...newLine(), quantity: '7.5', unitPrice: '82.50' }))).toBe(618.75);
-    // An empty price is zero, not NaN — a half-filled form must still render.
+    // An empty price is zero, not NaN: a half-filled form must still render.
     expect(toDecimal(lineNetAmount({ ...newLine(), quantity: '2', unitPrice: '' }))).toBe(0);
   });
 
@@ -276,7 +276,7 @@ describe('the builder never invents data', () => {
 
 describe('logo handling', () => {
   it('states sizes the way a person would, never as a raw division', () => {
-    // The bug this replaces printed "390.625 kB" — the storage budget divided
+    // The bug this replaces printed "390.625 kB": the storage budget divided
     // by 1024 and rendered verbatim.
     expect(describeSize(8_151_000)).toBe('8.2 MB');
     expect(describeSize(500_000)).toBe('500 kB');
@@ -288,7 +288,7 @@ describe('logo handling', () => {
   });
 
   it('accepts the ordinary oversized photo rather than refusing it', () => {
-    // 8 MB is what a phone camera produces. It gets scaled, not rejected —
+    // 8 MB is what a phone camera produces. It gets scaled, not rejected:
     // so nothing about its size stops it at the gate.
     expect(logoRejection({ type: 'image/jpeg', size: 8_151_000, name: 'logo.jpg' })).toBeNull();
     expect(logoRejection({ type: 'image/png', size: 400_000, name: 'logo.png' })).toBeNull();

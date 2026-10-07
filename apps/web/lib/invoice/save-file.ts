@@ -5,7 +5,7 @@
  *
  * The blob-and-anchor trick lands files in the browser's download shelf,
  * where Chrome and Edge greet an .xml from a young domain with "this file may
- * harm your device" — which, on an invoicing product, reads as "this invoice
+ * harm your device": which, on an invoicing product, reads as "this invoice
  * is malware". The File System Access API skips the shelf entirely: the user
  * picks where the file goes and the browser writes it, no verdict attached.
  * Firefox and Safari do not have the API, and also do not editorialise about
@@ -49,7 +49,7 @@ export async function saveFile(filename: string, content: Blob | string, kind: S
       await writable.close();
       return;
     } catch (e) {
-      // Cancelling the dialog is a decision, not an error — and not a cue to
+      // Cancelling the dialog is a decision, not an error: and not a cue to
       // shove the same file through the download shelf after all.
       if (e instanceof DOMException && e.name === 'AbortError') return;
       // Anything else (embedded context, permission policy): fall through.

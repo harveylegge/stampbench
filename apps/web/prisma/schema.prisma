@@ -1,6 +1,6 @@
 // InvoiceGate data model.
 // Default datasource is SQLite so the app runs locally with zero configuration.
-// Production (Vercel + Neon/Postgres): see docs/deployment.md — switch the
+// Production (Vercel + Neon/Postgres): see docs/deployment.md: switch the
 // provider to "postgresql" and set DATABASE_URL before `prisma db push`.
 
 generator client {

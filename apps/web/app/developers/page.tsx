@@ -5,7 +5,7 @@ import { en } from '@/lib/copy';
 import { RULE_COUNTS } from '@/lib/markets';
 
 export const metadata: Metadata = {
-  title: 'Developer platform — e-invoicing infrastructure',
+  title: 'Developer platform: e-invoicing infrastructure',
   description:
     'Build compliant e-invoicing into your software. Validate and generate XRechnung / EN 16931 documents with a TypeScript-first engine, a CLI and a hosted REST API. UBL and CII, deterministic rules, source locations on every violation.',
   alternates: { canonical: '/developers' },
@@ -25,7 +25,7 @@ export const metadata: Metadata = {
  * as noise to a freelancer, and a developer had to scroll past a form to find
  * out whether there was an engine underneath.
  *
- * So the technical product is not reduced here — it is concentrated. This page
+ * So the technical product is not reduced here: it is concentrated. This page
  * uses the vocabulary a developer came for (rule ids, syntaxes, profiles,
  * rulesets, exit codes) without apology, because that vocabulary is the
  * evidence that Stampbench is infrastructure rather than a form.
@@ -36,20 +36,20 @@ export const metadata: Metadata = {
 
 const GITHUB_URL = 'https://github.com/harveylegge/stampbench';
 
-/** Transcribed from real runs — the header line, rule ids, wording and counts. */
+/** Transcribed from real runs: the header line, rule ids, wording and counts. */
 const VALIDATE_SNIPPET = `$ npx stampbench validate invoice.xml --profile en16931
 
 invoice.xml  syntax: UBL | profile: en16931 | ruleset: 2026-08.2
   ERROR  BR-CO-17  VAT breakdown S @ 7%: tax amount should be
          22.04 (314.86 × 7%) but is 99.99. (line 78)
   ERROR  BR-11     Missing buyer country code (BT-55). (~line 39)
-INVALID — 2 errors, 0 warnings (40 rules run)`;
+INVALID: 2 errors, 0 warnings (40 rules run)`;
 
 const FIX_SNIPPET = `$ npx stampbench fix invoice.xml --profile en16931 --write
 
 invoice.xml
   fix   line 78    BR-CO-17, BR-S-09  99.99 → 22.04
-  keep            BR-11  no derivable correct value —
+  keep            BR-11  no derivable correct value:
                          this needs a human decision, not arithmetic`;
 
 const INSTALL_SNIPPET = `npm install @stampbench/core
@@ -82,7 +82,7 @@ const REASONS = [
   },
   {
     title: 'Local-first',
-    body: 'The library and CLI run entirely in your process. No upload, no account, no network — which is also the only honest way to promise that invoices stay on your infrastructure.',
+    body: 'The library and CLI run entirely in your process. No upload, no account, no network: which is also the only honest way to promise that invoices stay on your infrastructure.',
   },
   {
     title: 'Hosted API when you want it',
@@ -113,7 +113,7 @@ export default function DevelopersPage() {
           </h1>
           <p className="mb-8 max-w-2xl text-lg leading-relaxed text-muted">
             Validate and generate XRechnung / EN 16931 documents with a TypeScript-first engine, a
-            CLI and a hosted API. Both syntaxes — UBL and CII — auto-detected, with the rule id and
+            CLI and a hosted API. Both syntaxes: UBL and CII: auto-detected, with the rule id and
             the source location on every violation.
           </p>
           <div className="flex flex-col items-stretch gap-3 sm:flex-row sm:items-center">
@@ -231,7 +231,7 @@ export default function DevelopersPage() {
           <p className="mt-3 max-w-2xl text-sm leading-relaxed text-muted">
             <code className="font-mono text-xs">stampbench regress</code> compares a directory
             against a future ruleset and exits <code className="font-mono text-xs">1</code> when
-            anything would start failing —{' '}
+            anything would start failing: {' '}
             <Link href="/docs#regression" className="text-accent-hi hover:underline">
               regression testing in the docs
             </Link>
@@ -339,13 +339,13 @@ export default function DevelopersPage() {
           </div>
           <p className="mt-6 max-w-2xl text-sm leading-relaxed text-faint">
             Stampbench is developer tooling, not legal advice. For certification-grade sign-off, run
-            the official KoSIT validator as well — the goal here is that by the time you do, it
+            the official KoSIT validator as well: the goal here is that by the time you do, it
             passes, and the parity results are published rather than asserted.
           </p>
         </div>
       </section>
 
-      {/* Free / paid — the developer version of the pricing question */}
+      {/* Free / paid: the developer version of the pricing question */}
       <section className="border-t border-border bg-surface/40 py-16">
         <div className="mx-auto max-w-6xl px-4">
           <h2 className="mb-10 text-2xl font-semibold tracking-tight">{en.model.heading}</h2>

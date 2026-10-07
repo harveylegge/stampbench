@@ -10,8 +10,8 @@
  * next to the draft it grew out of.
  *
  * Each entry keeps the full draft rather than a summary. The draft is the
- * source of truth everywhere else — totals, preview and XML are all derived
- * from it — so storing derived figures here would create a second copy that
+ * source of truth everywhere else: totals, preview and XML are all derived
+ * from it: so storing derived figures here would create a second copy that
  * could disagree with what reopening the invoice shows.
  *
  * Every storage access is wrapped: Safari in private mode throws on
@@ -38,13 +38,13 @@ export interface SavedInvoice {
   /**
    * When it was last created/re-created *or otherwise changed*, epoch ms.
    * This is also the sync clock: backup pushes an entry when the account's
-   * copy is older than this, so anything that must reach other devices —
-   * including marking paid — has to bump it.
+   * copy is older than this, so anything that must reach other devices:
+   * including marking paid: has to bump it.
    */
   savedAt: number;
   /**
    * When the user marked it paid, epoch ms; absent/null means unpaid.
-   * A timestamp rather than a boolean so "overdue" can stay derived — an
+   * A timestamp rather than a boolean so "overdue" can stay derived: an
    * invoice is overdue exactly when it is unpaid past its due date, computed
    * from the draft's own dates instead of stored where it could go stale.
    */
@@ -79,7 +79,7 @@ function read(): SavedInvoice[] {
 function write(entries: SavedInvoice[]): void {
   if (typeof window === 'undefined') return;
   try {
-    // Quota pressure is real here — logos are data URLs. Shedding the oldest
+    // Quota pressure is real here: logos are data URLs. Shedding the oldest
     // entries until the write fits keeps the recent history alive instead of
     // losing the invoice that was just created.
     let list = entries;
@@ -110,7 +110,7 @@ export function getInvoice(id: string): SavedInvoice | null {
  * Record a created invoice, newest first.
  *
  * Upserts on the invoice number: creating, going back to the editor and
- * creating again is one invoice being finished, not two invoices — and an
+ * creating again is one invoice being finished, not two invoices: and an
  * entry per attempt would bury the list in near-duplicates. Two genuinely
  * different documents that share a number collapse to the latest, which is
  * also what a numbering series is supposed to mean.
@@ -123,7 +123,7 @@ export function saveInvoice(draft: InvoiceDraft): SavedInvoice {
   const entry: SavedInvoice = {
     id: existing?.id ?? `inv-${Date.now().toString(36)}-${Math.random().toString(36).slice(2, 8)}`,
     savedAt: Date.now(),
-    // Re-creating an invoice is finishing it, not issuing a new one — an
+    // Re-creating an invoice is finishing it, not issuing a new one: an
     // already-paid invoice that gets its address corrected stays paid.
     paidAt: existing?.paidAt ?? null,
     draft,
@@ -200,7 +200,7 @@ const RESUME_KEY = 'sb_invoice_resume';
 /**
  * "Open" on /my-invoices: put the saved draft where the generator already
  * looks, flag the handoff, navigate. Session-scoped like the playground's
- * `sb_playground_xml` — a stale flag surviving into next week's visit would
+ * `sb_playground_xml`: a stale flag surviving into next week's visit would
  * skip the market step for no reason the visitor remembers.
  */
 export function stageForEditing(draft: InvoiceDraft): void {
@@ -208,7 +208,7 @@ export function stageForEditing(draft: InvoiceDraft): void {
     window.localStorage.setItem('sb_invoice_draft', JSON.stringify(draft));
     window.sessionStorage.setItem(RESUME_KEY, '1');
   } catch {
-    // Private mode. The generator opens on its market step instead — a
+    // Private mode. The generator opens on its market step instead: a
     // survivable outcome for a convenience handoff.
   }
 }

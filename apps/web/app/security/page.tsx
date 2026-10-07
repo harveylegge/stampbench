@@ -9,16 +9,16 @@ export const metadata: Metadata = {
 
 /**
  * Only measures actually implemented in this codebase are listed. Anything
- * planned is in the "not yet" section — no aspirational security claims.
+ * planned is in the "not yet" section: no aspirational security claims.
  */
 
 const MEASURES = [
   {
     area: 'Invoice data',
     items: [
-      'Invoice XML sent to the hosted API is processed in memory to produce a validation result and is not written to our database. We store the outcome (valid/invalid, rule counts, timestamp) for your usage metering — not the document.',
+      'Invoice XML sent to the hosted API is processed in memory to produce a validation result and is not written to our database. We store the outcome (valid/invalid, rule counts, timestamp) for your usage metering: not the document.',
       'Request bodies are capped at 2 MB and every field is schema-validated before it reaches the rule engine.',
-      'The open-source library runs entirely on your own infrastructure. If you never want an invoice to leave your network, use it and never call the API — it is MIT-licensed and has the same rule engine.',
+      'The open-source library runs entirely on your own infrastructure. If you never want an invoice to leave your network, use it and never call the API: it is MIT-licensed and has the same rule engine.',
     ],
   },
   {
@@ -33,7 +33,7 @@ const MEASURES = [
     area: 'Credentials & sessions',
     items: [
       'Passwords are hashed with PBKDF2-HMAC-SHA256 at 100,000 iterations (WebCrypto), each with its own random 16-byte salt. Plaintext passwords are never stored or logged.',
-      'API keys are generated from 20 bytes of cryptographic randomness, stored only as a SHA-256 hash, and displayed exactly once at creation. We cannot recover a lost key — you rotate it.',
+      'API keys are generated from 20 bytes of cryptographic randomness, stored only as a SHA-256 hash, and displayed exactly once at creation. We cannot recover a lost key: you rotate it.',
       'Revoking a key takes effect immediately: revoked or unrecognised credentials return 401 and are never silently downgraded to anonymous access.',
       'Sessions are stateless HS256 JWTs carried in an HttpOnly, SameSite=Lax, Secure cookie and signed with a server-side secret, so a session cookie cannot be forged or altered without it. A separate readable, non-secret flag lets the site skip a server round-trip for signed-out visitors and carries no session token.',
       'Login and registration are rate-limited per IP, and authentication runs a constant-time comparison against a dummy credential even when the account does not exist, so response timing does not reveal which emails are registered.',
@@ -46,8 +46,8 @@ const MEASURES = [
       'Security headers on every response: a Content-Security-Policy restricting script and connection sources, X-Frame-Options: DENY, X-Content-Type-Options: nosniff, a strict Referrer-Policy, and a Permissions-Policy disabling camera, microphone and geolocation.',
       'Database access goes exclusively through parameterised prepared statements (Cloudflare D1); no string-concatenated SQL exists in the codebase.',
       'Per-key and per-IP rate limiting plus monthly quotas, so a leaked key has a bounded blast radius.',
-      'Billing webhooks are verified by cryptographic signature — PayPal subscription events today, and Stripe if card billing is enabled — and unsigned or mis-signed payloads are rejected before any account state changes.',
-      'The optional inbound payment webhook (auto-invoicing) is authenticated by a secret URL you can rotate, is rate-limited, and can only create draft invoices or mark your own invoices paid — never move money or read data back. Auto-created invoices are held in their own archive so they can never displace the invoices you saved yourself.',
+      'Billing webhooks are verified by cryptographic signature: PayPal subscription events today, and Stripe if card billing is enabled: and unsigned or mis-signed payloads are rejected before any account state changes.',
+      'The optional inbound payment webhook (auto-invoicing) is authenticated by a secret URL you can rotate, is rate-limited, and can only create draft invoices or mark your own invoices paid: never move money or read data back. Auto-created invoices are held in their own archive so they can never displace the invoices you saved yourself.',
       'Structured JSON logging that records outcomes and never request bodies, credentials or invoice contents.',
     ],
   },
@@ -63,7 +63,7 @@ const MEASURES = [
 
 const NOT_YET = [
   'SOC 2 Type II or ISO 27001 certification. We do not have either, and we will not imply otherwise.',
-  'A signed DPA/AVV and a formal EU-data-residency commitment — in progress for the Platform tier; ask us for current status before relying on it.',
+  'A signed DPA/AVV and a formal EU-data-residency commitment: in progress for the Platform tier; ask us for current status before relying on it.',
   'A third-party penetration test. Our review was internal and adversarial, but it was not an external pentest.',
   'A published uptime SLA. The service is new; we would rather commit to a number we have history for.',
 ];
@@ -91,7 +91,7 @@ export default function SecurityPage() {
       <p className="mb-10 leading-relaxed text-muted">
         You are considering sending us documents that contain your customers&apos; names, addresses
         and bank details. This page states precisely what we do with them and how the service is
-        built — including the things we have not done yet.
+        built: including the things we have not done yet.
       </p>
 
       <div className="mb-10 rounded-xl border border-accent/30 bg-accent-dim/20 p-5">
@@ -100,7 +100,7 @@ export default function SecurityPage() {
         </h2>
         <p className="text-sm leading-relaxed text-muted">
           If your security review says invoice data must never leave your infrastructure, you do not
-          need to argue with us about our controls — use{' '}
+          need to argue with us about our controls: use{' '}
           <code className="font-mono text-xs text-accent-hi">@stampbench/core</code> locally. It is
           MIT-licensed, runs offline, has no telemetry, and contains the same rule engine the hosted
           API uses. The hosted product exists to save you maintenance, not to hold your data.
@@ -115,7 +115,7 @@ export default function SecurityPage() {
         <h2 className="mb-3 text-lg font-semibold tracking-tight">AI features</h2>
         <p className="text-sm leading-relaxed text-muted">
           Three optional features send data to Anthropic&apos;s API, and only when you use them.{' '}
-          <strong className="text-text">Explain this error</strong> sends the validation findings —
+          <strong className="text-text">Explain this error</strong> sends the validation findings:
           rule identifiers, business terms and our own message text.{' '}
           <strong className="text-text">AI assist</strong> in the invoice builder sends only the
           free-text description you type into that box. The{' '}
@@ -132,7 +132,7 @@ export default function SecurityPage() {
         <ul className="space-y-2.5">
           {NOT_YET.map((t) => (
             <li key={t} className="flex gap-3 text-sm leading-relaxed text-muted">
-              <span className="mt-0.5 shrink-0 text-faint">—</span>
+              <span className="mt-0.5 shrink-0 text-faint">: </span>
               <span>{t}</span>
             </li>
           ))}
@@ -156,7 +156,7 @@ export default function SecurityPage() {
           </li>
         </ul>
         <p className="mt-4 text-sm text-muted">
-          Please do not run automated scanners against the production API — use the open-source
+          Please do not run automated scanners against the production API: use the open-source
           library locally instead, where you can test freely.
         </p>
       </section>

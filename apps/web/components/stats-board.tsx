@@ -3,7 +3,7 @@ import type { Copy } from '@/lib/copy';
 
 /**
  * The evidence board. Every figure here is real and re-derivable from the
- * repository (test runs, the rule tables, the locator measurement) — that is
+ * repository (test runs, the rule tables, the locator measurement): that is
  * the entire point, so each card links to /trust where the receipts live.
  * Deliberately absent: time-series we do not record, growth percentages we
  * cannot substantiate, and certification badges we do not hold.
@@ -15,7 +15,7 @@ import type { Copy } from '@/lib/copy';
 
 // Counted from actual runs (vitest, 2026-08-15): packages/core, packages/cli
 // and apps/web. The web figure had drifted 28 tests behind the suite, which
-// made the headline total wrong on the homepage and on /trust — a number this
+// made the headline total wrong on the homepage and on /trust: a number this
 // page invites people to verify has to be re-counted when it changes.
 const TESTS = [
   { label: 'library', n: 140 },
@@ -31,11 +31,11 @@ const DOCS = [
 const DOCS_TOTAL = DOCS.reduce((s, d) => s + d.n, 0);
 
 /** EN 16931 structure, VAT categories, BR-DE. Asserted to sum to the engine's
- *  own profile totals by test — the card and the showcase must agree. */
+ *  own profile totals by test: the card and the showcase must agree. */
 export const RULE_FAMILIES = [32, 8, 16] as const;
 
 /**
- * Test cases per package, counted from the repository's commit history —
+ * Test cases per package, counted from the repository's commit history:
  * `git grep -c "^\s*(it|test)\("` at the last commit of each day. Re-derive
  * with the same command; the final points match today's live run (136 / 50).
  * Counted 2026-08-10.
@@ -95,7 +95,7 @@ function DocsDonut() {
 }
 
 /**
- * Semicircular gauge, full because the measured value really is 100% — of the
+ * Semicircular gauge, full because the measured value really is 100%: of the
  * narrow thing the card's label names: every violation the engine *reports*
  * comes with a location. It is not a claim about detection rate, and the label
  * next to it has to keep saying so.
@@ -113,7 +113,7 @@ function LocatedGauge() {
 }
 
 /** Two-series line chart of test-suite growth. Thin 2px lines, dot markers,
-    direct end labels — identity is never carried by colour alone. */
+    direct end labels: identity is never carried by colour alone. */
 function GrowthChart({ copy }: { copy: Copy }) {
   const g = copy.statsBoard.growth;
   const W = 560;

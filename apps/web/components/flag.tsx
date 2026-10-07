@@ -14,7 +14,7 @@
  */
 export type FlagCode = 'gb' | 'us' | 'eu' | 'de' | 'globe';
 
-/** 12 stars on a circle — the arrangement is the whole identity of the EU flag. */
+/** 12 stars on a circle: the arrangement is the whole identity of the EU flag. */
 const EU_STARS = Array.from({ length: 12 }, (_, i) => {
   const angle = (i * Math.PI) / 6 - Math.PI / 2;
   return {
@@ -25,7 +25,7 @@ const EU_STARS = Array.from({ length: 12 }, (_, i) => {
 
 export function Flag({ code, size = 22, className = '' }: { code: FlagCode; size?: number; className?: string }) {
   // The clip is a CSS box on the rendered element, so the radius has to be in
-  // CSS pixels rather than viewBox units — otherwise a 40px flag gets the same
+  // CSS pixels rather than viewBox units: otherwise a 40px flag gets the same
   // 2.5px corner as an 18px one and looks squarer the bigger it grows.
   const radius = (size * 2.5) / 20;
   return (
@@ -37,7 +37,7 @@ export function Flag({ code, size = 22, className = '' }: { code: FlagCode; size
       /* Rounded corners via CSS on the root <svg> rather than an SVG
          <clipPath>. A clipPath needs an id, and the same flag appears more
          than once on /markets (column header and card), which would put
-         duplicate ids in the document — invalid, and the kind of thing that
+         duplicate ids in the document: invalid, and the kind of thing that
          quietly confuses accessibility tooling. inset() needs no id at all. */
       style={{ clipPath: `inset(0 round ${radius}px)` }}
       aria-hidden

@@ -35,7 +35,7 @@ export function writeMarket(id: MarketId): void {
     window.localStorage.setItem(KEY, id);
   } catch {
     // Storage unavailable (private mode, blocked cookies). The choice still
-    // applies to this page — it just will not survive a reload.
+    // applies to this page: it just will not survive a reload.
   }
   window.dispatchEvent(new CustomEvent(MARKET_EVENT, { detail: id }));
 }

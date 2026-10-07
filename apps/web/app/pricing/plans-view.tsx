@@ -15,7 +15,7 @@ import { BillingNote } from './billing-note';
  * A freelancer read it and could not tell which number applied to them; a
  * developer read it and could not tell whether this was serious infrastructure
  * or a PDF tool. Both audiences are still sold the same four plans at the same
- * prices — the switch changes which of them are relevant and which vocabulary
+ * prices: the switch changes which of them are relevant and which vocabulary
  * describes them, not what is on sale.
  *
  * Business sees two plans, because Agency and Platform are quotas on an API a
@@ -107,7 +107,7 @@ export function PlansView() {
                 <span className="text-3xl font-semibold">£{plan.priceGbp}</span>
                 <span className="text-sm text-muted">/month</span>
                 <div className="mt-1 text-xs text-faint">
-                  {plan.priceGbp === 0 ? 'Free forever — no card needed' : 'Cancel anytime'}
+                  {plan.priceGbp === 0 ? 'Free forever: no card needed' : 'Cancel anytime'}
                 </div>
               </div>
 
@@ -165,7 +165,7 @@ export function PlansView() {
 
       {audience === 'business' && (
         <p className="pricing-browser-note">
-          Creating invoices does not need an account at all — the generator runs in your browser and
+          Creating invoices does not need an account at all: the generator runs in your browser and
           keeps its history there.{' '}
           <Link href="/invoice-generator" className="text-accent-hi hover:underline">
             Create one now

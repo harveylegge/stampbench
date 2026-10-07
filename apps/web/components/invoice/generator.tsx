@@ -71,7 +71,7 @@ import { isMarketId, MARKETS, PAGE_MARKETS, type MarketId } from '@/lib/markets'
  *
  * **Nothing is filled in on the user's behalf.** The compliance checklist
  * shows what the selected profile requires and whether the draft has it, but
- * it never supplies the value — an invented VAT number turns an honest
+ * it never supplies the value: an invented VAT number turns an honest
  * failure into a document that passes while being wrong.
  *
  * Everything runs client-side: the engine is a pure-TypeScript npm package, so
@@ -86,7 +86,7 @@ type Phase = 'market' | 'format' | 'build' | 'result';
  * Read the saved draft, filling in anything a newer build expects.
  *
  * A draft written by an earlier version of this page is missing whatever has
- * been added since — and the totals code reaches straight into `discount.
+ * been added since: and the totals code reaches straight into `discount.
  * enabled`, so a stale draft would throw on mount and take the whole editor
  * with it. Merging over a fresh draft costs nothing and means someone's
  * half-finished invoice survives a deploy.
@@ -98,7 +98,7 @@ function loadDraft(): InvoiceDraft | null {
     const parsed = JSON.parse(raw) as Partial<InvoiceDraft>;
     if (!parsed || !Array.isArray(parsed.lines)) return null;
     // Validate the market before trusting it. Every render of the saved-draft
-    // banner dereferences MARKETS[draft.market] — a corrupted or
+    // banner dereferences MARKETS[draft.market]: a corrupted or
     // cross-version localStorage value that is not a known market id would
     // throw during that render, and because the throw kills the banner the
     // "Discard" button never mounts, so the user cannot clear the poison and
@@ -155,7 +155,7 @@ export function InvoiceGenerator({ initialMarket }: { initialMarket?: MarketId }
   const [showRules, setShowRules] = useState(false);
   /**
    * The book: customers and services this browser has already invoiced,
-   * derived from the history on mount. Not state that changes mid-edit — the
+   * derived from the history on mount. Not state that changes mid-edit: the
    * invoice being built now joins the book on its *next* visit.
    */
   const [allCustomers, setAllCustomers] = useState<KnownCustomer[]>([]);
@@ -165,7 +165,7 @@ export function InvoiceGenerator({ initialMarket }: { initialMarket?: MarketId }
   const [logoBusy, setLogoBusy] = useState(false);
   /**
    * The monthly invoice allowance. `plan` is null until the account check
-   * resolves, which resolves to Free — an unknown plan must never hand out the
+   * resolves, which resolves to Free: an unknown plan must never hand out the
    * paid experience, the same rule the PDF branding follows.
    */
   const [plan, setPlan] = useState<PlanId | null>(null);
@@ -201,13 +201,13 @@ export function InvoiceGenerator({ initialMarket }: { initialMarket?: MarketId }
 
   useEffect(() => {
     const stored = loadDraft();
-    // The book reads the same history in every path through this effect —
+    // The book reads the same history in every path through this effect:
     // a resumed invoice deserves its saved customers as much as a new one.
     const saved = listInvoices();
     setAllCustomers(knownCustomers(saved));
     setAllServices(knownServices(saved));
     // Arriving from /my-invoices: the draft was staged and flagged, so skip
-    // the market step and the "you have a saved draft" banner — the visitor
+    // the market step and the "you have a saved draft" banner: the visitor
     // just said which invoice they want. The flag is consumed even when the
     // staged draft failed to load, so it cannot linger and hijack a later,
     // unrelated visit.
@@ -238,7 +238,7 @@ export function InvoiceGenerator({ initialMarket }: { initialMarket?: MarketId }
    * Straight from "where do you bill?" to the invoice.
    *
    * There used to be a format step in between, asking *"what should Stampbench
-   * produce for Germany?"* and listing options — including deliberately
+   * produce for Germany?"* and listing options: including deliberately
    * disabled ones with reasons. That is a compliance-literacy exam standing
    * between an advert click and the first field, and the honest answer for
    * almost everyone is the market's default anyway. The choice is not removed:
@@ -258,7 +258,7 @@ export function InvoiceGenerator({ initialMarket }: { initialMarket?: MarketId }
     setErrors(problems);
     if (problems.length > 0) return;
     // The allowance is checked *after* preflight so a capped user still gets
-    // their invoice validated and their mistakes pointed out — the wall is on
+    // their invoice validated and their mistakes pointed out: the wall is on
     // creating documents, not on being told the truth about one.
     if (!mayCreateInvoice(plan, used)) {
       setCapReached(true);
@@ -287,7 +287,7 @@ export function InvoiceGenerator({ initialMarket }: { initialMarket?: MarketId }
             <h2 className="mb-1 font-medium tracking-tight">You have a saved draft</h2>
             <p className="mb-4 text-sm leading-relaxed text-muted">
               <span className="font-mono">{savedDraft.document.number}</span> for{' '}
-              {MARKETS[savedDraft.market].name}, kept in this browser only — it was never uploaded.
+              {MARKETS[savedDraft.market].name}, kept in this browser only: it was never uploaded.
             </p>
             <div className="flex flex-wrap gap-2">
               <button
@@ -318,7 +318,7 @@ export function InvoiceGenerator({ initialMarket }: { initialMarket?: MarketId }
           </p>
           <h2 className="mb-2 text-2xl font-semibold tracking-tight">Where is your business based?</h2>
           {/* The very first thing anyone reads on the business path. It used to
-              answer in rulesets, formats and VAT categories — three terms
+              answer in rulesets, formats and VAT categories: three terms
               deep before the first click, to explain a choice that only needs
               one sentence. What Stampbench does with the answer has not
               changed; only who the sentence is written for. */}
@@ -494,7 +494,7 @@ export function InvoiceGenerator({ initialMarket }: { initialMarket?: MarketId }
   // ----------------------------------------------------------------- build step
   //
   // The invoice is the interface. Rather than a form on one side and a preview
-  // on the other — two views of the same data, inevitably drifting — the
+  // on the other: two views of the same data, inevitably drifting: the
   // fields sit in the document where their values will print. What cannot fit
   // there without turning an invoice into a tax form (VAT identifiers, contact
   // details, exemption reasons) hides behind a disclosure under the block it
@@ -546,7 +546,7 @@ export function InvoiceGenerator({ initialMarket }: { initialMarket?: MarketId }
   /**
    * Scale first, complain second. The old version rejected anything over the
    * storage budget, which meant an ordinary phone photo or an unoptimised
-   * export bounced — and the message landed in the "before creating" list, as
+   * export bounced: and the message landed in the "before creating" list, as
    * though a logo were stopping the invoice. It never was.
    */
   async function readLogo(file: File) {
@@ -611,7 +611,7 @@ export function InvoiceGenerator({ initialMarket }: { initialMarket?: MarketId }
               <p className="mt-1.5 max-w-[15rem] text-[11px] leading-relaxed text-muted">{logoNote}</p>
             )}
             <p className="mt-1.5 max-w-[13rem] text-[11px] leading-relaxed text-faint">
-              Printed only — EN 16931 has no logo field, so it is not written into the XML.
+              Printed only: EN 16931 has no logo field, so it is not written into the XML.
             </p>
           </div>
 
@@ -688,7 +688,7 @@ export function InvoiceGenerator({ initialMarket }: { initialMarket?: MarketId }
                 label="Tax registration"
                 value={draft.seller.taxRegistrationId}
                 onChange={(taxRegistrationId) => update({ seller: { ...draft.seller, taxRegistrationId } })}
-                hint="BT-32 — either this or the VAT identifier is required by every VAT category."
+                hint="BT-32: either this or the VAT identifier is required by every VAT category."
               />
               {sellerCountry.address.subdivisionLabel && (
                 <TextField
@@ -730,7 +730,7 @@ export function InvoiceGenerator({ initialMarket }: { initialMarket?: MarketId }
                 label="Electronic address"
                 value={draft.seller.electronicAddress}
                 onChange={(electronicAddress) => update({ seller: { ...draft.seller, electronicAddress } })}
-                hint="BT-34 — a Peppol participant id or email."
+                hint="BT-34: a Peppol participant id or email."
               />
             </DocDetails>
           </div>
@@ -791,7 +791,7 @@ export function InvoiceGenerator({ initialMarket }: { initialMarket?: MarketId }
             <div className="grid gap-2">
               {/* Everyone this browser has invoiced before, one click to
                   reuse. Value pinned to '' so it reads as an action, not a
-                  state — the state is the fields it fills in below. */}
+                  state: the state is the fields it fills in below. */}
               {customers.length > 0 && (
                 <select
                   value=""
@@ -853,7 +853,7 @@ export function InvoiceGenerator({ initialMarket }: { initialMarket?: MarketId }
                 value={draft.buyer.vatId}
                 onChange={(vatId) => update({ buyer: { ...draft.buyer, vatId } })}
                 placeholder={buyerCountry.taxIdPlaceholder}
-                hint="BT-48 — required for reverse charge and intra-community supplies."
+                hint="BT-48: required for reverse charge and intra-community supplies."
               />
               {buyerCountry.address.subdivisionLabel && (
                 <TextField
@@ -888,7 +888,7 @@ export function InvoiceGenerator({ initialMarket }: { initialMarket?: MarketId }
                   ? 'Intra-EU: the intra-community and reverse-charge categories are on the line items.'
                   : relation === 'eu-export'
                     ? 'Export from the EU: the export category is on the line items.'
-                    : 'Which tax treatment applies to this supply is your decision — Stampbench checks the document, not the transaction.'}
+                    : 'Which tax treatment applies to this supply is your decision: Stampbench checks the document, not the transaction.'}
               </p>
             )}
           </div>
@@ -947,7 +947,7 @@ export function InvoiceGenerator({ initialMarket }: { initialMarket?: MarketId }
               </div>
             ) : (
               <p className="text-sm leading-relaxed text-faint">
-                Optional. Add it when the goods or services went somewhere other than the billing address —
+                Optional. Add it when the goods or services went somewhere other than the billing address:
                 it is written into the document as delivery information, not left on the printout.
               </p>
             )}
@@ -980,7 +980,7 @@ export function InvoiceGenerator({ initialMarket }: { initialMarket?: MarketId }
                       value={line.description}
                       list={services.length > 0 ? 'sb-known-services' : undefined}
                       onChange={(description) => {
-                        // Picking a known service fills the whole line — but
+                        // Picking a known service fills the whole line: but
                         // only on an exact match with the price still empty,
                         // so typing a prefix of one can never overwrite
                         // figures someone already entered.
@@ -1103,7 +1103,7 @@ export function InvoiceGenerator({ initialMarket }: { initialMarket?: MarketId }
                 label="Payment means"
                 value={draft.payment.meansTypeCode}
                 onChange={(meansTypeCode) => update({ payment: { ...draft.payment, meansTypeCode } })}
-                options={PAYMENT_MEANS_OPTIONS.map((p) => ({ value: p.code, label: `${p.code} — ${p.label}` }))}
+                options={PAYMENT_MEANS_OPTIONS.map((p) => ({ value: p.code, label: `${p.code}: ${p.label}` }))}
                 hint="BT-81"
               />
               <TextField
@@ -1130,7 +1130,7 @@ export function InvoiceGenerator({ initialMarket }: { initialMarket?: MarketId }
                 <h3 className="mb-1 text-sm font-medium">Exemption reasons</h3>
                 <p className="mb-3 text-xs leading-relaxed text-muted">
                   The categories you used require a stated reason (BT-120). The placeholder is a starting
-                  point — replace it with the wording that is correct for your supply.
+                  point: replace it with the wording that is correct for your supply.
                 </p>
                 <div className="grid gap-3">
                   {reasonsNeeded.map((code) => {
@@ -1138,7 +1138,7 @@ export function InvoiceGenerator({ initialMarket }: { initialMarket?: MarketId }
                     return (
                       <TextField
                         key={code}
-                        label={`${category.code} — ${category.label}`}
+                        label={`${category.code}: ${category.label}`}
                         value={draft.exemptionReasons[code] ?? ''}
                         onChange={(value) =>
                           update({ exemptionReasons: { ...draft.exemptionReasons, [code]: value } })
@@ -1176,7 +1176,7 @@ export function InvoiceGenerator({ initialMarket }: { initialMarket?: MarketId }
               </span>
             </div>
             <p className="mb-1 text-[11px] leading-relaxed text-faint">
-              A rate, not a lump sum — BR-S-09 requires tax to equal taxable × rate.
+              A rate, not a lump sum: BR-S-09 requires tax to equal taxable × rate.
               {sellerCountry.commonVatRates && (
                 <> Common in {sellerCountry.name}: {sellerCountry.commonVatRates.join('%, ')}%.</>
               )}
@@ -1208,7 +1208,7 @@ export function InvoiceGenerator({ initialMarket }: { initialMarket?: MarketId }
                       })
                     }
                     className="rounded-lg border border-border px-2 py-1.5 text-xs text-muted transition hover:text-text"
-                    aria-label={`Discount is ${draft.discount.mode === 'percent' ? 'a percentage' : 'a fixed amount'} — switch`}
+                    aria-label={`Discount is ${draft.discount.mode === 'percent' ? 'a percentage' : 'a fixed amount'}: switch`}
                   >
                     {draft.discount.mode === 'percent' ? '%' : currency}
                   </button>
@@ -1247,7 +1247,7 @@ export function InvoiceGenerator({ initialMarket }: { initialMarket?: MarketId }
             )}
 
             {/* -mx-2 keeps the row optically aligned with the totals above
-                while the padding gives each control a 24px+ touch target —
+                while the padding gives each control a 24px+ touch target:
                 these are thumb targets in the middle of the mobile invoice
                 flow, not desktop text links. */}
             {(!draft.discount.enabled || !draft.shipping.enabled) && (
@@ -1397,7 +1397,7 @@ export function InvoiceGenerator({ initialMarket }: { initialMarket?: MarketId }
           onApply={(groups, hourlyRate) =>
             update({
               // "Insert" means insert: imported lines join what is already
-              // there. Only the untouched starter line gets dropped — a fresh
+              // there. Only the untouched starter line gets dropped: a fresh
               // draft should not keep an empty row above the real work.
               lines: [
                 ...draft.lines.filter(
@@ -1439,7 +1439,7 @@ export function InvoiceGenerator({ initialMarket }: { initialMarket?: MarketId }
                 label="Document type"
                 value={draft.document.typeCode}
                 onChange={(typeCode) => update({ document: { ...draft.document, typeCode } })}
-                options={TYPE_CODE_OPTIONS.map((t) => ({ value: t.code, label: `${t.code} — ${t.label}` }))}
+                options={TYPE_CODE_OPTIONS.map((t) => ({ value: t.code, label: `${t.code}: ${t.label}` }))}
               />
               <div className="flex flex-wrap gap-3 text-sm">
                 <button onClick={() => setPhase('format')} className={BUTTON_QUIET}>
@@ -1454,7 +1454,7 @@ export function InvoiceGenerator({ initialMarket }: { initialMarket?: MarketId }
         </div>
 
         {/* The live checklist. Written as things a person still has to supply,
-            not as rules they have failed — the rule codes that enforce each
+            not as rules they have failed: the rule codes that enforce each
             item are real and stay available, but they are a second question
             ("why is this needed?") and they sit behind their own control. */}
         <div className="rounded-xl border border-border bg-surface p-4">
@@ -1479,7 +1479,7 @@ export function InvoiceGenerator({ initialMarket }: { initialMarket?: MarketId }
                       {showRules && (
                         <span className="ml-1 font-mono text-[10px] text-faint">{check.rule}</span>
                       )}
-                      <span className="sr-only">{check.met ? ' — provided' : ' — still needed'}</span>
+                      <span className="sr-only">{check.met ? ': provided' : ': still needed'}</span>
                     </span>
                   </li>
                 ))}
@@ -1495,7 +1495,7 @@ export function InvoiceGenerator({ initialMarket }: { initialMarket?: MarketId }
             </>
           )}
           <p className="mt-3 text-[11px] leading-relaxed text-faint">
-            Stampbench runs the full check when you create the invoice — this is a preview of it.
+            Stampbench runs the full check when you create the invoice: this is a preview of it.
           </p>
         </div>
 
@@ -1514,7 +1514,7 @@ export function InvoiceGenerator({ initialMarket }: { initialMarket?: MarketId }
           <h2 className="mb-1 font-medium tracking-tight">Change the market?</h2>
           <p className="mb-4 max-w-2xl text-sm leading-relaxed text-muted">
             A different market means a different ruleset, different required fields and a different format.
-            Your data is kept — fields the new market does not use simply stop being asked for, and the
+            Your data is kept: fields the new market does not use simply stop being asked for, and the
             format resets to that market&apos;s default.
           </p>
           <div className="mb-4 flex flex-wrap gap-2">

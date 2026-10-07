@@ -2,7 +2,7 @@
  * The business-tools layer: duplication, payment status, the month summary,
  * recurring schedules and the derived customer/service book.
  *
- * All pure logic — dates and "now" are injected everywhere, so nothing here
+ * All pure logic: dates and "now" are injected everywhere, so nothing here
  * depends on when the suite runs.
  */
 import { describe, expect, it } from 'vitest';
@@ -131,7 +131,7 @@ describe('monthSummary', () => {
       entry({ number: 'A-1', issueDate: '2026-08-01', dueDate: '2026-08-10' }), // overdue
       entry({ number: 'A-2', issueDate: '2026-08-05', paidAt: 5 }), // paid
       entry({ number: 'A-3', issueDate: '2026-08-12', dueDate: '2026-09-11' }), // awaiting
-      entry({ number: 'OLD', issueDate: '2026-07-30' }), // last month — excluded
+      entry({ number: 'OLD', issueDate: '2026-07-30' }), // last month: excluded
       entry({ number: 'E-1', issueDate: '2026-08-09', currency: 'EUR' }),
     ];
     const summary = monthSummary(entries, NOW);
@@ -193,7 +193,7 @@ describe('the book', () => {
       entry({ number: 'A-1', buyerName: 'Acme Ltd', savedAt: 1 }),
       entry({ number: 'A-2', buyerName: 'acme ltd', savedAt: 5 }), // newer casing wins
       entry({ number: 'B-1', buyerName: 'Borealis GmbH', savedAt: 3 }),
-      entry({ number: 'X-1', buyerName: '', savedAt: 9 }), // nameless — skipped
+      entry({ number: 'X-1', buyerName: '', savedAt: 9 }), // nameless: skipped
     ];
     const customers = knownCustomers(entries);
     expect(customers.map((c) => c.name)).toEqual(['acme ltd', 'Borealis GmbH']);
@@ -210,7 +210,7 @@ describe('the book', () => {
   it('derives services and skips half-typed lines', () => {
     const entries = [
       entry({ number: 'A-1', description: 'Website design', price: '800', savedAt: 5 }),
-      entry({ number: 'A-2', description: 'Website design', price: '900', savedAt: 1 }), // older — loses
+      entry({ number: 'A-2', description: 'Website design', price: '900', savedAt: 1 }), // older: loses
       entry({ number: 'A-3', description: 'Unpriced thing', price: '', savedAt: 4 }),
     ];
     const services = knownServices(entries);

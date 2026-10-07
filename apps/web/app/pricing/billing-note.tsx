@@ -3,7 +3,7 @@
 /**
  * The one line under each paid plan's button that says how payment actually
  * happens. The page is statically exported, so whether card checkout is live
- * is unknowable at build time — the worker is asked after mount, exactly like
+ * is unknowable at build time: the worker is asked after mount, exactly like
  * the playground's AI button.
  *
  * Renders the manual-path wording first and swaps only if billing is on:
@@ -31,7 +31,7 @@ export function BillingNote() {
         else if (s.paypal) setMode('paypal');
       })
       .catch(() => {
-        /* worker unreachable — keep the conservative wording */
+        /* worker unreachable: keep the conservative wording */
       });
     return () => {
       cancelled = true;
@@ -41,12 +41,12 @@ export function BillingNote() {
   return (
     <p className="mt-2 text-center text-xs text-faint">
       {mode === 'cards'
-        ? 'Pay by card after signup — activates instantly, cancel anytime.'
+        ? 'Pay by card after signup: activates instantly, cancel anytime.'
         : mode === 'paypal-subscription'
-          ? 'Subscribe with PayPal after signup — renews monthly, activates automatically, cancel anytime.'
+          ? 'Subscribe with PayPal after signup: renews monthly, activates automatically, cancel anytime.'
           : mode === 'paypal'
-            ? 'Pay by PayPal after signup — we switch your plan on once it lands, usually the same day.'
-            : 'No card on the site — we email you to arrange payment and activation.'}
+            ? 'Pay by PayPal after signup: we switch your plan on once it lands, usually the same day.'
+            : 'No card on the site: we email you to arrange payment and activation.'}
     </p>
   );
 }

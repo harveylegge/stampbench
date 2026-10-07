@@ -4,11 +4,11 @@
  *   node scripts/build-static.mjs
  *
  * Server-only routes (auth, admin, dashboard, API) are moved aside for the
- * duration of the build — `next export` requires every route to be static,
+ * duration of the build: `next export` requires every route to be static,
  * and these are exactly the parts of the app that stay dormant until the
  * hosted platform launches. They are restored afterwards no matter what.
  *
- * Output: apps/web/out — drag the folder into Cloudflare Pages (Direct
+ * Output: apps/web/out: drag the folder into Cloudflare Pages (Direct
  * Upload), then add stampbench.com under Custom domains.
  */
 import { execSync } from 'node:child_process';
@@ -71,7 +71,7 @@ try {
   // With a custom distDir, next export writes the site into the distDir itself.
   renameSync(join(webRoot, '.next-static'), join(webRoot, 'out'));
   writeFileSync(join(webRoot, 'out', '_headers'), HEADERS);
-  console.log('\n[static] done — upload the folder: apps/web/out');
+  console.log('\n[static] done: upload the folder: apps/web/out');
 } finally {
   restore();
 }
