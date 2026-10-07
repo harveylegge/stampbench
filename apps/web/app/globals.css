@@ -699,10 +699,10 @@ body:has(.basalt-hero)>header{display:none}.editorial-home:has(.basalt-hero){bac
 .basalt-nav{position:relative;width:min(1180px,100%);padding:10px 0 11px;border:0;border-top:1px solid #82796542;border-bottom:1px solid #82796561;border-radius:0;background:linear-gradient(90deg,transparent,#f7f0e1a8 18%,#f7f0e1a8 82%,transparent);box-shadow:none}.basalt-nav:after{content:"";position:absolute;left:0;bottom:-1px;width:58px;height:2px;background:#c03a1f}.basalt-nav-workbench,.basalt-nav-cta{border-radius:3px!important}.basalt-nav-cta{box-shadow:inset 0 1px #ff9b816b,2px 2px 0 #8e281b24!important}
 .aurora-field{inset:-2%;background:linear-gradient(145deg,#f3ebd9 0%,#f1ead8 46%,#eee3cc 100%);transform:translate3d(var(--hero-haze-x,0px),var(--hero-haze-y,0px),0) scale(1.04);transform-origin:center;will-change:transform}
 .aurora-field i{opacity:.43!important;filter:blur(54px) saturate(1.08);mix-blend-mode:multiply}
-.aurora-field i:nth-child(1){left:-12vw;top:3vh;width:72vw;height:19vw;background:linear-gradient(90deg,#b93520a8 0%,#df552b9c 26%,#f47c3894 58%,#ffc06765 100%)}
-.aurora-field i:nth-child(2){right:-15vw;top:13vh;width:68vw;height:19vw;background:linear-gradient(90deg,#ffc56a59 0%,#ee813d87 37%,#d94a279c 70%,#ae2f1f91 100%)}
-.aurora-field i:nth-child(3){left:7vw;bottom:-5vw;width:80vw;height:20vw;background:linear-gradient(90deg,#bc352177 0%,#e85d2f8f 35%,#f697477d 66%,#c63d2570 100%)}
-.aurora-field b{background:linear-gradient(112deg,transparent 12%,#ffc16523 31%,#ed6d352e 48%,#bd37231d 61%,transparent 74%);mix-blend-mode:multiply}
+.aurora-field i:nth-child(1){left:-12vw;top:3vh;width:72vw;height:19vw;background:linear-gradient(90deg,#c84b18a8 0%,#e66a1f9c 26%,#f28a2b94 58%,#ffc35d65 100%)}
+.aurora-field i:nth-child(2){right:-15vw;top:13vh;width:68vw;height:19vw;background:linear-gradient(90deg,#ffd06a59 0%,#f2912b87 37%,#df5b1d9c 70%,#b9401591 100%)}
+.aurora-field i:nth-child(3){left:7vw;bottom:-5vw;width:80vw;height:20vw;background:linear-gradient(90deg,#c4471777 0%,#eb70228f 35%,#f4a13a7d 66%,#cf521970 100%)}
+.aurora-field b{background:linear-gradient(112deg,transparent 12%,#ffc95c23 31%,#ee7c222e 48%,#c249181d 61%,transparent 74%);mix-blend-mode:multiply}
 /* Workbench Pass: a live software card over an original folded-paper film. */
 .basalt-hero .basalt-layout{grid-template-columns:minmax(0,1.02fr) minmax(430px,.82fr);gap:clamp(34px,5vw,76px);width:min(1180px,100%);margin:auto;justify-content:normal}
 .workbench-pass-stage{--form-x:0px;--form-y:0px;--form-rx:0deg;--form-ry:0deg;--form-scale:1.03;--card-x:0px;--card-y:0px;--card-rx:0deg;--card-ry:0deg;--passport-lift:0px;--passport-hover-tilt:0deg;--pass-light-x:50%;--pass-light-y:42%;--bulge-strength:0;position:relative;z-index:1;width:100%;min-height:620px;perspective:1400px;isolation:isolate;cursor:pointer;outline:none}
