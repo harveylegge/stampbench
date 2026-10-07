@@ -4,6 +4,7 @@ import { useEffect, useRef, useState } from 'react';
 
 export function WorkbenchPass() {
   const stageRef = useRef<HTMLDivElement>(null);
+  const passportRef = useRef<HTMLDivElement>(null);
   const videoRef = useRef<HTMLVideoElement>(null);
   const [personalised, setPersonalised] = useState(false);
   const [canPlayVideo, setCanPlayVideo] = useState(false);
@@ -33,55 +34,182 @@ export function WorkbenchPass() {
 
   useEffect(() => {
     const stage = stageRef.current;
+    const passport = passportRef.current;
     const video = videoRef.current;
     if (!stage) return;
 
     const hero = stage.closest<HTMLElement>('.basalt-hero');
     const reducedMotion = window.matchMedia('(prefers-reduced-motion: reduce)');
 
-    let bounds = stage.getBoundingClientRect();
-    let pointerX = 0.5;
-    let pointerY = 0.5;
+    let stageBounds = stage.getBoundingClientRect();
+    let heroBounds = hero?.getBoundingClientRect() ?? stageBounds;
     let animationFrame = 0;
 
-    const measureStage = () => {
-      bounds = stage.getBoundingClientRect();
+    const current = {
+      formX: 0,
+      formY: 0,
+      formRx: 0,
+      formRy: 0,
+      cardX: 0,
+      cardY: 0,
+      cardRx: 0,
+      cardRy: 0,
+      lightX: 50,
+      lightY: 42,
+      proximity: 0,
+      hover: 0,
+      hazeX: 0,
+      hazeY: 0,
+    };
+    const target = { ...current };
+
+    const clamp = (value: number, minimum: number, maximum: number) => (
+      Math.max(minimum, Math.min(maximum, value))
+    );
+
+    const measure = () => {
+      stageBounds = stage.getBoundingClientRect();
+      heroBounds = hero?.getBoundingClientRect() ?? stageBounds;
     };
 
-    const drawPointer = () => {
+    const writeMotion = () => {
+      const formScale = 1.03 + current.proximity * 0.01 - current.hover * 0.012;
+
+      stage.style.setProperty('--form-x', `${current.formX.toFixed(3)}px`);
+      stage.style.setProperty('--form-y', `${current.formY.toFixed(3)}px`);
+      stage.style.setProperty('--form-rx', `${current.formRx.toFixed(3)}deg`);
+      stage.style.setProperty('--form-ry', `${current.formRy.toFixed(3)}deg`);
+      stage.style.setProperty('--form-scale', formScale.toFixed(4));
+      stage.style.setProperty('--card-x', `${current.cardX.toFixed(3)}px`);
+      stage.style.setProperty('--card-y', `${current.cardY.toFixed(3)}px`);
+      stage.style.setProperty('--card-rx', `${current.cardRx.toFixed(3)}deg`);
+      stage.style.setProperty('--card-ry', `${current.cardRy.toFixed(3)}deg`);
+      stage.style.setProperty('--passport-lift', `${(current.hover * 22).toFixed(3)}px`);
+      stage.style.setProperty('--passport-hover-tilt', `${(current.hover * 1.35).toFixed(3)}deg`);
+      stage.style.setProperty('--pass-light-x', `${current.lightX.toFixed(3)}%`);
+      stage.style.setProperty('--pass-light-y', `${current.lightY.toFixed(3)}%`);
+      stage.style.setProperty('--bulge-strength', current.proximity.toFixed(4));
+      hero?.style.setProperty('--hero-haze-x', `${current.hazeX.toFixed(3)}px`);
+      hero?.style.setProperty('--hero-haze-y', `${current.hazeY.toFixed(3)}px`);
+    };
+
+    const settleMotion = () => {
       animationFrame = 0;
-      stage.style.setProperty('--pass-rx', `${(0.5 - pointerY) * 8}deg`);
-      stage.style.setProperty('--pass-ry', `${(pointerX - 0.5) * 10}deg`);
-      stage.style.setProperty('--pass-shift-x', `${(pointerX - 0.5) * 12}px`);
-      stage.style.setProperty('--pass-shift-y', `${(pointerY - 0.5) * 8}px`);
-      stage.style.setProperty('--pass-light-x', `${pointerX * 100}%`);
-      stage.style.setProperty('--pass-light-y', `${pointerY * 100}%`);
+      const smoothing = 0.058;
+      let unsettled = false;
+
+      (Object.keys(current) as Array<keyof typeof current>).forEach((key) => {
+        const difference = target[key] - current[key];
+        if (Math.abs(difference) > 0.004) {
+          current[key] += difference * smoothing;
+          unsettled = true;
+        } else {
+          current[key] = target[key];
+        }
+      });
+
+      writeMotion();
+      if (unsettled) animationFrame = window.requestAnimationFrame(settleMotion);
+    };
+
+    const queueMotion = () => {
+      if (!animationFrame) animationFrame = window.requestAnimationFrame(settleMotion);
     };
 
     const followPointer = (event: PointerEvent) => {
       if (event.pointerType === 'touch' || reducedMotion.matches) return;
-      pointerX = Math.max(0, Math.min(1, (event.clientX - bounds.left) / bounds.width));
-      pointerY = Math.max(0, Math.min(1, (event.clientY - bounds.top) / bounds.height));
-      if (!animationFrame) animationFrame = window.requestAnimationFrame(drawPointer);
+
+      const heroX = clamp((event.clientX - heroBounds.left) / heroBounds.width, 0, 1);
+      const heroY = clamp((event.clientY - heroBounds.top) / heroBounds.height, 0, 1);
+      const x = heroX * 2 - 1;
+      const y = heroY * 2 - 1;
+      const localX = clamp((event.clientX - stageBounds.left) / stageBounds.width, 0, 1);
+      const localY = clamp((event.clientY - stageBounds.top) / stageBounds.height, 0, 1);
+      const distance = Math.hypot(
+        event.clientX - (stageBounds.left + stageBounds.width * 0.5),
+        event.clientY - (stageBounds.top + stageBounds.height * 0.5),
+      );
+      const attractionRadius = Math.max(260, Math.min(stageBounds.width, stageBounds.height) * 0.72);
+
+      target.formX = x * 26;
+      target.formY = y * 20;
+      target.formRx = -y * 1.1;
+      target.formRy = x * 1.35;
+      target.cardX = x * -7;
+      target.cardY = y * -5;
+      target.cardRx = -y * 1.65;
+      target.cardRy = x * 2.15;
+      target.lightX = clamp(localX * 100, 18, 82);
+      target.lightY = clamp(localY * 100, 18, 82);
+      target.proximity = clamp(1 - distance / attractionRadius, 0, 1);
+      target.hazeX = x * 7;
+      target.hazeY = y * 5;
+      queueMotion();
     };
 
     const resetPointer = () => {
-      if (animationFrame) window.cancelAnimationFrame(animationFrame);
-      animationFrame = 0;
-      pointerX = 0.5;
-      pointerY = 0.5;
-      stage.style.setProperty('--pass-rx', '0deg');
-      stage.style.setProperty('--pass-ry', '0deg');
-      stage.style.setProperty('--pass-shift-x', '0px');
-      stage.style.setProperty('--pass-shift-y', '0px');
-      stage.style.setProperty('--pass-light-x', '50%');
-      stage.style.setProperty('--pass-light-y', '42%');
+      target.formX = 0;
+      target.formY = 0;
+      target.formRx = 0;
+      target.formRy = 0;
+      target.cardX = 0;
+      target.cardY = 0;
+      target.cardRx = 0;
+      target.cardRy = 0;
+      target.lightX = 50;
+      target.lightY = 42;
+      target.proximity = 0;
+      target.hover = 0;
+      target.hazeX = 0;
+      target.hazeY = 0;
+      stage.classList.remove('is-passport-hovered');
+      queueMotion();
+    };
+
+    const raisePassport = () => {
+      if (reducedMotion.matches) return;
+      target.hover = 1;
+      stage.classList.add('is-passport-hovered');
+      queueMotion();
+    };
+
+    const lowerPassport = () => {
+      target.hover = 0;
+      stage.classList.remove('is-passport-hovered');
+      queueMotion();
+    };
+
+    const resetMotionImmediately = () => {
+      Object.assign(current, {
+        formX: 0,
+        formY: 0,
+        formRx: 0,
+        formRy: 0,
+        cardX: 0,
+        cardY: 0,
+        cardRx: 0,
+        cardRy: 0,
+        lightX: 50,
+        lightY: 42,
+        proximity: 0,
+        hover: 0,
+        hazeX: 0,
+        hazeY: 0,
+      });
+      Object.assign(target, current);
+      stage.classList.remove('is-passport-hovered');
+      writeMotion();
     };
 
     const syncMotionPreference = () => {
-      if (!video) return;
-      if (reducedMotion.matches) video.pause();
-      else void video.play().catch(() => undefined);
+      if (reducedMotion.matches) {
+        if (animationFrame) window.cancelAnimationFrame(animationFrame);
+        animationFrame = 0;
+        resetMotionImmediately();
+        video?.pause();
+      } else {
+        void video?.play().catch(() => undefined);
+      }
     };
 
     const observer = new IntersectionObserver(([entry]) => {
@@ -90,14 +218,18 @@ export function WorkbenchPass() {
       if (entry.isIntersecting) void video.play().catch(() => undefined);
       else video.pause();
     }, { rootMargin: '160px 0px' });
-    const resizeObserver = new ResizeObserver(measureStage);
+    const resizeObserver = new ResizeObserver(measure);
 
     observer.observe(stage);
     resizeObserver.observe(stage);
+    if (hero) resizeObserver.observe(hero);
     hero?.addEventListener('pointermove', followPointer, { passive: true });
     hero?.addEventListener('pointerleave', resetPointer);
-    window.addEventListener('scroll', measureStage, { passive: true });
+    passport?.addEventListener('pointerenter', raisePassport);
+    passport?.addEventListener('pointerleave', lowerPassport);
+    window.addEventListener('scroll', measure, { passive: true });
     reducedMotion.addEventListener('change', syncMotionPreference);
+    writeMotion();
     syncMotionPreference();
 
     return () => {
@@ -106,8 +238,12 @@ export function WorkbenchPass() {
       if (animationFrame) window.cancelAnimationFrame(animationFrame);
       hero?.removeEventListener('pointermove', followPointer);
       hero?.removeEventListener('pointerleave', resetPointer);
-      window.removeEventListener('scroll', measureStage);
+      passport?.removeEventListener('pointerenter', raisePassport);
+      passport?.removeEventListener('pointerleave', lowerPassport);
+      window.removeEventListener('scroll', measure);
       reducedMotion.removeEventListener('change', syncMotionPreference);
+      hero?.style.removeProperty('--hero-haze-x');
+      hero?.style.removeProperty('--hero-haze-y');
     };
   }, [canPlayVideo]);
 
@@ -151,7 +287,7 @@ export function WorkbenchPass() {
       </div>
       <div className="workbench-pass-atmosphere" aria-hidden="true" />
 
-      <div className="workbench-pass-motion" aria-hidden="true">
+      <div ref={passportRef} className="workbench-pass-motion" aria-hidden="true">
         <div className="workbench-pass-card">
           <div className="workbench-pass-face workbench-pass-front">
             <div className="workbench-pass-shine" />
