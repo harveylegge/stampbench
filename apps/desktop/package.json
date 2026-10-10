@@ -1,0 +1,52 @@
+{
+  "name": "@stampbench/desktop",
+  "version": "0.1.0",
+  "private": true,
+  "description": "Stampbench local-first desktop workbench",
+  "author": "Harvey Legge",
+  "main": "main.cjs",
+  "scripts": {
+    "dev": "electron .",
+    "build:web": "node scripts/build-web.mjs",
+    "dist:win": "npm run build:web && electron-builder --win nsis",
+    "dist:dir": "npm run build:web && electron-builder --dir"
+  },
+  "devDependencies": {
+    "electron": "44.7.0",
+    "electron-builder": "^26.0.0"
+  },
+  "build": {
+    "appId": "com.stampbench.desktop",
+    "productName": "Stampbench",
+    "asar": true,
+    "directories": {
+      "output": "dist"
+    },
+    "files": [
+      "main.cjs",
+      "package.json"
+    ],
+    "extraResources": [
+      {
+        "from": "../web/out",
+        "to": "web",
+        "filter": ["**/*"]
+      }
+    ],
+    "win": {
+      "target": ["nsis"],
+      "icon": "build/icon.png",
+      "artifactName": "Stampbench-Setup-${version}.${ext}"
+    },
+    "nsis": {
+      "oneClick": false,
+      "allowToChangeInstallationDirectory": true,
+      "createDesktopShortcut": true,
+      "createStartMenuShortcut": true
+    },
+    "mac": {
+      "target": ["dmg"],
+      "category": "public.app-category.business"
+    }
+  }
+}

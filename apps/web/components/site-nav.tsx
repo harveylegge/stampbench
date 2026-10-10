@@ -7,10 +7,11 @@ import { me, probablySignedIn, type Me } from '@/lib/account-client';
 import { BrandLink } from '@/components/nav-links';
 
 const links = [
-  { href: '/invoice-generator', label: 'The workbench' },
-  { href: '/developers', label: 'For developers' },
-  { href: '/pricing', label: 'Pricing' },
-  { href: '/trust', label: 'Our standards' },
+  { href: '/', label: 'Validation' },
+  { href: '/docs', label: 'Integration docs' },
+  { href: '/trust', label: 'Evidence' },
+  { href: '/business', label: 'Create invoices' },
+  { href: '/pricing', label: 'Pilot' },
   { href: '/my-invoices', label: 'My invoices' },
 ];
 
@@ -32,7 +33,7 @@ export function SiteNav() {
       <BrandLink />
       <nav className="hidden items-center gap-7 text-sm lg:flex" aria-label="Main navigation">
         {links.map((link) => (
-          <Link key={link.href} href={link.href} aria-current={pathname.startsWith(link.href) ? 'page' : undefined}>
+          <Link key={link.href} href={link.href} aria-current={link.href === '/' ? (pathname === '/' ? 'page' : undefined) : (pathname.startsWith(link.href) ? 'page' : undefined)}>
             {link.label}
           </Link>
         ))}

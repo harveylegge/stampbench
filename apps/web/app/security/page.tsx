@@ -63,7 +63,7 @@ const MEASURES = [
 
 const NOT_YET = [
   'SOC 2 Type II or ISO 27001 certification. We do not have either, and we will not imply otherwise.',
-  'A signed DPA/AVV and a formal EU-data-residency commitment: in progress for the Platform tier; ask us for current status before relying on it.',
+  'A signed DPA/AVV or formal EU-data-residency commitment. Neither is currently offered as a standard service.',
   'A third-party penetration test. Our review was internal and adversarial, but it was not an external pentest.',
   'A published uptime SLA. The service is new; we would rather commit to a number we have history for.',
 ];
@@ -103,7 +103,8 @@ export default function SecurityPage() {
           need to argue with us about our controls: use{' '}
           <code className="font-mono text-xs text-accent-hi">@stampbench/core</code> locally. It is
           MIT-licensed, runs offline, has no telemetry, and contains the same rule engine the hosted
-          API uses. The hosted product exists to save you maintenance, not to hold your data.
+          API uses. Hosted access is currently limited to evaluation and is not sold as a standard
+          managed service.
         </p>
       </div>
 

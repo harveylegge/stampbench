@@ -2,9 +2,9 @@
 
 # Stampbench
 
-**E-invoicing compliance, minus the pain.** Validate and generate XRechnung / EN 16931
-e-invoices with a TypeScript-first library and hosted API — with AI-written, plain-language
-explanations for cryptic rule violations.
+**European e-invoicing validation for software.** Validate and generate XRechnung / EN 16931
+e-invoices with a TypeScript-first library and command-line tool, with structured rule ids and
+source locations for findings.
 
 Created by [Harvey Legge](https://github.com/harveylegge), founder of [Stampbench](https://stampbench.com).
 
@@ -147,18 +147,15 @@ the enforcement date. Register a new specification release with `registerRuleset
 day it is published; superseded rule sets stay available so you can re-check historical
 invoices against the rules that were in force when you issued them.
 
-## The API
+## Integration pilot
 
-```bash
-curl -s https://stampbench.com/api/v1/validate \
-  -H "Authorization: Bearer sb_live_…" \
-  -H "Content-Type: application/json" \
-  -d '{"xml":"<Invoice …>"}'
-```
+The public integration surfaces today are the MIT library and CLI. Stampbench is also testing a
+fixed-scope £3,000 integration pilot: one product, one staging workflow, agreed representative
+documents, diagnostic mapping, acceptance evidence and a technical handover. Managed hosting,
+private deployments and guaranteed response times are not standard services today.
 
-Endpoints: `POST /api/v1/validate`, `POST /api/v1/generate`, `POST /api/v1/fix` —
-create a key at [stampbench.com/account](https://stampbench.com/account) (free: 100 calls/month).
-Full reference: [/docs](https://stampbench.com/docs) (or `apps/web/app/docs/page.tsx`).
+See the current [integration documentation](https://stampbench.com/docs) or email
+[hello@stampbench.com](mailto:hello@stampbench.com?subject=Stampbench%20integration%20pilot).
 
 ## Documentation
 
@@ -177,4 +174,5 @@ official KoSIT validator — Stampbench's job is that by the time you run it, it
 
 ## License
 
-`packages/core` is MIT. The `apps/web` application is proprietary.
+`packages/core` is MIT. The original InvoiceGate copyright notice is preserved in the root
+licence alongside the current Stampbench attribution. The `apps/web` application is proprietary.

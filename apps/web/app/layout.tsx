@@ -26,7 +26,7 @@ export const metadata: Metadata = {
    * standards vocabulary in full.
    */
   description:
-    'Create compliant invoices without learning e-invoicing standards, or build e-invoicing into your software with a TypeScript engine, CLI and hosted API. EN 16931, the German XRechnung profile, UBL and CII: open source, runs on your own machine.',
+    'European e-invoicing validation for software teams. Validate UBL and CII against supported EN 16931 and XRechnung rules with an open-source TypeScript engine and CLI.',
   keywords: [
     'invoice validation', 'e-invoicing api', 'invoice api', 'invoice compliance',
     'en 16931', 'ubl invoice', 'cii invoice', 'xrechnung', 'zugferd', 'factur-x',
@@ -36,7 +36,7 @@ export const metadata: Metadata = {
   openGraph: {
     title: 'Stampbench: invoice validation and compliance infrastructure',
     description:
-      'Validate, repair and create structured e-invoices against the ruleset that applies where you bill: EN 16931 everywhere, the German XRechnung profile in full. Open source, runs locally.',
+      'Validate, repair and create structured e-invoices against documented EN 16931 and XRechnung rules. Open source and designed to run locally.',
     siteName: 'Stampbench',
     type: 'website',
   },
@@ -56,7 +56,7 @@ function Footer() {
       <div className="mx-auto flex max-w-[1180px] flex-col justify-between gap-7 px-6 md:flex-row md:items-end">
         <div><div className="mb-2 font-semibold text-text">Stampbench</div><p>Good work. Properly invoiced.<br />Founded by <a href="/harvey">Harvey Legge</a>.</p></div>
         <nav className="flex flex-wrap gap-x-6 gap-y-3" aria-label="Footer navigation">
-          <a href="/invoice-generator">The workbench</a><a href="/developers">For developers</a><a href="/pricing">Pricing</a><a href="/trust">Standards</a><a href="/docs">Docs</a><a href="/security">Security</a><a href="/privacy">Privacy</a><a href="/cookies">Cookies</a><a href="/terms">Terms</a><a href="/refunds">Refunds</a><a href="/impressum">Business details</a>
+          <a href="/">Validation</a><a href="/invoice-generator">Invoice creator</a><a href="/pricing">Integration pilot</a><a href="/trust">Evidence</a><a href="/docs">Docs</a><a href="/security">Security</a><a href="/privacy">Privacy</a><a href="/cookies">Cookies</a><a href="/terms">Terms</a><a href="/refunds">Refunds</a><a href="/impressum">Business details</a>
         </nav>
       </div>
       <div className="mx-auto mt-7 max-w-[1180px] px-6 text-xs">© {new Date().getFullYear()} Harvey Legge trading as Stampbench · United Kingdom · <a href="mailto:hello@stampbench.com">hello@stampbench.com</a></div>

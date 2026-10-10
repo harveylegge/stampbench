@@ -1,110 +1,100 @@
 import type { Metadata } from 'next';
 import Link from 'next/link';
-import { Suspense } from 'react';
-
-import { PlansView } from './plans-view';
 
 export const metadata: Metadata = {
-  title: 'Pricing',
+  title: 'Open-source core and integration pilot',
   description:
-    'Stampbench pricing for businesses and developers. Five invoices a month free, unlimited from £29/month; hosted API plans from £29/month. Unlimited local validation with the open-source library.',
+    'Run the MIT-licensed Stampbench validation core locally, or evaluate a fixed-scope £3,000 integration pilot for one software workflow.',
+  alternates: { canonical: '/pricing' },
 };
 
-/**
- * Two audiences, one price list.
- *
- * The plans and prices are unchanged: what changed is that the page no longer
- * makes a freelancer read API quotas to work out whether £29 is for them. The
- * audience switch lives in PlansView (it needs state); the FAQ below is shared,
- * but each answer says plainly which audience it concerns.
- */
+const pilotItems = [
+  'One product and one staging integration path',
+  'An agreed set of representative UBL or CII documents',
+  'Structured rule IDs, business terms and source locations',
+  'Written coverage and acceptance results',
+  'Implementation handover and one technical workshop',
+  '30 days of defect support for the delivered pilot scope',
+] as const;
 
-const faqs = [
+const questions = [
   {
-    q: 'Do I need to pay to create invoices?',
-    a: 'Not for the first five a month. Creating, checking and downloading five invoices a month is free, with no account: it all runs in your browser. Paying lifts that limit and adds the tools for running on Stampbench month after month: recurring invoices, your customer book, marking invoices paid and chasing what is overdue, clean PDFs with no "Made with Stampbench" line, and backup that follows you between devices. Checking and repairing a file you already have stays free and unlimited, always.',
-    who: 'Business',
+    question: 'Why pay when the core is MIT licensed?',
+    answer:
+      'You do not need to pay Stampbench for permission to use the library. The pilot pays for defined integration work, testing against your representative invoices, diagnostic mapping and a documented handover.',
   },
   {
-    q: 'What counts as a document?',
-    a: 'Each request to /api/v1/validate or /api/v1/generate counts as one document. Local validation with the open-source @stampbench/core library is unlimited and free forever: the quota only applies to the hosted API. Creating invoices on this site does not consume it either.',
-    who: 'Developer',
+    question: 'Is £3,000 a permanent list price?',
+    answer:
+      'It is the initial test price for a tightly bounded pilot. Scope and acceptance criteria are agreed before work starts. Wider formats, additional products or custom national rules are quoted separately.',
   },
   {
-    q: 'How do accounts and quotas work?',
-    a: 'A free account comes with 100 hosted API calls, 10 shared reports and 5 future-ruleset checks per month. The open-source library, and validate, generate and fix in the playground, never need an account and are unlimited: quotas apply only to the hosted features.',
-    who: 'Developer',
+    question: 'Does a pilot certify our invoices?',
+    answer:
+      'No. Stampbench implements a documented subset of supported EN 16931 and XRechnung rules. The pilot supplies validation tooling and test evidence, not legal advice, certification or a guarantee of recipient acceptance.',
   },
   {
-    q: 'What does the Platform tier actually include?',
-    a: 'Usage-based pricing beyond 100k documents, a signable DPA/AVV and EU data residency (rolling out), version pinning per integration, and a rule-update commitment: new KoSIT releases supported within days, contractually.',
-    who: 'Developer',
+    question: 'What happens after the pilot?',
+    answer:
+      'There is no automatic subscription. If continuing engineering support or shared infrastructure would be useful, it is scoped only after the pilot has established what your team actually needs.',
   },
-  {
-    q: 'Why pay when the library is free?',
-    a: 'The hosted API gives you always-current rule sets without dependency upgrades, usage from any language (not just Node.js), shareable validation reports, and someone else maintaining the rule treadmill as XRechnung versions change.',
-    who: 'Developer',
-  },
-  {
-    q: 'Will my invoice be accepted? Is this legal advice?',
-    a: 'Stampbench checks your invoice against the published EN 16931 and XRechnung rules and documents its coverage precisely, but it is tooling rather than legal advice, and it cannot promise what any particular customer’s system will do. For certification-grade sign-off, also run the official KoSIT validator: Stampbench is built to make passing it straightforward.',
-    who: 'Both',
-  },
-  {
-    q: 'Do you support Factur-X / ZUGFeRD, Peppol BIS, or FatturaPA?',
-    a: 'Validation supports both syntaxes today, auto-detected: UBL and CII (the ZUGFeRD/Factur-X XML most German invoices arrive as). Generation is XRechnung UBL. Factur-X PDF generation, Peppol BIS and FatturaPA are next: Agency subscribers get early access.',
-    who: 'Developer',
-  },
-  {
-    q: 'Can I cancel anytime?',
-    a: 'Yes: plans are monthly. There is no billing portal yet: email us and your plan drops to Free at the end of the period. If you set up a recurring PayPal payment you can also cancel it yourself in PayPal at any time. Nothing renews behind your back.',
-    who: 'Both',
-  },
-  {
-    q: 'What about annual billing or EUR pricing?',
-    a: 'Both are coming. Email us and we will set you up manually in the meantime.',
-    who: 'Both',
-  },
-];
+] as const;
 
 export default function PricingPage() {
   return (
-    <main className="pricing-editorial mx-auto max-w-6xl px-4 py-14 sm:py-20">
-      {/* PlansView reads ?for= via useSearchParams, which the static export
-          requires to sit under a Suspense boundary. */}
-      <Suspense fallback={<div className="min-h-[32rem]" />}>
-        <PlansView />
-      </Suspense>
-
-      <div className="pricing-faq-head">
-        <p>THE SMALL PRINT / MADE CLEAR</p>
-        <h2>Questions, answered<br/><em>without the fine print.</em></h2>
-      </div>
-      <div className="pricing-faq-grid">
-        {faqs.map((f) => (
-          <div key={f.q} className="pricing-faq-card">
-            <div className="mb-2 flex items-start justify-between gap-3">
-              <h3 className="text-sm font-medium">{f.q}</h3>
-              <span className="pricing-faq-tag">
-                {f.who}
-              </span>
-            </div>
-            <p className="text-sm leading-relaxed text-muted">{f.a}</p>
+    <main className="bg-[#f4efe3] text-[#20231f]">
+      <section className="border-b border-[#20231f]/15 px-5 py-16 sm:px-8 sm:py-24">
+        <div className="mx-auto grid max-w-[1180px] gap-10 lg:grid-cols-[.85fr_1.15fr] lg:items-end">
+          <div>
+            <p className="font-mono text-[10px] uppercase tracking-[0.15em] text-[#c7442d]">Commercial model / October 2026</p>
+            <h1 className="mt-6 text-[clamp(3rem,6vw,5.8rem)] font-semibold leading-[.98] tracking-[-0.055em]">Use the core freely. Pay for the integration work.</h1>
           </div>
-        ))}
-      </div>
+          <p className="max-w-xl text-base leading-7 text-[#5f625b] lg:justify-self-end">Stampbench separates open-source validation from professional implementation. There is no artificial licence gate around the local engine.</p>
+        </div>
+      </section>
 
-      <p className="pricing-footnote">
-        Still deciding which side you are on?{' '}
-        <Link href="/invoice-generator" className="text-accent-hi hover:underline">
-          Create an invoice
-        </Link>{' '}
-        or{' '}
-        <Link href="/developers" className="text-accent-hi hover:underline">
-          look at the developer platform
-        </Link>
-        .
-      </p>
+      <section className="border-b border-[#20231f]/15 px-5 py-16 sm:px-8 sm:py-20">
+        <div className="mx-auto grid max-w-[1180px] border-l border-t border-[#20231f]/20 lg:grid-cols-2">
+          <article className="border-r border-b border-[#20231f]/20 p-6 sm:p-8">
+            <p className="font-mono text-[9px] uppercase tracking-[0.14em] text-[#777a72]">Open-source core</p>
+            <div className="mt-8 flex items-baseline gap-2"><strong className="text-5xl font-semibold tracking-[-0.05em]">£0</strong><span className="text-sm text-[#686c64]">MIT licensed</span></div>
+            <p className="mt-5 max-w-lg text-sm leading-6 text-[#5f625b]">Install the TypeScript library or CLI, run validation locally and maintain the integration inside your own team.</p>
+            <ul className="mt-7 space-y-3 border-t border-[#20231f]/15 pt-6 text-sm text-[#3f433c]">
+              <li>UBL and CII syntax detection</li>
+              <li>Documented EN 16931 and XRechnung rule coverage</li>
+              <li>Structured findings and source locations</li>
+              <li>No Java runtime or mandatory invoice upload</li>
+            </ul>
+            <Link href="/docs" className="mt-8 inline-block border-b border-[#20231f] pb-1 text-sm font-medium">Read integration docs ↗</Link>
+          </article>
+
+          <article className="border-r border-b border-[#20231f]/20 bg-[#eee8dc] p-6 sm:p-8">
+            <p className="font-mono text-[9px] uppercase tracking-[0.14em] text-[#c7442d]">Founding integration pilot</p>
+            <div className="mt-8 flex items-baseline gap-2"><strong className="text-5xl font-semibold tracking-[-0.05em]">£3,000</strong><span className="text-sm text-[#686c64]">test price · fixed scope</span></div>
+            <p className="mt-5 max-w-lg text-sm leading-6 text-[#5f625b]">Stampbench works with your engineering team to put the current validator into one real staging workflow and document the result.</p>
+            <ul className="mt-7 space-y-3 border-t border-[#20231f]/15 pt-6 text-sm text-[#3f433c]">
+              {pilotItems.map((item) => <li key={item}>{item}</li>)}
+            </ul>
+            <a href="mailto:hello@stampbench.com?subject=Stampbench%20integration%20pilot" className="mt-8 inline-block rounded-[4px] bg-[#20231f] px-5 py-3.5 text-sm font-semibold text-[#fdfbf7]">Discuss a pilot ↗</a>
+          </article>
+        </div>
+        <p className="mx-auto mt-6 max-w-[1180px] text-xs leading-5 text-[#686c64]">Managed hosting, private deployments and guaranteed response times are not sold as standard services today. Any continuing work is agreed only after a successful pilot.</p>
+      </section>
+
+      <section className="px-5 py-16 sm:px-8 sm:py-20">
+        <div className="mx-auto max-w-[1180px]">
+          <h2 className="text-3xl font-semibold tracking-[-0.045em] sm:text-4xl">Questions, answered precisely.</h2>
+          <div className="mt-8 border-t border-[#20231f]/20">
+            {questions.map(({ question, answer }) => (
+              <article key={question} className="grid gap-3 border-b border-[#20231f]/15 py-6 md:grid-cols-[.72fr_1.28fr] md:gap-10">
+                <h3 className="text-sm font-semibold">{question}</h3>
+                <p className="max-w-2xl text-sm leading-6 text-[#5f625b]">{answer}</p>
+              </article>
+            ))}
+          </div>
+          <p className="mt-10 text-sm text-[#5f625b]">Need to create an invoice rather than integrate validation? <Link href="/business" className="border-b border-[#20231f]/50 text-[#20231f]">Open Stampbench Business →</Link></p>
+        </div>
+      </section>
     </main>
   );
 }

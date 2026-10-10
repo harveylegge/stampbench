@@ -48,7 +48,7 @@ export default function TrustPage() {
           >
             Create a free invoice <span>↗</span>
           </Link>
-          <Link href="/developers" className="editorial-link">
+          <Link href="/docs" className="editorial-link">
             Technical documentation <span>↗</span>
           </Link>
         </div>

@@ -43,8 +43,8 @@ export default function PlaygroundPage() {
           API and library docs
         </a>
         <span className="mx-2">·</span>
-        <a href="/developers" className="text-accent-hi hover:underline">
-          Developer platform
+        <a href="/pricing" className="text-accent-hi hover:underline">
+          Integration pilot
         </a>
         <span className="mx-2">·</span>
         <a href="/invoice-generator" className="text-accent-hi hover:underline">

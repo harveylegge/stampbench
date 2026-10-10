@@ -19,7 +19,8 @@ import { fileURLToPath } from 'node:url';
 const webRoot = join(dirname(fileURLToPath(import.meta.url)), '..');
 const appDir = join(webRoot, 'app');
 const holding = join(webRoot, '.static-excluded');
-const SERVER_ONLY = ['(auth)', 'admin', 'api', 'dashboard'];
+const includeDesktopApp = process.env.INCLUDE_DESKTOP_APP === '1';
+const SERVER_ONLY = ['(auth)', 'admin', 'api', 'dashboard', ...(includeDesktopApp ? [] : ['desktop'])];
 
 const moved = [];
 function exclude() {

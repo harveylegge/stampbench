@@ -1,15 +1,18 @@
 import type { Metadata } from 'next';
-import { EditorialHero } from '@/components/editorial-hero';
-import { en } from '@/lib/copy';
+import { EnterpriseLanding } from '@/components/enterprise-landing';
 
 export const metadata: Metadata = {
-  // absolute: the root layout's template would otherwise append the brand twice.
-  title: { absolute: en.meta.title },
-  description: en.meta.description,
+  title: { absolute: 'Stampbench: European e-invoicing validation for software' },
+  description:
+    'Validate UBL and CII invoices against supported EN 16931 and XRechnung rules. Integrate structured rule IDs and source locations into your software.',
   alternates: { canonical: '/', languages: { en: '/', de: '/de' } },
-  openGraph: { title: en.meta.title, description: en.meta.description },
+  openGraph: {
+    title: 'European e-invoicing validation for your software',
+    description:
+      'Validate UBL and CII invoices and return structured diagnostics inside the workflow your product already uses.',
+  },
 };
 
 export default function LandingPage() {
-  return <EditorialHero copy={en} />;
+  return <EnterpriseLanding />;
 }

@@ -740,3 +740,23 @@ body:has(.basalt-hero)>header{display:none}.editorial-home:has(.basalt-hero){bac
 @media(max-width:760px){.basalt-hero .basalt-layout{grid-template-columns:1fr;gap:18px;width:100%;margin:65px auto 0}.workbench-pass-stage{min-height:450px;margin-top:-12px}.workbench-pass-film-shell{width:650px;height:650px}.workbench-pass-motion{width:min(360px,94%);transform:translate3d(-50%,-50%,0) rotateZ(-2deg);animation-duration:7s}.workbench-pass-front li b{font-size:8.5px}.workbench-pass-caption{bottom:25px}.workbench-pass-hint{bottom:6px}}
 @media(hover:none){.workbench-pass-motion{transform:translate3d(-50%,-50%,0) rotateZ(-2deg)}.workbench-pass-film-shell{transform:translate3d(-50%,-50%,-20px) scale(1.03)}.pass-hint-pointer{display:none}.pass-hint-touch{display:inline}}
 @media(prefers-reduced-motion:reduce){.aurora-field{transform:scale(1.04)}.workbench-pass-stage{cursor:pointer}.workbench-pass-film-shell{transform:translate3d(-50%,-50%,-20px) scale(1.03)}.workbench-pass-film-shell:after{display:none}.workbench-pass-atmosphere{background:radial-gradient(circle,#ed71333d,transparent 57%);transform:none}.workbench-pass-motion,.workbench-pass-card,.pass-checking i,.workbench-pass-front li em{animation:none!important;transition:none}.workbench-pass-motion{transform:translate3d(-50%,-50%,0) rotateZ(-2deg)}.workbench-pass-front li em{opacity:1;transform:none}}
+
+/* The enterprise homepage owns its navigation and footer so the application
+   routes can keep the warmer product shell without duplicating chrome here. */
+body:has(.enterprise-landing){background:#f4efe3;color-scheme:light}
+body:has(.enterprise-landing)>header,
+body:has(.enterprise-landing)>footer,
+body:has(.enterprise-landing) .assistant-launch,
+body:has(.enterprise-landing) .assistant-panel{display:none}
+body:has(.enterprise-landing) main{min-width:0}
+.enterprise-landing ::selection{background:#c7442d;color:#fff}
+.enterprise-landing a{transition:color .2s ease,background-color .2s ease,border-color .2s ease,transform .2s ease}
+.enterprise-landing button{cursor:pointer}
+@media(prefers-reduced-motion:reduce){.enterprise-landing *{scroll-behavior:auto!important;transition-duration:0s!important}}
+
+body:has(.desktop-app-preview)>header,
+body:has(.desktop-app-preview)>footer,
+body:has(.desktop-app-preview) .assistant-launch,
+body:has(.desktop-app-preview) .assistant-panel,
+body:has(.desktop-app-preview)>.skip-link{display:none}
+body:has(.desktop-app-preview){background:#d8d2c6;color-scheme:light}
