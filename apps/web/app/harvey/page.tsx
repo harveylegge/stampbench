@@ -119,8 +119,9 @@ export default function HarveyPage() {
         <p>
           Harvey started Stampbench for the mandate wave hitting European businesses: Germany has
           required companies to receive e-invoices since January 2025 and requires them to issue
-          e-invoices from January 2027, with France and other EU states following. The existing
-          tooling ecosystem is Java; Stampbench is the TypeScript-first answer.
+          e-invoices from January 2027 (January 2028 for smaller businesses), with France and
+          other EU states following. The existing tooling ecosystem is Java; Stampbench is the
+          TypeScript-first answer.
         </p>
       </div>
 
@@ -136,6 +137,12 @@ export default function HarveyPage() {
           </a>
         ))}
       </div>
+
+      <p className="mt-10 text-xs leading-relaxed text-faint">
+        About the $50,000 figure: it is the advertised value of technology offers from programme
+        partners available to participants in the Anthropic programme Stampbench was selected for.
+        It is not funding, investment or payment from Anthropic.
+      </p>
     </div>
   );
 }
