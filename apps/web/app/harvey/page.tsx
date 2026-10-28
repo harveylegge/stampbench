@@ -1,10 +1,33 @@
 import type { Metadata } from 'next';
 
+const NAME = 'Harvey Legge';
+const HEADLINE = 'Harvey Legge — Founder of Stampbench';
+const LOCATION = 'Based in London – Cotswolds';
+const DESCRIPTION =
+  'Harvey Legge is the founder of Stampbench, developing European e-invoicing technology. Based in London – Cotswolds. Selected by Anthropic, with access to over $50,000 in technology benefits.';
+
 export const metadata: Metadata = {
-  title: 'Harvey Legge',
-  description:
-    'Harvey Legge is the founder of Stampbench, an open-source e-invoicing compliance toolkit: validation, repair and generation for XRechnung / EN 16931 invoices in TypeScript.',
+  // Absolute: the page is about a person, so the "· Stampbench" suffix the
+  // site template adds would read as "Founder of Stampbench · Stampbench".
+  title: { absolute: HEADLINE },
+  description: DESCRIPTION,
   alternates: { canonical: '/harvey' },
+  openGraph: {
+    type: 'profile',
+    title: HEADLINE,
+    description: DESCRIPTION,
+    url: '/harvey',
+    siteName: 'Stampbench',
+    firstName: 'Harvey',
+    lastName: 'Legge',
+    username: 'harveylegge',
+    locale: 'en_GB',
+  },
+  twitter: {
+    card: 'summary',
+    title: HEADLINE,
+    description: DESCRIPTION,
+  },
 };
 
 const LINKS = [
@@ -14,41 +37,55 @@ const LINKS = [
   { label: 'npm', href: 'https://www.npmjs.com/package/stampbench', sub: 'stampbench · @stampbench/core' },
 ];
 
+const PERSON_JSON_LD = {
+  '@context': 'https://schema.org',
+  '@type': 'ProfilePage',
+  url: 'https://stampbench.com/harvey',
+  mainEntity: {
+    '@type': 'Person',
+    '@id': 'https://stampbench.com/#harvey-legge',
+    name: NAME,
+    givenName: 'Harvey',
+    familyName: 'Legge',
+    url: 'https://stampbench.com/harvey',
+    description: DESCRIPTION,
+    jobTitle: 'Founder',
+    worksFor: {
+      '@type': 'Organization',
+      '@id': 'https://stampbench.com/#org',
+      name: 'Stampbench',
+      url: 'https://stampbench.com',
+    },
+    homeLocation: {
+      '@type': 'Place',
+      name: 'London – Cotswolds',
+      address: {
+        '@type': 'PostalAddress',
+        addressLocality: 'London',
+        addressRegion: 'Cotswolds',
+        addressCountry: 'GB',
+      },
+    },
+    knowsAbout: [
+      'E-invoicing',
+      'XRechnung',
+      'EN 16931',
+      'TypeScript',
+      'Software development',
+    ],
+    sameAs: [
+      'https://github.com/harveylegge',
+      'https://www.linkedin.com/in/harvey-legge-ba687b3ba',
+    ],
+  },
+};
+
 export default function HarveyPage() {
   return (
     <div className="mx-auto max-w-3xl px-4 py-16">
       <script
         type="application/ld+json"
-        dangerouslySetInnerHTML={{
-          __html: JSON.stringify({
-            '@context': 'https://schema.org',
-            '@type': 'ProfilePage',
-            mainEntity: {
-              '@type': 'Person',
-              '@id': 'https://stampbench.com/#harvey-legge',
-              name: 'Harvey Legge',
-              url: 'https://stampbench.com/harvey',
-              jobTitle: 'Founder',
-              worksFor: {
-                '@type': 'Organization',
-                '@id': 'https://stampbench.com/#org',
-                name: 'Stampbench',
-                url: 'https://stampbench.com',
-              },
-              knowsAbout: [
-                'E-invoicing',
-                'XRechnung',
-                'EN 16931',
-                'TypeScript',
-                'Software development',
-              ],
-              sameAs: [
-                'https://github.com/harveylegge',
-                'https://www.linkedin.com/in/harvey-legge-ba687b3ba',
-              ],
-            },
-          }),
-        }}
+        dangerouslySetInnerHTML={{ __html: JSON.stringify(PERSON_JSON_LD) }}
       />
 
       <div className="mb-8 flex items-center gap-6">
@@ -60,24 +97,27 @@ export default function HarveyPage() {
           HL
         </div>
         <div>
-          <h1 className="text-3xl font-semibold tracking-tight">Harvey Legge</h1>
-          <p className="mt-1 text-muted">Founder, Stampbench</p>
+          <h1 className="text-3xl font-semibold tracking-tight">{HEADLINE}</h1>
+          <p className="mt-1 text-muted">{LOCATION}</p>
         </div>
       </div>
 
       <div className="space-y-4 leading-relaxed text-muted">
-        <p>
-          Harvey Legge is a software developer and the founder of{' '}
-          <a href="https://stampbench.com" className="text-text underline decoration-border underline-offset-4 hover:decoration-accent">
+        <p className="text-text">
+          Selected by Anthropic, with access to over $50,000 in technology benefits. Founder of{' '}
+          <a href="https://stampbench.com" className="underline decoration-border underline-offset-4 hover:decoration-accent">
             Stampbench
           </a>
-          , an open-source compliance toolkit for European e-invoicing. Stampbench validates,
+          , developing European e-invoicing technology.
+        </p>
+        <p>
+          Stampbench is an open-source compliance toolkit for European e-invoicing. It validates,
           repairs and generates <strong className="text-text">XRechnung / EN 16931</strong>{' '}
           e-invoices in pure TypeScript: locally, on your own machine, with plain-language
           explanations for cryptic rule violations.
         </p>
         <p>
-          He started Stampbench for the mandate wave hitting European businesses: Germany has
+          Harvey started Stampbench for the mandate wave hitting European businesses: Germany has
           required companies to receive e-invoices since January 2025 and requires them to issue
           e-invoices from January 2027, with France and other EU states following. The existing
           tooling ecosystem is Java; Stampbench is the TypeScript-first answer.
