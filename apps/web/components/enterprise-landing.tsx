@@ -36,10 +36,10 @@ function Arrow() {
   return <span aria-hidden="true" className="inline-block transform transition-transform duration-300 ease-in-out group-hover:translate-x-0.5 group-hover:-translate-y-0.5">↗</span>;
 }
 
-function SectionIndex({ number, children }: { number: string; children: React.ReactNode }) {
+function SectionIndex({ number, children }: { number?: string; children: React.ReactNode }) {
   return (
     <div className="flex items-center gap-4 font-mono text-[10px] uppercase tracking-[0.16em] text-[#5f625b]">
-      <span className="text-[#c7442d]">{number}</span>
+      {number ? <span className="text-[#c7442d]">{number}</span> : null}
       <span>{children}</span>
     </div>
   );
@@ -183,7 +183,7 @@ function Hero() {
     <section className="border-b border-[#20231f]/15">
       <div className="mx-auto grid max-w-[1280px] lg:grid-cols-12">
         <div className="border-[#20231f]/15 px-5 py-14 sm:px-8 sm:py-20 lg:col-span-7 lg:border-r lg:py-20 lg:pr-16">
-          <SectionIndex number="01">Validation for software teams</SectionIndex>
+          <SectionIndex>Validation for software teams</SectionIndex>
           <h1 className="mt-7 max-w-[720px] text-[clamp(3.1rem,6.2vw,5.8rem)] font-semibold leading-[.98] tracking-[-0.055em] text-[#20231f]">
             European e-invoicing validation
             <span className="mt-2 block text-[#c7442d]">for your software.</span>
